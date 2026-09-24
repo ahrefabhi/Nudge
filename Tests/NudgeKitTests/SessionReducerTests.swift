@@ -74,6 +74,20 @@ import Testing
         #expect(session?.phase == .working)
     }
 
+    @Test mutating func thePermissionNotificationForAQuestionKeepsTheQuestion() {
+        send("PreToolUse") {
+            $0.toolName = "AskUserQuestion"
+            $0.toolUseID = "q1"
+            $0.toolInput = HookRecord.ToolInput()
+            $0.toolInput?.questions = [HookRecord.Question(question: "What next?", options: ["A", "B"])]
+        }
+        let asked = session?.since
+        // Claude Code also sends a generic permission_prompt a few seconds after asking.
+        send("Notification") { $0.notificationType = "permission_prompt"; $0.message = "Claude needs your permission" }
+        guard case .question? = session?.phase else { Issue.record("expected the question to stay"); return }
+        #expect(session?.since == asked)
+    }
+
     @Test mutating func aSubagentToolDoesNotClearAPendingPermission() {
         send("PermissionRequest") { $0.toolName = "Bash"; $0.toolUseID = "main-tool" }
         send("PreToolUse") { $0.toolName = "Read"; $0.toolUseID = "other"; $0.agentID = "sub" }
