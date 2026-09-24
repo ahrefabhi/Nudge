@@ -120,8 +120,10 @@ public final class PhaseMachine {
         sessions.filter { $0.kind == .working || ($0.needsYou && resolved.contains($0.attentionKey)) }
     }
 
+    /// Every finished session, including one queued as an alert when "pop up on finish" is on:
+    /// the manager lists only sessions that need you under NEEDS YOU, so it belongs here.
     public var finished: [NudgeSession] {
-        sessions.filter { $0.kind == .finished && !queue.contains($0) }
+        sessions.filter { $0.kind == .finished }
     }
 
     public var idle: [NudgeSession] { sessions.filter { $0.kind == .idle } }

@@ -157,6 +157,16 @@ import Testing
         #expect(opened == ["chrome"])
     }
 
+    @Test func managerListsAFinishedSessionThatPoppedUp() {
+        machine.expandFinished = true
+        machine.update(sessions: MockSessions.sample(now: clock.now))
+        let done = machine.sessions.filter { $0.kind == .finished }.map(\.id)
+        #expect(!done.isEmpty)
+        #expect(machine.queue.contains { $0.kind == .finished }, "it's queued as an alert")
+        #expect(machine.finished.map(\.id) == done)
+        #expect(Set(machine.managerRows.map(\.id)) == Set(machine.sessions.map(\.id)))
+    }
+
     @Test func mutedEventsOnlyUpdateThePill() {
         machine.muted = true
         trigger(.permission)
