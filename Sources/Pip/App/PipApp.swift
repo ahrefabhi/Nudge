@@ -18,6 +18,14 @@ enum PipApp {
             return
         }
 
+        if let flag = arguments.firstIndex(of: "--icon") {
+            let path = flag + 1 < arguments.count ? arguments[flag + 1] : "AppIcon.iconset"
+            do { try AppIconView.writeIconset(to: URL(filePath: path)) } catch {
+                FileHandle.standardError.write(Data("icon failed: \(error)\n".utf8))
+                exit(1)
+            }
+            return
+        }
         if arguments.contains("--dump-sessions") { return dumpSessions() }
 
         let app = NSApplication.shared

@@ -13,12 +13,13 @@ bin="$(swift build -c "$config" --show-bin-path)"
 
 app="build/Pip.app"
 rm -rf "$app"
-mkdir -p "$app/Contents/MacOS" "$app/Contents/Helpers" "$app/Contents/Frameworks"
+mkdir -p "$app/Contents/MacOS" "$app/Contents/Helpers" "$app/Contents/Frameworks" "$app/Contents/Resources"
 cp "$bin/Pip" "$app/Contents/MacOS/Pip"
 cp "$bin/pip-hook" "$app/Contents/Helpers/pip-hook"
 # ditto keeps the framework's internal symlinks intact.
 ditto "$bin/Sparkle.framework" "$app/Contents/Frameworks/Sparkle.framework"
 cp Resources/Info.plist "$app/Contents/Info.plist"
+cp Resources/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
 
 if [[ -n "${PIP_VERSION:-}" ]]; then plutil -replace CFBundleShortVersionString -string "$PIP_VERSION" "$app/Contents/Info.plist"; fi
 if [[ -n "${PIP_BUILD:-}" ]]; then plutil -replace CFBundleVersion -string "$PIP_BUILD" "$app/Contents/Info.plist"; fi
