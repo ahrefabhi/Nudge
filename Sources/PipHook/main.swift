@@ -89,10 +89,29 @@ func encode(_ record: HookRecord) -> Data? {
     return data
 }
 
+/// Pip drains the inbox within seconds while it runs. A backlog this large means Pip was
+/// deleted without removing its hooks (or hasn't run in ages), so stop filling the disk.
+let maximumBacklog = 10_000
+
+func inboxIsFull(_ inbox: URL) -> Bool {
+    guard let directory = opendir(inbox.path) else { return false }
+    defer { closedir(directory) }
+    var count = 0
+    while let entry = readdir(directory) {
+        // Skip ".", ".." and in-flight ".tmp" files; only committed records count.
+        let hidden = withUnsafeBytes(of: entry.pointee.d_name) { $0.first == UInt8(ascii: ".") }
+        if hidden { continue }
+        count += 1
+        if count >= maximumBacklog { return true }
+    }
+    return false
+}
+
 /// Writes to a hidden temporary file, then renames it into place, so readers never see half a record.
 func commit(_ data: Data, id: String, to inbox: URL) {
     let manager = FileManager.default
     try? manager.createDirectory(at: inbox, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+    guard !inboxIsFull(inbox) else { return }
     let temporary = inbox.appending(path: ".\(id).tmp")
     let final = inbox.appending(path: "\(Int64(Date().timeIntervalSince1970 * 1000))-\(id).json")
     guard manager.createFile(atPath: temporary.path, contents: data, attributes: [.posixPermissions: 0o600]) else { return }
