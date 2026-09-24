@@ -1,0 +1,165 @@
+import AppKit
+import NudgeKit
+
+/// Menu bar item: hook setup, demo mode and quit. Rebuilt each time it opens, so it's always current.
+final class StatusMenu: NSObject, NSMenuDelegate {
+    struct Actions {
+        var sessionCount: () -> Int
+        var hookTargets: () -> [HookInstaller.Target]
+        var hookStatus: (HookInstaller.Target) -> HookInstaller.Status
+        var installHooks: (HookInstaller.Target) -> Void
+        var removeHooks: (HookInstaller.Target) -> Void
+        var isDemo: () -> Bool
+        var setDemo: (Bool) -> Void
+        var simulate: (MockSessions.Event) -> Void
+        var simulateUsage: () -> Void
+        var resetDemo: () -> Void
+        var toggleManager: () -> Void
+        var showCharacterSheet: () -> Void
+        var showSetup: () -> Void
+        var showSettings: () -> Void
+        var canCheckForUpdates: () -> Bool
+        var checkForUpdates: () -> Void
+        var quietUntil: () -> Date?
+        var setQuiet: (Date?) -> Void
+        var toggleEnvironment: (HostApp) -> Void
+    }
+
+    private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+    private let actions: Actions
+
+    init(actions: Actions) {
+        self.actions = actions
+        super.init()
+        item.button?.image = MenuBarIcon.image()
+        let menu = NSMenu()
+        menu.delegate = self
+        item.menu = menu
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+        handlers.removeAll()
+        let demo = actions.isDemo()
+
+        let count = actions.sessionCount()
+        menu.addItem(disabled(demo ? "Showing demo sessions" : count == 0 ? "No agent sessions" : "Watching \(count) session\(count == 1 ? "" : "s")"))
+
+        // What Nudge is watching, and how loudly.
+        let manager = entry("Session Manager") { $0.actions.toggleManager() }
+        // Shown for reference; the global hotkey does the work outside this menu.
+        manager.keyEquivalent = "."
+        manager.keyEquivalentModifierMask = [.option, .command]
+        menu.addItem(manager)
+        addQuiet(to: menu)
+
+        let environments = NSMenu()
+        let hiddenHosts = Preferences.disabledHosts
+        for host in Preferences.environments {
+            let item = entry(host.onboardingName) { $0.actions.toggleEnvironment(host) }
+            item.state = hiddenHosts.contains(host) ? .off : .on
+            environments.addItem(item)
+        }
+        menu.addItem(submenu("Watch Sessions In", environments))
+
+        // Hooks.
+        menu.addItem(.separator())
+        for target in actions.hookTargets() {
+            let name = target.agent.productName
+            switch actions.hookStatus(target) {
+            case .installed:
+                menu.addItem(disabled("\(name) hooks installed"))
+                menu.addItem(entry("Remove \(name) Hooks…") { $0.actions.removeHooks(target) })
+            case .incomplete:
+                menu.addItem(disabled("\(name) hooks need an update"))
+                menu.addItem(entry("Update \(name) Hooks…") { $0.actions.installHooks(target) })
+                menu.addItem(entry("Remove \(name) Hooks…") { $0.actions.removeHooks(target) })
+            case .notInstalled:
+                menu.addItem(disabled(target == .claude ? "Nudge can't see why sessions wait yet" : "Nudge can't see Codex sessions yet"))
+                menu.addItem(entry("Install \(name) Hooks…") { $0.actions.installHooks(target) })
+            }
+        }
+
+        // Trying Nudge out.
+        menu.addItem(.separator())
+        let demoItem = entry("Demo Mode") { $0.actions.setDemo(!demo) }
+        demoItem.state = demo ? .on : .off
+        menu.addItem(demoItem)
+        if demo {
+            let simulate = NSMenu()
+            let events: [(String, MockSessions.Event)] = [
+                ("Permission Request", .permission), ("Question", .question), ("Error", .error),
+                ("Finished", .success), ("3 Agents Waiting", .multiple),
+            ]
+            for (title, event) in events { simulate.addItem(entry(title) { $0.actions.simulate(event) }) }
+            simulate.addItem(entry("Usage Limit") { $0.actions.simulateUsage() })
+            simulate.addItem(.separator())
+            simulate.addItem(entry("Reset") { $0.actions.resetDemo() })
+            menu.addItem(submenu("Simulate", simulate))
+        }
+        menu.addItem(entry("Character Sheet") { $0.actions.showCharacterSheet() })
+
+        // The app itself. macOS indents a whole section when one item has an icon, so all of these get one.
+        menu.addItem(.separator())
+        menu.addItem(symbol(entry("Set Up Nudge…") { $0.actions.showSetup() }, "wand.and.stars"))
+        let updates = symbol(entry("Check for Updates…") { $0.actions.checkForUpdates() }, "arrow.triangle.2.circlepath")
+        updates.isEnabled = actions.canCheckForUpdates()
+        menu.addItem(updates)
+        let settings = symbol(entry("Settings…") { $0.actions.showSettings() }, "gearshape")
+        settings.keyEquivalent = ","
+        settings.keyEquivalentModifierMask = [.command]
+        menu.addItem(settings)
+
+        menu.addItem(.separator())
+        menu.addItem(symbol(entry("Uninstall Nudge…") { _ in Uninstaller.confirmAndUninstall() }, "trash"))
+        menu.addItem(symbol(NSMenuItem(title: "Quit Nudge", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"), "power"))
+    }
+
+    private func addQuiet(to menu: NSMenu) {
+        if let until = actions.quietUntil() {
+            menu.addItem(disabled("Quiet until \(until.formatted(date: Calendar.current.isDateInToday(until) ? .omitted : .abbreviated, time: .shortened))"))
+            menu.addItem(entry("Resume Notifications") { $0.actions.setQuiet(nil) })
+        } else {
+            let quiet = NSMenu()
+            quiet.addItem(entry("For 1 Hour") { $0.actions.setQuiet(Date().addingTimeInterval(3600)) })
+            quiet.addItem(entry("Until Tomorrow") {
+                let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))
+                $0.actions.setQuiet(tomorrow.flatMap { Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: $0) })
+            })
+            menu.addItem(submenu("Quiet", quiet))
+        }
+    }
+
+    // MARK: Items
+
+    private var handlers: [Int: (StatusMenu) -> Void] = [:]
+
+    private func entry(_ title: String, _ handler: @escaping (StatusMenu) -> Void) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: #selector(performEntry(_:)), keyEquivalent: "")
+        item.target = self
+        item.tag = handlers.count + 1
+        handlers[item.tag] = handler
+        return item
+    }
+
+    private func submenu(_ title: String, _ submenu: NSMenu) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.submenu = submenu
+        return item
+    }
+
+    private func symbol(_ item: NSMenuItem, _ name: String) -> NSMenuItem {
+        item.image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
+        return item
+    }
+
+    private func disabled(_ title: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        return item
+    }
+
+    @objc private func performEntry(_ sender: NSMenuItem) {
+        handlers[sender.tag]?(self)
+    }
+}

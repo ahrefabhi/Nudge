@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>Pip</string>
+	<string>Nudge</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.pip.Pip</string>
+	<string>app.nudge.Nudge</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Pip</string>
+	<string>Nudge</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -25,13 +25,13 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Pip focuses the terminal tab or editor window that holds the Claude Code session you open. It never types into it.</string>
+	<string>Nudge focuses the terminal tab or editor window that holds the Claude Code session you open. It never types into it.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://github.com/ahrefabhi/pip/releases/latest/download/appcast.xml</string>
+	<string>https://github.com/ahrefabhi/nudge/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>wURvj3pAvquFzcBeo3Pv+gbcOoABV9ZZZSlU6Z/pqmQ=</string>
 	<key>SUScheduledCheckInterval</key>
