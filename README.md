@@ -46,6 +46,12 @@ Idle, Nudge is invisible: the notch is just the notch. While agents work, two ey
 
 <p align="center"><img src="docs/images/notch.png" width="760" alt="Three notch states: working with a spinner and a count of 5, Nudge dropping out of the notch with amber eyes, and a folded pill with a badge showing 3 waiting"></p>
 
+### On a Mac without a notch
+
+On an external display or an older MacBook, there's no notch to hide in, so Nudge stays out of the menu bar entirely while idle, leaving the app menus clear. When agents start working it slides down as a black pill the height of the menu bar, and everything else works the same. While it's hidden, open the session manager from the menu bar icon or with ⌥⌘.
+
+<p align="center"><img src="docs/images/menu-bar.png" width="760" alt="Four menu bar states on a display without a notch: idle with nothing showing, working as a black pill with a spinner and a count of 5, Nudge dropping out of the menu bar with amber eyes, and a folded pill with a badge showing 3 waiting"></p>
+
 ### When several agents need you
 
 Nudge never stacks notifications. One creature, one queue, most urgent first.
@@ -107,7 +113,7 @@ You only do this once. Later versions arrive through Nudge's own updater and ope
 
 <p align="center"><img src="docs/images/onboarding.png" width="760" alt="Setup in three steps: Hi, I'm Nudge; where do your agents run, with iTerm, Terminal and VS Code found; and permissions for Claude Code and Codex hooks, Accessibility and Automation"></p>
 
-**Requirements:** macOS 14 Sonoma or later, and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in a terminal (iTerm or Terminal), in VS Code, or in the Claude app, and optionally the [Codex CLI](https://developers.openai.com/codex/cli). Nudge is designed for Macs with a notch; on other displays it shows as a small black pill at the top of the screen.
+**Requirements:** macOS 14 Sonoma or later, and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in a terminal (iTerm or Terminal), in VS Code, or in the Claude app, and optionally the [Codex CLI](https://developers.openai.com/codex/cli). Nudge is designed for Macs with a notch, and works on other displays too (see [On a Mac without a notch](#on-a-mac-without-a-notch)).
 
 Want to look around first? Choose **Demo Mode** from the menu bar and use **Simulate** to trigger each kind of alert.
 
