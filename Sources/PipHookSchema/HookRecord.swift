@@ -1,6 +1,6 @@
 import Foundation
 
-/// One Claude Code hook event, trimmed to what Pip shows, as the collector writes it to the inbox.
+/// One Claude Code or Codex hook event, trimmed to what Pip shows, as the collector writes it to the inbox.
 public struct HookRecord: Codable, Sendable, Equatable {
     public static let currentSchema = 1
     public static let maximumBytes = 64 * 1024
@@ -22,6 +22,11 @@ public struct HookRecord: Codable, Sendable, Equatable {
     public var notificationType: String?
     public var lastAssistantMessage: String?
     public var host: HostHint?
+    /// Which coding agent sent the event: `nil` (or "claude") for Claude Code, "codex" for Codex.
+    public var agent: String?
+    /// The agent's own process, found by walking up from the collector. Codex has no session
+    /// registry, so this is how Pip tells a Codex session is still running and finds its terminal.
+    public var agentPID: Int32?
     /// Set when fields were dropped to fit `maximumBytes`.
     public var truncated: Bool?
 

@@ -2,8 +2,8 @@ import Darwin
 import Foundation
 import PipHookSchema
 
-// Claude Code runs this for every registered hook event. It only records what happened:
-// it never prints, never decides anything for Claude, and always exits 0 quickly.
+// Claude Code and Codex run this for every registered hook event. It only records what happened:
+// it never prints, never decides anything for the agent, and always exits 0 quickly.
 
 let maximumInput = 8 * 1024 * 1024
 
@@ -65,6 +65,11 @@ func record(event: String, payload: [String: Any]) -> HookRecord? {
         break
     }
 
+    if let agent = argument(after: "--agent"), agent == "claude" || agent == "codex" {
+        record.agent = agent
+        if agent == "codex" { record.agentPID = ancestor(namedLike: "codex") }
+    }
+
     let environment = ProcessInfo.processInfo.environment
     record.host = HookRecord.HostHint(
         bundleID: text(environment["__CFBundleIdentifier"], 256),
@@ -73,6 +78,33 @@ func record(event: String, payload: [String: Any]) -> HookRecord? {
         parentPID: getppid()
     )
     return record
+}
+
+// MARK: Process ancestry
+
+func processName(_ pid: pid_t) -> String? {
+    var buffer = [UInt8](repeating: 0, count: 256)
+    let length = Int(proc_name(pid, &buffer, UInt32(buffer.count)))
+    return length > 0 ? String(decoding: buffer.prefix(length), as: UTF8.self) : nil
+}
+
+func parent(of pid: pid_t) -> pid_t? {
+    var info = proc_bsdinfo()
+    let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+    guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size else { return nil }
+    return pid_t(info.pbi_ppid)
+}
+
+/// The nearest ancestor whose process name starts with `prefix` (e.g. "codex", or the npm
+/// package's "codex-aarch64-apple-darwin"). Hooks may run under a shell, so look a few levels up.
+func ancestor(namedLike prefix: String) -> Int32? {
+    var pid = getppid()
+    for _ in 0..<12 where pid > 1 {
+        if processName(pid)?.hasPrefix(prefix) == true { return pid }
+        guard let next = parent(of: pid) else { return nil }
+        pid = next
+    }
+    return nil
 }
 
 func encode(_ record: HookRecord) -> Data? {
@@ -118,9 +150,33 @@ func commit(_ data: Data, id: String, to inbox: URL) {
     if rename(temporary.path, final.path) != 0 { unlink(temporary.path) }
 }
 
+/// Development aid, off unless `--capture <dir>` is passed: saves the raw payload, a few
+/// environment variables and the process ancestry, to learn what an agent actually sends.
+func capture(_ input: Data, to directory: String) {
+    var chain: [String] = []
+    var pid = getppid()
+    for _ in 0..<12 where pid > 1 {
+        chain.append("\(pid) \(processName(pid) ?? "?")")
+        guard let next = parent(of: pid) else { break }
+        pid = next
+    }
+    let environment = ProcessInfo.processInfo.environment
+    let keys = ["TERM_PROGRAM", "__CFBundleIdentifier", "ITERM_SESSION_ID", "TERM_SESSION_ID", "SHELL", "PWD"]
+    let info: [String: Any] = [
+        "arguments": CommandLine.arguments,
+        "ancestry": chain,
+        "environment": environment.filter { keys.contains($0.key) || $0.key.hasPrefix("CODEX_") && !$0.key.contains("TOKEN") && !$0.key.contains("KEY") },
+        "payload": (try? JSONSerialization.jsonObject(with: input)) ?? String(decoding: input, as: UTF8.self),
+    ]
+    guard let data = try? JSONSerialization.data(withJSONObject: info, options: [.prettyPrinted, .sortedKeys]) else { return }
+    try? FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
+    FileManager.default.createFile(atPath: "\(directory)/\(Int64(Date().timeIntervalSince1970 * 1000))-\(getpid()).json", contents: data)
+}
+
 func run() {
-    guard let input = try? FileHandle.standardInput.read(upToCount: maximumInput + 1), input.count <= maximumInput,
-          let payload = (try? JSONSerialization.jsonObject(with: input)) as? [String: Any],
+    guard let input = try? FileHandle.standardInput.read(upToCount: maximumInput + 1), input.count <= maximumInput else { return }
+    if let directory = argument(after: "--capture") { capture(input, to: directory) }
+    guard let payload = (try? JSONSerialization.jsonObject(with: input)) as? [String: Any],
           let event = argument(after: "--event") ?? text(payload["hook_event_name"], 64),
           let record = record(event: event, payload: payload),
           let data = encode(record) else { return }
