@@ -25,6 +25,14 @@ public struct HistoryRecorder: Sendable {
         receivedFirstSnapshot = true
         var changed = false
 
+        // Entries saved before apps were recorded learn theirs while the session still runs.
+        for index in entries.indices where entries[index].host == .other && entries[index].hostBundleID == nil {
+            guard let session = current[entries[index].sessionID], session.host == .other, let bundleID = session.hostBundleID else { continue }
+            entries[index].hostBundleID = bundleID
+            entries[index].hostName = session.hostAppName
+            changed = true
+        }
+
         // Close waiting episodes the session has moved on from. On the first snapshot after a
         // restart the true end time is unknown, so none is recorded.
         for index in entries.indices where entries[index].isOpenEpisode {

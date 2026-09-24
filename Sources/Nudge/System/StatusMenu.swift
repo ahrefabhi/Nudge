@@ -22,7 +22,9 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         var checkForUpdates: () -> Void
         var quietUntil: () -> Date?
         var setQuiet: (Date?) -> Void
-        var toggleEnvironment: (HostApp) -> Void
+        /// Other apps sessions have run in, e.g. Warp.
+        var otherApps: () -> [OtherApp]
+        var toggleApp: (WatchedApp) -> Void
     }
 
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -54,10 +56,11 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         addQuiet(to: menu)
 
         let environments = NSMenu()
-        let hiddenHosts = Preferences.disabledHosts
-        for host in Preferences.environments {
-            let item = entry(host.onboardingName) { $0.actions.toggleEnvironment(host) }
-            item.state = hiddenHosts.contains(host) ? .off : .on
+        for app in Preferences.watchedApps(others: actions.otherApps()) {
+            // The built-in apps, then a line, then the others.
+            if case .other = app, environments.items.count == Preferences.environments.count { environments.addItem(.separator()) }
+            let item = entry(app.name) { $0.actions.toggleApp(app) }
+            item.state = Preferences.isHidden(app) ? .off : .on
             environments.addItem(item)
         }
         menu.addItem(submenu("Watch Sessions In", environments))

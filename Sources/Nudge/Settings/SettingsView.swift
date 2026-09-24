@@ -127,8 +127,8 @@ struct SettingsView: View {
     private var environments: some View {
         Section {
             ForEach(model.setup.environments) { environment in
-                Toggle(isOn: Binding(get: { environment.enabled }, set: { _ in model.setup.toggle(environment.host) })) {
-                    Text(environment.host.onboardingName)
+                Toggle(isOn: Binding(get: { environment.enabled }, set: { _ in model.setup.toggle(environment.id) })) {
+                    Text(environment.name)
                     Text(environment.detail)
                 }
             }

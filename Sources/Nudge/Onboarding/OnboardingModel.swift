@@ -10,10 +10,10 @@ final class OnboardingModel {
     enum Step: Int, CaseIterable { case hello = 1, environments, permissions }
 
     struct Environment: Identifiable, Equatable {
-        let host: HostApp
+        let id: WatchedApp
         var detail: String
         var enabled: Bool
-        var id: HostApp { host }
+        var name: String { id.name }
     }
 
     enum AutomationState: Equatable {
@@ -35,12 +35,14 @@ final class OnboardingModel {
     @ObservationIgnored var onFinish: (() -> Void)?
     @ObservationIgnored var onEnvironmentsChanged: (() -> Void)?
     @ObservationIgnored private let sessions: () -> [NudgeSession]
+    @ObservationIgnored private let otherApps: () -> [OtherApp]
     @ObservationIgnored private let hookSetup: HookSetup?
     @ObservationIgnored private var poll: Timer?
     @ObservationIgnored private var askedForAccessibility = false
 
-    init(sessions: @escaping () -> [NudgeSession], hookSetup: HookSetup?) {
+    init(sessions: @escaping () -> [NudgeSession], otherApps: @escaping () -> [OtherApp] = { [] }, hookSetup: HookSetup?) {
         self.sessions = sessions
+        self.otherApps = otherApps
         self.hookSetup = hookSetup
     }
 
@@ -70,11 +72,9 @@ final class OnboardingModel {
     }
 
     func refresh() {
-        let disabled = Preferences.disabledHosts
         let current = sessions()
-        environments = Preferences.environments.map { host in
-            Environment(host: host, detail: Self.detail(for: host, sessions: current.filter { $0.host == host }.count),
-                        enabled: !disabled.contains(host))
+        environments = Preferences.watchedApps(others: otherApps()).map { app in
+            Environment(id: app, detail: Self.detail(for: app, sessions: current), enabled: !Preferences.isHidden(app))
         }
         if let hookSetup {
             hooks = hookSetup.status(.claude)
@@ -83,6 +83,18 @@ final class OnboardingModel {
         }
         accessibility = Permissions.accessibilityTrusted
         refreshAutomation(ask: false)
+    }
+
+    static func detail(for app: WatchedApp, sessions: [NudgeSession]) -> String {
+        switch app {
+        case .host(let host):
+            return detail(for: host, sessions: sessions.filter { $0.host == host }.count)
+        case .other(let other):
+            let count = sessions.filter { $0.host == .other && ($0.hostBundleID ?? "") == other.bundleID }.count
+            if count > 0 { return "\(count) session\(count == 1 ? "" : "s") found" }
+            if other.isUnidentified { return "Sessions where Nudge can't tell the app" }
+            return NSRunningApplication.runningApplications(withBundleIdentifier: other.bundleID).isEmpty ? "Not running" : "Running · no sessions now"
+        }
     }
 
     static func detail(for host: HostApp, sessions count: Int) -> String {
@@ -105,10 +117,8 @@ final class OnboardingModel {
         onFinish?()
     }
 
-    func toggle(_ host: HostApp) {
-        var disabled = Preferences.disabledHosts
-        if disabled.contains(host) { disabled.remove(host) } else { disabled.insert(host) }
-        Preferences.disabledHosts = disabled
+    func toggle(_ app: WatchedApp) {
+        Preferences.toggle(app)
         refresh()
         onEnvironmentsChanged?()
     }
@@ -185,7 +195,7 @@ final class OnboardingModel {
     // MARK: Automation
 
     private var automationTargets: [String] {
-        let enabled = Set(environments.filter(\.enabled).map(\.host))
+        let enabled = Set(environments.filter(\.enabled).compactMap(\.id.host))
         return Preferences.environments.filter { $0.needsAutomation && enabled.contains($0) && $0.isRunning }.compactMap(\.bundleID)
     }
 

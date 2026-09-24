@@ -82,7 +82,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Preferences.quietUntil = until
                 self?.presence.refresh()
             },
-            toggleEnvironment: { [weak self] host in self?.toggleEnvironment(host) }
+            otherApps: { [weak self] in self?.otherApps ?? [] },
+            toggleApp: { [weak self] app in self?.toggle(app) }
         ))
 
         let hotKeys = HotKeys()
@@ -109,8 +110,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Real sessions, minus apps the user turned off.
     private var visibleSessions: [NudgeSession] {
-        let disabled = Preferences.disabledHosts
-        return observation.sessions.filter { !disabled.contains($0.host) }
+        let filter = Preferences.hostFilter
+        return observation.sessions.filter { !filter.hides($0) }
     }
 
     private func deliverSessions() {
@@ -118,9 +119,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // It keeps recording in Demo Mode; it just isn't shown.
         if history.record(observation.sessions) { historyStore.save(history.entries) }
         guard !demoMode else { return }
-        let disabled = Preferences.disabledHosts
+        let filter = Preferences.hostFilter
         machine.update(sessions: visibleSessions)
-        machine.history = history.entries.filter { !disabled.contains($0.host) }
+        machine.history = history.entries.filter { !filter.hides($0) }
     }
 
     /// Rate limits past the user's threshold join the queue after sessions that need you.
@@ -138,10 +139,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         deliverUsageAlerts()
     }
 
-    private func toggleEnvironment(_ host: HostApp) {
-        var disabled = Preferences.disabledHosts
-        if disabled.contains(host) { disabled.remove(host) } else { disabled.insert(host) }
-        Preferences.disabledHosts = disabled
+    /// Apps besides the built-in four that sessions have run in, for the menu and Settings.
+    private var otherApps: [OtherApp] {
+        OtherApp.seen(sessions: observation.sessions, history: history.entries, hidden: Preferences.disabledApps) { bundleID in
+            NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID).map { FileManager.default.displayName(atPath: $0.path) }
+        }
+    }
+
+    private func toggle(_ app: WatchedApp) {
+        Preferences.toggle(app)
         deliverSessions()
     }
 
@@ -184,7 +190,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showSettings() {
         if let settings { return settings.show() }
-        let setup = OnboardingModel(sessions: { [weak self] in self?.observation.sessions ?? [] }, hookSetup: hookSetup)
+        let setup = OnboardingModel(sessions: { [weak self] in self?.observation.sessions ?? [] },
+                                    otherApps: { [weak self] in self?.otherApps ?? [] }, hookSetup: hookSetup)
         setup.onEnvironmentsChanged = { [weak self] in self?.deliverSessions() }
         let model = SettingsModel(setup: setup, updater: updater)
         model.onPreferencesChanged = { [weak self] in self?.applyPreferences() }
@@ -200,7 +207,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showOnboarding() {
         if let onboarding { return onboarding.show() }
-        let model = OnboardingModel(sessions: { [weak self] in self?.observation.sessions ?? [] }, hookSetup: hookSetup)
+        let model = OnboardingModel(sessions: { [weak self] in self?.observation.sessions ?? [] },
+                                    otherApps: { [weak self] in self?.otherApps ?? [] }, hookSetup: hookSetup)
         model.onEnvironmentsChanged = { [weak self] in self?.deliverSessions() }
         let window = OnboardingWindow(model: model) { [weak self] in
             Preferences.onboardingCompleted = true
