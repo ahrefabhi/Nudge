@@ -173,14 +173,18 @@ private struct LightPanel<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .top)
         .clipShape(shape)
         .background {
-            // The shadow belongs to the panel's shape, not to every element inside it.
-            shape
-                .fill(Color(hex: 0xfafafc, opacity: still ? 0.97 : 0.62))
-                .background {
-                    // ImageRenderer can't draw the AppKit blur, so snapshots use a solid fill.
-                    if !still { FrostedBackground().clipShape(shape) }
-                }
-                .shadow(color: Color(.sRGB, red: 20 / 255, green: 24 / 255, blue: 40 / 255, opacity: 0.2), radius: 22, y: 18)
+            ZStack {
+                // The shadow lives outside the panel only: the frosted fill is see-through, and a
+                // shadow under it would show as a grey box behind the content.
+                shape
+                    .fill(Color.black)
+                    .shadow(color: Color(.sRGB, red: 20 / 255, green: 24 / 255, blue: 40 / 255, opacity: 0.2), radius: 22, y: 18)
+                    .overlay(shape.fill(Color.black).blendMode(.destinationOut))
+                    .compositingGroup()
+                // ImageRenderer can't draw the AppKit blur, so snapshots use a solid fill.
+                if !still { FrostedBackground().clipShape(shape) }
+                shape.fill(Color(hex: 0xfafafc, opacity: still ? 0.97 : 0.62))
+            }
         }
         .overlay(shape.strokeBorder(Color.black.opacity(0.14), lineWidth: 0.5))
         .environment(\.palette, .light)
