@@ -48,6 +48,7 @@ enum ReadmeImages {
 
         try write(NotchStates().background(Desktop()), "notch")
         try write(MenuBarStates().background(Desktop()), "menu-bar")
+        try write(SocialPreview(), "social-preview")
         try write(CharacterSheet(), "states")
 
         try write(
@@ -214,5 +215,50 @@ private struct MenuBarStates: View {
         .foregroundStyle(Color.label(0.85))
         .padding(.horizontal, 14)
         .frame(height: Self.notch.barHeight)
+    }
+}
+
+/// GitHub's social preview. Laid out at 1280×640 with the real island scaled up to fill its half,
+/// then halved so the 2× render comes out 1280×640. Text keeps an 80pt margin for link-card crops.
+private struct SocialPreview: View {
+    var body: some View {
+        let clock = ManualScheduler(start: Date())
+        let machine = PhaseMachine(scheduler: clock)
+        machine.update(sessions: MockSessions.calm(now: clock.now))
+        Snapshots.trigger(.multiple, machine, clock)
+        clock.advance(by: 1.5)
+
+        return ZStack(alignment: .top) {
+            Desktop()
+            MenuBarStrip()
+
+            HStack(alignment: .center, spacing: 0) {
+                VStack(alignment: .leading, spacing: 28) {
+                    HStack(spacing: 24) {
+                        AppIconView().scaleEffect(128 / AppIconView.canvas).frame(width: 128, height: 128)
+                        Text("Nudge").font(.nudge(92, .bold)).foregroundStyle(Tokens.textPrimary)
+                    }
+                    Text("A tiny companion in your notch that tells you when a Claude Code or Codex session needs you.")
+                        .font(.nudge(34, .medium))
+                        .foregroundStyle(Color.label(0.7))
+                        .lineSpacing(6)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("macOS 14+  ·  Swift  ·  MIT")
+                        .font(.nudgeMono(22, .medium))
+                        .foregroundStyle(Color.label(0.45))
+                }
+                .frame(width: 560, alignment: .leading)
+                .padding(.leading, 80)
+                .padding(.top, 32)
+
+                IslandView(machine: machine, notch: .fallback, forceLight: false)
+                    .scaleEffect(1.3, anchor: .top)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+        }
+        .frame(width: 1280, height: 640)
+        .clipped()
+        .scaleEffect(0.5)
+        .frame(width: 640, height: 320)
     }
 }
