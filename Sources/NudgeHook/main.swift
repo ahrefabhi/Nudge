@@ -66,6 +66,7 @@ func record(event: String, payload: [String: Any]) -> HookRecord? {
     default:
         break
     }
+    record.branch = record.cwd.flatMap(GitBranch.current(in:)).flatMap { text($0, 256) }
 
     if let agent = argument(after: "--agent"), agent == "claude" || agent == "codex" {
         record.agent = agent

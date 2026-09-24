@@ -14,6 +14,8 @@ public struct HookRecord: Codable, Sendable, Equatable {
     public var agentID: String?
     public var toolUseID: String?
     public var cwd: String?
+    /// The git branch checked out in `cwd`, or a short commit id when detached.
+    public var branch: String?
     public var prompt: String?
     public var toolName: String?
     public var toolInput: ToolInput?

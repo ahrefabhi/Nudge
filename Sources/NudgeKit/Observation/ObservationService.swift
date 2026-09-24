@@ -17,7 +17,6 @@ public final class ObservationService {
     private let io = DispatchQueue(label: "app.nudge.observation", qos: .utility)
     private var watchers: [DirectoryWatcher] = []
     private var sweep: Timer?
-    private var branchCache: [String: (branch: String?, readAt: Date)] = [:]
     private var publishScheduled = false
 
     /// Also rescans on this interval, to notice exited processes and missed file events.
@@ -104,7 +103,7 @@ public final class ObservationService {
         publishScheduled = false
         scheduleSave()
         let next = reducer.sessions.values
-            .map { SessionProjection.session($0, branch: branch(for: $0.cwd)) }
+            .map(SessionProjection.session)
             .sorted { ($0.project, $0.id) < ($1.project, $1.id) }
         guard next != sessions else { return }
         sessions = next
@@ -122,13 +121,5 @@ public final class ObservationService {
                 self.store.save(Array(self.reducer.sessions.values))
             }
         }
-    }
-
-    private func branch(for cwd: String) -> String? {
-        guard !cwd.isEmpty else { return nil }
-        if let cached = branchCache[cwd], Date().timeIntervalSince(cached.readAt) < 10 { return cached.branch }
-        let branch = GitBranch.current(in: cwd)
-        branchCache[cwd] = (branch, Date())
-        return branch
     }
 }

@@ -3,7 +3,7 @@ import NudgeHookSchema
 
 /// Maps observed state to the `NudgeSession` the UI shows.
 public enum SessionProjection {
-    public static func session(_ observed: ObservedSession, branch: String?) -> NudgeSession {
+    public static func session(_ observed: ObservedSession) -> NudgeSession {
         let (kind, quote, choices) = presentation(observed.phase)
         let project = observed.cwd.isEmpty ? (observed.title ?? observed.resolvedAgent.name) : (observed.cwd as NSString).lastPathComponent
         let agent = observed.resolvedAgent
@@ -12,7 +12,7 @@ public enum SessionProjection {
             id: observed.id,
             agent: agent,
             project: project,
-            branch: branch,
+            branch: observed.branch,
             task: TitleCleaner.title(from: observed.prompt) ?? observed.title ?? "\(agent.productName) session",
             activity: kind == .working ? observed.activity : nil,
             host: host,
