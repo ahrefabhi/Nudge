@@ -1,0 +1,134 @@
+import Foundation
+import PipHookSchema
+
+/// Watches Pip's hook inbox and Claude's session registry, and publishes `PipSession`s.
+/// File reads happen on a background queue; state lives on the main actor.
+@MainActor
+public final class ObservationService {
+    public var onChange: (([PipSession]) -> Void)?
+    public private(set) var sessions: [PipSession] = []
+
+    private var reducer: SessionReducer
+    private let store: SessionStore
+    private var saveScheduled = false
+    private var registryEntries: [RegistryEntry] = []
+    private let inbox: InboxReader
+    private let registryDirectory: URL
+    private let io = DispatchQueue(label: "app.pip.observation", qos: .utility)
+    private var watchers: [DirectoryWatcher] = []
+    private var sweep: Timer?
+    private var branchCache: [String: (branch: String?, readAt: Date)] = [:]
+    private var publishScheduled = false
+
+    /// Also rescans on this interval, to notice exited processes and missed file events.
+    static let sweepInterval: TimeInterval = 10
+
+    public init(paths: PipPaths = .default, registryDirectory: URL = ClaudePaths.sessions) {
+        inbox = InboxReader(directory: paths.inbox)
+        self.registryDirectory = registryDirectory
+        store = SessionStore(paths: paths)
+        // What hooks said before Pip last quit, e.g. a question's choices.
+        reducer = SessionReducer(restoring: store.load())
+    }
+
+    public func start() {
+        inbox.prepare()
+        refreshRegistry()
+        drainInbox()
+        if let watcher = DirectoryWatcher(directory: inbox.directory, queue: io, onChange: { [weak self] in
+            Task { @MainActor in self?.drainInbox() }
+        }) { watchers.append(watcher) }
+        if let watcher = DirectoryWatcher(directory: registryDirectory, queue: io, onChange: { [weak self] in
+            Task { @MainActor in self?.refreshRegistry() }
+        }) { watchers.append(watcher) }
+        sweep = Timer.scheduledTimer(withTimeInterval: Self.sweepInterval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.refreshRegistry()
+                self?.drainInbox()
+            }
+        }
+    }
+
+    public func stop() {
+        watchers.removeAll()
+        sweep?.invalidate()
+        sweep = nil
+        store.save(Array(reducer.sessions.values))
+    }
+
+    /// Everything known about a session, for focusing it.
+    public func observed(_ id: String) -> ObservedSession? { reducer.sessions[id] }
+
+    // MARK: Inputs
+
+    private func drainInbox() {
+        let inbox = inbox
+        io.async { [weak self] in
+            let records = inbox.drain()
+            guard !records.isEmpty else { return }
+            Task { @MainActor in self?.ingest(records) }
+        }
+    }
+
+    private func refreshRegistry() {
+        let directory = registryDirectory
+        io.async { [weak self] in
+            let entries = SessionRegistry.read(from: directory)
+            Task { @MainActor in self?.reconcile(entries) }
+        }
+    }
+
+    private func ingest(_ records: [HookRecord]) {
+        for record in records { reducer.apply(record) }
+        schedulePublish()
+    }
+
+    private func reconcile(_ entries: [RegistryEntry]) {
+        registryEntries = entries
+        reducer.reconcile(entries)
+        schedulePublish()
+    }
+
+    // MARK: Output
+
+    /// Coalesces bursts of events (a tool call is several) into one update.
+    private func schedulePublish() {
+        guard !publishScheduled else { return }
+        publishScheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+            MainActor.assumeIsolated { self?.publish() }
+        }
+    }
+
+    private func publish() {
+        publishScheduled = false
+        scheduleSave()
+        let next = reducer.sessions.values
+            .map { SessionProjection.session($0, branch: branch(for: $0.cwd)) }
+            .sorted { ($0.project, $0.id) < ($1.project, $1.id) }
+        guard next != sessions else { return }
+        sessions = next
+        onChange?(next)
+    }
+
+    /// At most once a second: bursts of hook events don't each rewrite the file.
+    private func scheduleSave() {
+        guard !saveScheduled else { return }
+        saveScheduled = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.saveScheduled = false
+                self.store.save(Array(self.reducer.sessions.values))
+            }
+        }
+    }
+
+    private func branch(for cwd: String) -> String? {
+        guard !cwd.isEmpty else { return nil }
+        if let cached = branchCache[cwd], Date().timeIntervalSince(cached.readAt) < 10 { return cached.branch }
+        let branch = GitBranch.current(in: cwd)
+        branchCache[cwd] = (branch, Date())
+        return branch
+    }
+}
