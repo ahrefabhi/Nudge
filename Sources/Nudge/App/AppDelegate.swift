@@ -10,6 +10,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let hookSetup = HookSetup()
     private lazy var demo = DemoController(machine: machine)
     private var demoMode = CommandLine.arguments.contains("--demo")
+    /// Before setup is done, the setup window is all Nudge shows: no notch, hotkeys or chimes.
+    private var setupPending = false
     private var notch: NotchWindowController?
     private var statusMenu: StatusMenu?
     private var hotKeys: HotKeys?
@@ -86,6 +88,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             toggleApp: { [weak self] app in self?.toggle(app) }
         ))
 
+        self.notch = notch
+        // Sessions are still read during setup, so it can say which apps have some running.
+        setupPending = !Preferences.onboardingCompleted && !demoMode
+        if setupPending { showOnboarding() } else { startNotch() }
+    }
+
+    /// The notch and its hotkeys, once setup is out of the way.
+    private func startNotch() {
         let hotKeys = HotKeys()
         // ⌥⌘. rather than ⌘⇧., which Finder and Open/Save dialogs use to show hidden files.
         hotKeys.register(keyCode: kVK_ANSI_Period, modifiers: cmdKey | optionKey) { [weak self] in self?.toggleManager() }
@@ -93,12 +103,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.machine.cycleNext()
             self?.notch?.focusIsland()
         }
-
-        notch.show()
-        self.notch = notch
         self.hotKeys = hotKeys
-
-        if !Preferences.onboardingCompleted && !demoMode { showOnboarding() }
+        notch?.show()
+        deliverSessions()
+        deliverUsageAlerts()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -118,7 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // History sees every session, so hiding an app never reads as its sessions being answered.
         // It keeps recording in Demo Mode; it just isn't shown.
         if history.record(observation.sessions) { historyStore.save(history.entries) }
-        guard !demoMode else { return }
+        guard !demoMode, !setupPending else { return }
         let filter = Preferences.hostFilter
         machine.update(sessions: visibleSessions)
         machine.history = history.entries.filter { !filter.hides($0) }
@@ -126,7 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Rate limits past the user's threshold join the queue after sessions that need you.
     private func deliverUsageAlerts() {
-        guard !demoMode else { return }
+        guard !demoMode, !setupPending else { return }
         let alerts = usageAlerts.update(usage.usage, rules: machine.usageAlertRules)
         if usageAlerts.handled != Preferences.handledUsageAlerts { Preferences.handledUsageAlerts = usageAlerts.handled }
         machine.update(usageAlerts: alerts)
@@ -179,6 +187,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func toggleManager() {
+        if setupPending { return showOnboarding() }
         machine.toggleManager()
         if machine.phase == .manager { notch?.focusIsland() }
     }
@@ -213,6 +222,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let window = OnboardingWindow(model: model) { [weak self] in
             Preferences.onboardingCompleted = true
             self?.onboarding = nil
+            if self?.setupPending == true {
+                self?.setupPending = false
+                self?.startNotch()
+            }
         }
         onboarding = window
         window.show()
