@@ -2,19 +2,42 @@ import CryptoKit
 import Foundation
 import PipHookSchema
 
-/// Adds and removes Pip's hook handlers in Claude Code's settings.
+/// Adds and removes Pip's hook handlers in Claude Code's settings or Codex's hooks file.
 ///
 /// It only ever touches handlers whose command is Pip's collector, keeps every other key in
 /// place and in order, backs the file up before writing, and refuses to write if the file
 /// changed while it worked.
 public struct HookInstaller: Sendable {
-    /// The events Pip reads. Each gets one handler that runs the collector.
-    public static let events = [
-        "SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure",
-        "PermissionRequest", "PermissionDenied", "Notification", "Stop", "StopFailure", "PreCompact", "CwdChanged",
-    ]
-    /// Notification fires for several reasons; Pip only needs these two.
-    static let notificationMatcher = "permission_prompt|elicitation_dialog"
+    /// Which agent's hooks to manage. Both use the same `{"hooks": {Event: [groups]}}` shape.
+    public enum Target: String, Sendable, CaseIterable {
+        case claude, codex
+
+        public var agent: Agent { self == .claude ? .claude : .codex }
+
+        /// The events Pip reads. Each gets one handler that runs the collector.
+        public var events: [String] {
+            switch self {
+            case .claude:
+                ["SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure",
+                 "PermissionRequest", "PermissionDenied", "Notification", "Stop", "StopFailure", "PreCompact", "CwdChanged"]
+            case .codex:
+                ["SessionStart", "SessionEnd", "UserPromptSubmit", "PreToolUse", "PostToolUse",
+                 "PermissionRequest", "Stop", "Interrupt", "PreCompact"]
+            }
+        }
+
+        /// Claude's Notification fires for several reasons; Pip only needs these two.
+        func matcher(for event: String) -> String? {
+            self == .claude && event == "Notification" ? "permission_prompt|elicitation_dialog" : nil
+        }
+
+        public var defaultSettingsURL: URL { self == .claude ? ClaudePaths.settings : CodexPaths.hooks }
+
+        var manifestName: String { self == .claude ? "hook-manifest.json" : "hook-manifest-codex.json" }
+    }
+
+    /// Claude Code's events, kept for existing callers.
+    public static var events: [String] { Target.claude.events }
     static let timeoutSeconds = 2
 
     public enum Status: Equatable, Sendable {
@@ -33,30 +56,34 @@ public struct HookInstaller: Sendable {
 
         public var errorDescription: String? {
             switch self {
-            case .settingsNotAnObject: "Claude's settings file doesn't contain a JSON object."
-            case .hooksNotAnObject: "The \"hooks\" value in Claude's settings isn't an object."
-            case .eventNotAnArray(let event): "The \"\(event)\" hooks value in Claude's settings isn't a list."
-            case .settingsChanged: "Claude's settings changed while Pip was editing them. Try again."
+            case .settingsNotAnObject: "The settings file doesn't contain a JSON object."
+            case .hooksNotAnObject: "The \"hooks\" value in the settings file isn't an object."
+            case .eventNotAnArray(let event): "The \"\(event)\" hooks value in the settings file isn't a list."
+            case .settingsChanged: "The settings file changed while Pip was editing it. Try again."
             case .collectorMissing: "Pip's hook collector wasn't found in the app."
             }
         }
     }
 
+    public let target: Target
     public let settingsURL: URL
     public let paths: PipPaths
 
-    public init(settingsURL: URL = ClaudePaths.settings, paths: PipPaths = .default) {
-        self.settingsURL = settingsURL
+    public init(target: Target = .claude, settingsURL: URL? = nil, paths: PipPaths = .default) {
+        self.target = target
+        self.settingsURL = settingsURL ?? target.defaultSettingsURL
         self.paths = paths
     }
+
+    public var events: [String] { target.events }
 
     // MARK: Status
 
     public func status(bundledCollector: URL?) -> Status {
         guard let settings = try? readSettings().value else { return .notInstalled }
-        let installed = Self.events.filter { hasPipHandler(in: settings["hooks"]?[$0]) }
+        let installed = events.filter { hasPipHandler(in: settings["hooks"]?[$0]) }
         if installed.isEmpty { return .notInstalled }
-        guard installed.count == Self.events.count, collectorIsCurrent(bundled: bundledCollector) else { return .incomplete }
+        guard installed.count == events.count, collectorIsCurrent(bundled: bundledCollector) else { return .incomplete }
         return .installed
     }
 
@@ -80,12 +107,12 @@ public struct HookInstaller: Sendable {
         var hooks = settings["hooks"] ?? .object([])
         guard case .object = hooks else { throw InstallError.hooksNotAnObject }
         var added = 0
-        for event in Self.events {
+        for event in events {
             var groups = hooks[event] ?? .array([])
             guard case .array(var list) = groups else { throw InstallError.eventNotAnArray(event) }
             if hasPipHandler(in: groups) { continue }
             var group = OrderedJSON.object([])
-            if event == "Notification" { group.set("matcher", .string(Self.notificationMatcher)) }
+            if let matcher = target.matcher(for: event) { group.set("matcher", .string(matcher)) }
             group.set("hooks", .array([handler(for: event)]))
             list.append(group)
             groups = .array(list)
@@ -137,16 +164,38 @@ public struct HookInstaller: Sendable {
     // MARK: Handlers
 
     func handler(for event: String) -> OrderedJSON {
-        .object([
-            .init("type", .string("command")),
-            .init("command", .string(paths.collector.path)),
-            .init("args", .array(["observe", "--event", event, "--inbox", paths.inbox.path].map { .string($0) })),
-            .init("timeout", .number(String(Self.timeoutSeconds))),
-        ])
+        switch target {
+        case .claude:
+            return .object([
+                .init("type", .string("command")),
+                .init("command", .string(paths.collector.path)),
+                .init("args", .array(["observe", "--event", event, "--inbox", paths.inbox.path].map { .string($0) })),
+                .init("timeout", .number(String(Self.timeoutSeconds))),
+            ])
+        case .codex:
+            // Codex has no "args": one command line, quoted because the path has a space in it.
+            // The collector reads the event name from the payload.
+            let command = [Self.quoted(paths.collector.path), "observe", "--agent", "codex", "--inbox", Self.quoted(paths.inbox.path)]
+                .joined(separator: " ")
+            return .object([
+                .init("type", .string("command")),
+                .init("command", .string(command)),
+                .init("timeout", .number(String(Self.timeoutSeconds))),
+            ])
+        }
+    }
+
+    /// Single-quoted for the shell, with any single quote escaped.
+    static func quoted(_ path: String) -> String {
+        "'" + path.replacing("'", with: "'\\''") + "'"
     }
 
     func isPipHandler(_ handler: OrderedJSON) -> Bool {
-        handler["command"]?.stringValue == paths.collector.path
+        guard let command = handler["command"]?.stringValue else { return false }
+        switch target {
+        case .claude: return command == paths.collector.path
+        case .codex: return command.hasPrefix(Self.quoted(paths.collector.path) + " ")
+        }
     }
 
     func hasPipHandler(in groups: OrderedJSON?) -> Bool {
@@ -212,9 +261,9 @@ public struct HookInstaller: Sendable {
     private func writeManifest() throws {
         let manifest: [String: Any] = [
             "settings": settingsURL.path, "collector": paths.collector.path, "inbox": paths.inbox.path,
-            "events": Self.events, "installedAt": ISO8601DateFormatter().string(from: Date()),
+            "agent": target.rawValue, "events": events, "installedAt": ISO8601DateFormatter().string(from: Date()),
         ]
         let data = try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys])
-        try data.write(to: paths.root.appending(path: "hook-manifest.json"), options: .atomic)
+        try data.write(to: paths.root.appending(path: target.manifestName), options: .atomic)
     }
 }
