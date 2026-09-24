@@ -70,10 +70,11 @@ public struct SessionReducer: Sendable {
             }
 
         case "Notification":
+            // Both usually follow a PermissionRequest or AskUserQuestion that Nudge already shows
+            // (Claude sends permission_prompt for questions too); only fill in when that was missed.
+            if session.phase.isPrompt { break }
             switch record.notificationType {
             case "permission_prompt":
-                // Usually follows PermissionRequest; only fill in when that was missed.
-                if case .permission = session.phase { break }
                 session.set(.permission(ObservedSession.Permission(toolName: "tool", preview: nil, detail: record.message)), at: at)
             case "elicitation_dialog":
                 session.set(.question(ObservedSession.Question(text: record.message ?? "Claude needs your input", choices: [])), at: at)
@@ -227,6 +228,14 @@ extension ObservedSession {
 }
 
 extension ObservedSession.Phase {
+    /// A permission or question the user is being asked in the session.
+    var isPrompt: Bool {
+        switch self {
+        case .permission, .question: true
+        default: false
+        }
+    }
+
     func kindMatches(_ other: Self) -> Bool {
         switch (self, other) {
         case (.idle, .idle), (.working, .working), (.waiting, .waiting), (.finished, .finished), (.failed, .failed): true
