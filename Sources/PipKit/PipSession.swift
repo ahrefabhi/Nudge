@@ -28,8 +28,18 @@ public enum SessionKind: Sendable, Hashable {
     }
 }
 
+/// The coding agent a session belongs to.
+public enum Agent: String, Sendable, Hashable, CaseIterable, Codable {
+    case claude, codex
+
+    /// For copy like "Claude needs your permission".
+    public var name: String { self == .claude ? "Claude" : "Codex" }
+    public var productName: String { self == .claude ? "Claude Code" : "Codex" }
+}
+
 public struct PipSession: Identifiable, Hashable, Sendable {
     public let id: String
+    public var agent: Agent
     public var project: String
     public var branch: String?
     /// What the session is for, e.g. "Upgrading Stripe SDK to v17".
@@ -47,10 +57,11 @@ public struct PipSession: Identifiable, Hashable, Sendable {
     public var since: Date
 
     public init(
-        id: String, project: String, branch: String? = nil, task: String, activity: String? = nil, host: HostApp,
-        location: String? = nil, kind: SessionKind, quote: String? = nil, choices: [String] = [], since: Date
+        id: String, agent: Agent = .claude, project: String, branch: String? = nil, task: String, activity: String? = nil,
+        host: HostApp, location: String? = nil, kind: SessionKind, quote: String? = nil, choices: [String] = [], since: Date
     ) {
         self.id = id
+        self.agent = agent
         self.project = project
         self.branch = branch
         self.task = task

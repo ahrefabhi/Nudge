@@ -46,6 +46,22 @@ public enum ClaudePaths {
     public static var sessions: URL { configRoot.appending(path: "sessions", directoryHint: .isDirectory) }
 }
 
+public enum CodexPaths {
+    /// `CODEX_HOME`, or `~/.codex`.
+    public static var home: URL {
+        if let custom = ProcessInfo.processInfo.environment["CODEX_HOME"], !custom.isEmpty {
+            return URL(filePath: custom, directoryHint: .isDirectory)
+        }
+        return FileManager.default.homeDirectoryForCurrentUser.appending(path: ".codex", directoryHint: .isDirectory)
+    }
+
+    public static var hooks: URL { home.appending(path: "hooks.json") }
+    public static var config: URL { home.appending(path: "config.toml") }
+
+    /// Codex looks installed when its home folder exists.
+    public static var isInstalled: Bool { FileManager.default.fileExists(atPath: home.path) }
+}
+
 public enum SessionRegistry {
     /// Live entries only: files for processes that have exited are skipped.
     public static func read(from directory: URL = ClaudePaths.sessions) -> [RegistryEntry] {

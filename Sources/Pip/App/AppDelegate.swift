@@ -33,9 +33,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusMenu = StatusMenu(actions: .init(
             sessionCount: { [weak self] in self?.visibleSessions.count ?? 0 },
-            hookStatus: { [weak self] in self?.hookSetup.status ?? .notInstalled },
-            installHooks: { [weak self] in self?.hookSetup.confirmAndInstall() },
-            removeHooks: { [weak self] in self?.hookSetup.confirmAndRemove() },
+            hookTargets: { HookSetup.availableTargets },
+            hookStatus: { [weak self] in self?.hookSetup.status($0) ?? .notInstalled },
+            installHooks: { [weak self] in self?.hookSetup.confirmAndInstall($0) },
+            removeHooks: { [weak self] in self?.hookSetup.confirmAndRemove($0) },
             isDemo: { [weak self] in self?.demoMode ?? false },
             setDemo: { [weak self] in self?.setDemoMode($0) },
             simulate: { [weak self] in self?.demo.trigger($0) },

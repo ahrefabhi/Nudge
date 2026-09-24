@@ -119,8 +119,22 @@ struct SettingsView: View {
                 case .notInstalled: Button("Install") { model.setup.installHooks() }
                 }
             } label: {
-                Text("Claude Code hooks")
+                Label { Text("Claude Code hooks") } icon: { AgentMark(agent: .claude, size: 13) }
                 Text(hooksDetail)
+            }
+            if let codex = model.setup.codexHooks {
+                LabeledContent {
+                    switch codex {
+                    case .installed: Button("Remove…") { model.setup.removeHooks(.codex) }
+                    case .incomplete: Button("Update") { model.setup.installHooks(.codex) }
+                    case .notInstalled: Button("Install") { model.setup.installHooks(.codex) }
+                    }
+                } label: {
+                    Label { Text("Codex hooks") } icon: { AgentMark(agent: .codex, size: 13) }
+                    Text(codex == .installed
+                         ? "Installed in \(model.setup.settingsPath(.codex)). In Codex, trust them once with /hooks."
+                         : codex == .incomplete ? "Some hooks are missing or out of date." : "Lets Pip see Codex sessions and why they wait.")
+                }
             }
             LabeledContent {
                 if model.setup.accessibility {
@@ -149,7 +163,7 @@ struct SettingsView: View {
                 Text("Switches iTerm and Terminal tabs.")
             }
         } header: {
-            Text("Claude Code")
+            Text(model.setup.codexHooks == nil ? "Claude Code" : "Agents")
         } footer: {
             Text("Pip only reads session state. It never types into your terminal or approves anything on your behalf.")
                 .font(.footnote)

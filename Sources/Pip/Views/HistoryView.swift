@@ -116,7 +116,10 @@ private struct HistoryRow: View {
                 }
             }
             Spacer(minLength: 8)
-            Text(entry.host.displayName)
+            HStack(spacing: 5) {
+                AgentMark(agent: entry.agent ?? .claude, size: 10)
+                Text(entry.host.displayName)
+            }
                 .font(.pip(11))
                 .foregroundStyle(palette.label(0.38))
                 .fixedSize()

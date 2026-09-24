@@ -97,15 +97,16 @@ extension SessionKind {
         }
     }
 
-    var alertTitle: String {
-        switch self {
-        case .permission: "Claude needs your permission"
-        case .question: "Claude has a question"
-        case .waiting: "Claude is waiting for you"
-        case .error: "Claude hit an error"
-        case .finished: "Claude finished"
-        case .working: "Claude is working"
-        case .idle: "Claude is ready"
+    func alertTitle(for agent: Agent) -> String {
+        let name = agent.name
+        return switch self {
+        case .permission: "\(name) needs your permission"
+        case .question: "\(name) has a question"
+        case .waiting: "\(name) is waiting for you"
+        case .error: "\(name) hit an error"
+        case .finished: "\(name) finished"
+        case .working: "\(name) is working"
+        case .idle: "\(name) is ready"
         }
     }
 }

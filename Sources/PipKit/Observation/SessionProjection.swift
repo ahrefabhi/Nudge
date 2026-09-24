@@ -5,12 +5,14 @@ import PipHookSchema
 public enum SessionProjection {
     public static func session(_ observed: ObservedSession, branch: String?) -> PipSession {
         let (kind, quote, choices) = presentation(observed.phase)
-        let project = observed.cwd.isEmpty ? (observed.title ?? "Claude") : (observed.cwd as NSString).lastPathComponent
+        let project = observed.cwd.isEmpty ? (observed.title ?? observed.resolvedAgent.name) : (observed.cwd as NSString).lastPathComponent
+        let agent = observed.resolvedAgent
         return PipSession(
             id: observed.id,
+            agent: agent,
             project: project,
             branch: branch,
-            task: TitleCleaner.title(from: observed.prompt) ?? observed.title ?? "Claude Code session",
+            task: TitleCleaner.title(from: observed.prompt) ?? observed.title ?? "\(agent.productName) session",
             activity: kind == .working ? observed.activity : nil,
             host: host(observed),
             location: location(observed),

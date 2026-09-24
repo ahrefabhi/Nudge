@@ -25,6 +25,8 @@ final class OnboardingModel {
     var step: Step = .hello
     var environments: [Environment] = []
     var hooks: HookInstaller.Status = .notInstalled
+    /// `nil` when Codex isn't installed, so its row doesn't show.
+    var codexHooks: HookInstaller.Status?
     var accessibility = false
     var automation: AutomationState = .asksOnFirstUse
 
@@ -40,7 +42,11 @@ final class OnboardingModel {
         self.hookSetup = hookSetup
     }
 
-    var settingsPath: String { hookSetup?.settingsPath ?? "~/.claude/settings.json" }
+    var settingsPath: String { settingsPath(.claude) }
+
+    func settingsPath(_ target: HookInstaller.Target) -> String {
+        hookSetup?.settingsPath(target) ?? (target == .claude ? "~/.claude/settings.json" : "~/.codex/hooks.json")
+    }
 
     /// Something only System Settings can grant is still missing.
     var needsSystemSettings: Bool {
@@ -68,7 +74,10 @@ final class OnboardingModel {
             Environment(host: host, detail: Self.detail(for: host, sessions: current.filter { $0.host == host }.count),
                         enabled: !disabled.contains(host))
         }
-        hooks = hookSetup?.status ?? hooks
+        if let hookSetup {
+            hooks = hookSetup.status(.claude)
+            codexHooks = HookSetup.availableTargets.contains(.codex) ? hookSetup.status(.codex) : nil
+        }
         accessibility = Permissions.accessibilityTrusted
         refreshAutomation(ask: false)
     }
@@ -101,14 +110,18 @@ final class OnboardingModel {
         onEnvironmentsChanged?()
     }
 
-    func installHooks() {
-        hookSetup?.install()
+    func installHooks() { installHooks(.claude) }
+
+    func installHooks(_ target: HookInstaller.Target) {
+        hookSetup?.install(target)
         refresh()
     }
 
     /// Asks first, like the menu does.
-    func removeHooks() {
-        hookSetup?.confirmAndRemove()
+    func removeHooks() { removeHooks(.claude) }
+
+    func removeHooks(_ target: HookInstaller.Target) {
+        hookSetup?.confirmAndRemove(target)
         refresh()
     }
 

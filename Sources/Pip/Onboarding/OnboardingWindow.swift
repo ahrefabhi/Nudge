@@ -11,7 +11,7 @@ final class OnboardingWindow: NSObject, NSWindowDelegate {
     init(model: OnboardingModel, onClose: @escaping () -> Void) {
         self.model = model
         self.onClose = onClose
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 420),
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: HookSetup.availableTargets.contains(.codex) ? 476 : 420),
                           styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
         super.init()
         window.titlebarAppearsTransparent = true

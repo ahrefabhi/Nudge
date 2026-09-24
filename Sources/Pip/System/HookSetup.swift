@@ -1,10 +1,10 @@
 import AppKit
 import PipKit
 
-/// Installing Pip's Claude Code hooks, always with the user's explicit go-ahead: the menu
-/// confirms with an alert, onboarding with its own row explaining the change.
+/// Installing Pip's Claude Code and Codex hooks, always with the user's explicit go-ahead: the
+/// menu confirms with an alert, onboarding with its own row explaining the change.
 final class HookSetup {
-    private let installer = HookInstaller()
+    typealias Target = HookInstaller.Target
 
     /// The collector shipped with this build: in the app bundle, or next to the binary in `swift run`.
     static var bundledCollector: URL? {
@@ -15,34 +15,48 @@ final class HookSetup {
         return candidates.compactMap { $0 }.first { FileManager.default.isExecutableFile(atPath: $0.path) }
     }
 
-    var status: HookInstaller.Status { installer.status(bundledCollector: Self.bundledCollector) }
+    /// The agents this Mac has: Claude Code always (it's Pip's first agent), Codex when installed.
+    static var availableTargets: [Target] { CodexPaths.isInstalled ? [.claude, .codex] : [.claude] }
 
-    /// "~/.claude/settings.json", for copy.
-    var settingsPath: String { tilde(installer.settingsURL) }
+    func status(_ target: Target = .claude) -> HookInstaller.Status {
+        HookInstaller(target: target).status(bundledCollector: Self.bundledCollector)
+    }
 
-    func confirmAndInstall() {
+    /// "~/.claude/settings.json" or "~/.codex/hooks.json", for copy.
+    func settingsPath(_ target: Target = .claude) -> String { tilde(HookInstaller(target: target).settingsURL) }
+
+    func confirmAndInstall(_ target: Target = .claude) {
+        let installer = HookInstaller(target: target)
+        let agent = target.agent
+        let updating = status(target) == .incomplete
         let alert = NSAlert()
-        alert.messageText = status == .incomplete ? "Update Claude Code hooks?" : "Let Pip watch your Claude Code sessions?"
-        alert.informativeText = """
-        Pip will add \(HookInstaller.events.count) hook entries to \(tilde(installer.settingsURL)). Each one runs Pip's \
-        collector, which notes what Claude is doing so Pip can show it. It never answers or approves anything.
+        alert.messageText = updating ? "Update \(agent.productName) hooks?" : "Let Pip watch your \(agent.productName) sessions?"
+        var text = """
+        Pip will add \(installer.events.count) hook entries to \(tilde(installer.settingsURL)). Each one runs Pip's \
+        collector, which notes what \(agent.name) is doing so Pip can show it. It never answers or approves anything.
 
         Your other settings and hooks stay as they are, and a backup is saved next to the file first. \
         Sessions that are already running may need a restart to report to Pip.
         """
-        alert.addButton(withTitle: status == .incomplete ? "Update Hooks" : "Install Hooks")
+        if target == .codex { text += "\n\n" + Self.codexTrustStep }
+        alert.informativeText = text
+        alert.addButton(withTitle: updating ? "Update Hooks" : "Install Hooks")
         alert.addButton(withTitle: "Cancel")
         NSApp.activate()
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        install()
+        install(target)
     }
+
+    /// Codex skips new hooks until the user trusts them; Pip can't (and shouldn't) do that for them.
+    static let codexTrustStep = "Codex runs new hooks only after you trust them: in Codex, type /hooks and trust Pip's entries."
 
     /// Installs without asking; the caller has already explained the change. Shows any error.
     @discardableResult
-    func install() -> Bool {
+    func install(_ target: Target = .claude) -> Bool {
         do {
             guard let collector = Self.bundledCollector else { throw HookInstaller.InstallError.collectorMissing }
-            try installer.install(collectorSource: collector)
+            let added = try HookInstaller(target: target).install(collectorSource: collector)
+            if target == .codex && added > 0 { showCodexTrustReminder() }
             return true
         } catch {
             show(error: error)
@@ -50,10 +64,13 @@ final class HookSetup {
         }
     }
 
-    func confirmAndRemove() {
+    func confirmAndRemove(_ target: Target = .claude) {
+        let installer = HookInstaller(target: target)
         let alert = NSAlert()
-        alert.messageText = "Remove Pip's Claude Code hooks?"
-        alert.informativeText = "Only Pip's entries are removed from \(tilde(installer.settingsURL)). Pip will still list running sessions, but can't say why they're waiting."
+        alert.messageText = "Remove Pip's \(target.agent.productName) hooks?"
+        alert.informativeText = target == .claude
+            ? "Only Pip's entries are removed from \(tilde(installer.settingsURL)). Pip will still list running sessions, but can't say why they're waiting."
+            : "Only Pip's entries are removed from \(tilde(installer.settingsURL)). Pip will stop seeing Codex sessions."
         alert.addButton(withTitle: "Remove Hooks")
         alert.addButton(withTitle: "Cancel")
         NSApp.activate()
@@ -63,6 +80,15 @@ final class HookSetup {
         } catch {
             show(error: error)
         }
+    }
+
+    private func showCodexTrustReminder() {
+        let alert = NSAlert()
+        alert.messageText = "One more step in Codex"
+        alert.informativeText = Self.codexTrustStep + " Until then Codex skips them, and Pip won't see Codex sessions."
+        alert.addButton(withTitle: "OK")
+        NSApp.activate()
+        alert.runModal()
     }
 
     private func show(error: Error) {

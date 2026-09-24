@@ -50,10 +50,11 @@ enum PipApp {
         let service = ObservationService()
         service.start()
         RunLoop.main.run(until: Date().addingTimeInterval(1))
-        let hooks = HookInstaller().status(bundledCollector: HookSetup.bundledCollector)
-        print("hooks: \(hooks)")
+        for target in HookSetup.availableTargets {
+            print("\(target.agent.productName) hooks: \(HookInstaller(target: target).status(bundledCollector: HookSetup.bundledCollector))")
+        }
         for session in service.sessions {
-            let fields = [session.project, "\(session.kind)", session.host.displayName, session.location, session.branch,
+            let fields = [session.project, session.agent.productName, "\(session.kind)", session.host.displayName, session.location, session.branch,
                           session.task, session.activity, session.quote,
                           session.choices.isEmpty ? nil : "choices: " + session.choices.joined(separator: " / ")].compactMap { $0 }
             print("- " + fields.joined(separator: " | "))

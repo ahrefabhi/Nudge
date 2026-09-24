@@ -50,7 +50,7 @@ public enum MockSessions {
         }
         func entry(_ id: String, _ session: String, _ project: String, _ host: HostApp, _ kind: HistoryEntry.Kind, _ at: Date,
                    _ detail: String, answeredAfter: TimeInterval? = nil, took: TimeInterval? = nil) -> HistoryEntry {
-            HistoryEntry(id: id, sessionID: session, project: project, host: host, kind: kind, at: at, detail: detail,
+            HistoryEntry(id: id, sessionID: session, agent: session == "infra" ? .codex : .claude, project: project, host: host, kind: kind, at: at, detail: detail,
                          endedAt: answeredAfter.map { at.addingTimeInterval($0) }, ended: kind != .started && kind != .finished,
                          duration: took)
         }
@@ -91,7 +91,7 @@ public enum MockSessions {
     }
 
     private static func infra(_ kind: SessionKind, since: Date) -> PipSession {
-        PipSession(id: "infra", project: "infra-terraform", branch: "chore/tf-1.9", task: "Upgrading to Terraform 1.9",
+        PipSession(id: "infra", agent: .codex, project: "infra-terraform", branch: "chore/tf-1.9", task: "Upgrading to Terraform 1.9",
                    host: .iTerm, location: "Tab 2", kind: kind,
                    quote: kind == .error ? "Error acquiring the state lock" : nil, since: since)
     }

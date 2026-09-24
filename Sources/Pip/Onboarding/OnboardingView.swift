@@ -1,7 +1,8 @@
 import PipKit
 import SwiftUI
 
-/// Three steps in one 420×420 window: hello, where agents run, permissions.
+/// Three steps in one 420×420 window: hello, where agents run, permissions. With Codex the
+/// window is one row taller, for its hooks row in the last step.
 struct OnboardingView: View {
     let model: OnboardingModel
 
@@ -21,7 +22,7 @@ struct OnboardingView: View {
             .transition(.opacity.animation(.easeOut(duration: 0.18)))
             footer
         }
-        .frame(width: 420, height: 420)
+        .frame(width: 420, height: model.codexHooks == nil ? 420 : 476)
         .background(Color(hex: 0x1c1c1f, opacity: 0.96))
         .foregroundStyle(Tokens.textPrimary)
         .environment(\.colorScheme, .dark)
@@ -133,6 +134,7 @@ private struct PermissionsStep: View {
             }
             OnboardingList(rows: rows) { row in
                 HStack(spacing: 12) {
+                    if let agent = row.agent { AgentMark(agent: agent, size: 16) }
                     RowText(title: row.title, detail: row.detail)
                     switch row.status {
                     case .done(let label):
@@ -178,6 +180,7 @@ private struct PermissionsStep: View {
         let title: String
         let detail: String
         let status: Status
+        var agent: Agent? = nil
         var id: String { title }
     }
 
@@ -193,8 +196,18 @@ private struct PermissionsStep: View {
         case .denied: .action("Open Settings…", model.allowAutomation)
         case .asksOnFirstUse: .note("Asks on first use")
         }
-        return [
-            Row(title: "Claude Code hooks", detail: "Adds \(HookInstaller.events.count) hooks to \(model.settingsPath)", status: hooks),
+        var rows = [Row(title: "Claude Code hooks", detail: "Adds \(HookInstaller.events.count) hooks to \(model.settingsPath)", status: hooks, agent: .claude)]
+        if let codex = model.codexHooks {
+            let status: Row.Status = switch codex {
+            case .installed: .done("Installed")
+            case .incomplete: .action("Update…") { model.installHooks(.codex) }
+            case .notInstalled: .action("Install…") { model.installHooks(.codex) }
+            }
+            // Codex also needs the user to trust new hooks, so say so right in the row.
+            rows.append(Row(title: "Codex hooks", detail: codex == .installed ? "Trust them in Codex with /hooks" : "Adds hooks to \(model.settingsPath(.codex))",
+                            status: status, agent: .codex))
+        }
+        return rows + [
             Row(title: "Accessibility", detail: "Needed to raise the exact window",
                 status: model.accessibility ? .done("Allowed") : .action("Allow…", model.allowAccessibility)),
             Row(title: "Automation", detail: "iTerm and Terminal, to switch tabs", status: automation),

@@ -5,9 +5,10 @@ import PipKit
 final class StatusMenu: NSObject, NSMenuDelegate {
     struct Actions {
         var sessionCount: () -> Int
-        var hookStatus: () -> HookInstaller.Status
-        var installHooks: () -> Void
-        var removeHooks: () -> Void
+        var hookTargets: () -> [HookInstaller.Target]
+        var hookStatus: (HookInstaller.Target) -> HookInstaller.Status
+        var installHooks: (HookInstaller.Target) -> Void
+        var removeHooks: (HookInstaller.Target) -> Void
         var isDemo: () -> Bool
         var setDemo: (Bool) -> Void
         var simulate: (MockSessions.Event) -> Void
@@ -41,19 +42,22 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         let demo = actions.isDemo()
 
         let count = actions.sessionCount()
-        menu.addItem(disabled(demo ? "Showing demo sessions" : count == 0 ? "No Claude Code sessions" : "Watching \(count) session\(count == 1 ? "" : "s")"))
+        menu.addItem(disabled(demo ? "Showing demo sessions" : count == 0 ? "No agent sessions" : "Watching \(count) session\(count == 1 ? "" : "s")"))
 
-        switch actions.hookStatus() {
-        case .installed:
-            menu.addItem(disabled("Claude Code hooks installed"))
-            menu.addItem(entry("Remove Claude Code Hooks…") { $0.actions.removeHooks() })
-        case .incomplete:
-            menu.addItem(disabled("Claude Code hooks need an update"))
-            menu.addItem(entry("Update Claude Code Hooks…") { $0.actions.installHooks() })
-            menu.addItem(entry("Remove Claude Code Hooks…") { $0.actions.removeHooks() })
-        case .notInstalled:
-            menu.addItem(disabled("Pip can't see why sessions wait yet"))
-            menu.addItem(entry("Install Claude Code Hooks…") { $0.actions.installHooks() })
+        for target in actions.hookTargets() {
+            let name = target.agent.productName
+            switch actions.hookStatus(target) {
+            case .installed:
+                menu.addItem(disabled("\(name) hooks installed"))
+                menu.addItem(entry("Remove \(name) Hooks…") { $0.actions.removeHooks(target) })
+            case .incomplete:
+                menu.addItem(disabled("\(name) hooks need an update"))
+                menu.addItem(entry("Update \(name) Hooks…") { $0.actions.installHooks(target) })
+                menu.addItem(entry("Remove \(name) Hooks…") { $0.actions.removeHooks(target) })
+            case .notInstalled:
+                menu.addItem(disabled(target == .claude ? "Pip can't see why sessions wait yet" : "Pip can't see Codex sessions yet"))
+                menu.addItem(entry("Install \(name) Hooks…") { $0.actions.installHooks(target) })
+            }
         }
 
         menu.addItem(.separator())
