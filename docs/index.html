@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nudge: a tiny companion in your MacBook's notch</title>
+<meta name="description" content="A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.">
+<meta name="theme-color" content="#0d0e12">
+<link rel="canonical" href="https://nudge.ahrefabhi.com/">
+<link rel="icon" type="image/png" href="images/icon.png">
+<link rel="apple-touch-icon" href="images/icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nudge">
+<meta property="og:title" content="Nudge: a tiny companion in your MacBook's notch">
+<meta property="og:description" content="A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.">
+<meta property="og:url" content="https://nudge.ahrefabhi.com/">
+<meta property="og:image" content="https://nudge.ahrefabhi.com/images/alert.png">
+<meta property="og:image:width" content="1520">
+<meta property="og:image:height" content="600">
+<meta property="og:image:alt" content="Nudge's notch expanded into a permission notification">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nudge: a tiny companion in your MacBook's notch">
+<meta name="twitter:description" content="A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.">
+<meta name="twitter:image" content="https://nudge.ahrefabhi.com/images/alert.png">
+<link rel="stylesheet" href="site.css">
+<script>if ('IntersectionObserver' in window) document.documentElement.classList.add('reveal-on');</script>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-glow"><div class="hero-glow-orb"></div></div>
+    <div class="hero-grid"></div>
+    <div class="ghosts">
+      <div class="ghost ghost-1">
+        <div class="ghost-win fade-r" data-ev="permission">
+          <div class="g-bar"><i></i><i></i><i></i><span>payments-api — claude</span></div>
+          <div class="g-tabs"><span class="on">payments-api</span><span>infra</span><span>docs</span></div>
+          <div class="g-body"><div>~/code/payments-api  feat/stripe-v17</div><div class="hi"><span class="g-spin">✻</span> Upgrading Stripe SDK to v17</div><div class="g-type" style="animation:typeIn 5s steps(41) 0s infinite">  ⎿ Edit src/billing/webhooks.ts  +42 −18</div><div class="amber">╭─ Bash ─────────────────</div><div class="hi">│ npm install stripe@17.2.0</div><div class="amber">│ ❯ 1. Yes</div><div>│   2. No</div><div class="hi">&gt; <span class="g-caret"></span></div><div class="g-sweep"></div></div>
+        </div>
+      </div>
+      <div class="ghost ghost-2">
+        <div class="ghost-win fade-l" data-ev="question">
+          <div class="g-bar"><i></i><i></i><i></i><span>ChartTooltip.tsx — dashboard-v2</span></div>
+          <div class="g-tabs"><span class="on">ChartTooltip.tsx</span><span>Popover.tsx</span></div>
+          <div class="g-body"><div class="hi">export function ChartTooltip({ point }) {</div><div class="g-type" style="animation:typeIn 6s steps(31) 1s infinite">  const label = format(point.x)</div><div>  return &lt;Popover anchor={point.el}&gt;</div><div> </div><div>CLAUDE CODE</div><div class="blue">Reuse the existing &lt;Popover&gt;, or build</div><div class="blue">a dedicated &lt;ChartTooltip&gt;?</div><div class="hi">&gt; <span class="g-caret"></span></div><div class="g-sweep"></div></div>
+        </div>
+      </div>
+      <div class="ghost ghost-3">
+        <div class="ghost-win fade-r" data-ev="error">
+          <div class="g-bar"><i></i><i></i><i></i><span>infra-terraform — claude</span></div>
+          <div class="g-tabs"><span class="on">infra-terraform</span><span>payments</span><span>docs</span></div>
+          <div class="g-body"><div>~/code/infra-terraform  chore/tf-1.9</div><div class="g-type" style="animation:typeIn 5.5s steps(23) 2s infinite">  ⎿ Bash terraform plan</div><div> </div><div class="red">  Error: Error acquiring the state lock</div><div>  Lock Info: held by ci-runner@build-04</div><div class="hi"><span class="g-spin">✻</span> Wait for CI, or force-unlock?</div><div class="hi">&gt; <span class="g-caret"></span></div><div class="g-sweep"></div></div>
+        </div>
+      </div>
+      <div class="ghost ghost-4">
+        <div class="ghost-win fade-l" data-ev="success">
+          <div class="g-bar"><i></i><i></i><i></i><span>docs-site — claude</span></div>
+          <div class="g-tabs"><span class="on">docs-site</span><span>chrome-ext</span></div>
+          <div class="g-body"><div>~/code/docs-site  main</div><div>  ⎿ Bash pnpm build  ✓</div><div class="g-type" style="animation:typeIn 4.5s steps(28) 0.5s infinite">  ⎿ Bash pnpm check-links  ✓</div><div> </div><div class="green">✓ Migrated 14 pages to MDX.</div><div>  2m 41s · 38.2k tokens</div><div class="hi">&gt; <span class="g-caret"></span></div><div class="g-sweep"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-motes"></div>
+    <div class="hero-vignette"></div>
+  </div>
+
+  <header class="menubar">
+    <a href="#top" class="menubar-brand"><img src="images/icon.png" alt="" width="18" height="18"><span>Nudge</span></a>
+    <nav>
+      <div class="menubar-links">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#install">Install</a>
+      </div>
+      <a href="https://github.com/ahrefabhi/Nudge" class="menubar-gh">GitHub ↗</a>
+    </nav>
+  </header>
+
+  <div class="island" data-phase="working"><div class="island-inner"></div></div>
+  <div class="toast-slot" role="status" aria-live="polite"></div>
+
+  <section id="top" class="hero-copy">
+    <div class="chips">
+      <button type="button" class="chip" data-ev="permission"><i style="background:var(--amber)"></i>Permission</button>
+      <button type="button" class="chip" data-ev="question"><i style="background:var(--blue)"></i>Question</button>
+      <button type="button" class="chip" data-ev="error"><i style="background:var(--red)"></i>Error</button>
+      <button type="button" class="chip" data-ev="success"><i style="background:var(--green)"></i>Finished</button>
+      <button type="button" class="chip" data-ev="usage"><i style="background:var(--amber)"></i>Usage alert</button>
+    </div>
+    <h1>A tiny creature in your notch that watches over your agents.</h1>
+    <p class="hero-sub">A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.</p>
+    <div class="hero-ctas">
+      <a href="https://github.com/ahrefabhi/nudge/releases/latest" class="btn-primary">Download for macOS</a>
+      <a href="https://github.com/ahrefabhi/Nudge" class="btn-secondary">View on GitHub</a>
+    </div>
+    <div class="hero-meta"><span>macOS 14+</span><span>Swift 6.2</span><span>MIT license</span><span>about 6 MB</span></div>
+  </section>
+</div>
+
+<main>
+<section class="problem">
+  <p class="problem-lead">You start a few Claude Code or Codex sessions in iTerm, Terminal and VS Code, switch to something else, and one of them quietly stops to ask for permission. <span>Ten minutes later you notice.</span></p>
+  <p class="problem-body">Nudge fixes that. It sits invisibly inside the notch while your agents work. When one needs you, Nudge drops out, the notch opens into a notification, and <b>Open Session</b> takes you straight to the exact terminal tab or editor window. Then Nudge tucks itself away again.</p>
+</section>
+
+<section class="section flow">
+  <div class="flow-row">
+    <div class="flow-text">
+      <span class="eyebrow" style="color:var(--amber)">01 · IN THE NOTCH</span>
+      <h2 class="h-md">Invisible until it isn't.</h2>
+      <p class="lede">Idle, Nudge is invisible: the notch is just the notch. While agents work, two eyes glance around beside the camera. When something needs you, Nudge drops out.</p>
+    </div>
+    <img class="shot" src="images/notch.png" alt="Three notch states: working, dropping out, and folded" width="1520" height="640" loading="lazy" decoding="async">
+  </div>
+  <div class="flow-row">
+    <div class="flow-text">
+      <span class="eyebrow" style="color:var(--blue)">02 · IT TELLS YOU WHY</span>
+      <h2 class="h-md">The exact command, question or error.</h2>
+      <p class="lede">Permission requests show the exact command, questions show their choices, errors show the error, and finished runs show the agent's last reply.</p>
+    </div>
+    <img class="shot" src="images/alert.png" alt="Nudge's notch expanded into a permission notification" width="1520" height="600" loading="lazy" decoding="async">
+  </div>
+  <div class="flow-row">
+    <div class="flow-text">
+      <span class="eyebrow" style="color:var(--green)">03 · ONE CLICK BACK</span>
+      <h2 class="h-md">Straight to the right tab.</h2>
+      <p class="lede">Opens the precise iTerm tab, Terminal tab or VS Code window, and outlines it with a brief focus ring. Several agents waiting become one list, most urgent first.</p>
+    </div>
+    <img class="shot" src="images/multiple.png" alt="Three agents need you, each with an Open button" width="1520" height="660" loading="lazy" decoding="async">
+  </div>
+</section>
+
+<section id="features" class="section">
+  <h2 class="h-lg features-title">Everything it does, and nothing it doesn't.</h2>
+  <div class="bento">
+
+    <div class="tile wide">
+      <div class="tile-vis why" aria-hidden="true">
+        <div data-pip="question" data-size="56"></div>
+        <div class="why-list">
+          <div style="--c:var(--amber)"><span>$ npm install stripe@17.2.0</span></div>
+          <div style="--c:var(--blue)"><span>Reuse &lt;Popover&gt;, or build a new &lt;ChartTooltip&gt;?</span></div>
+          <div style="--c:var(--red)"><span>Error acquiring the state lock</span></div>
+          <div style="--c:var(--green)"><span>Migrated 14 pages to MDX · build passes</span></div>
+        </div>
+      </div>
+      <div class="tile-body"><b>Knows why a session is waiting.</b><span>Permission requests show the exact command, questions show their choices, errors show the error, and finished runs show the agent's last reply.</span></div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-vis" aria-hidden="true">
+        <div class="mini-win">
+          <div class="mini-win-bar"><i></i><i></i><i></i></div>
+          <div class="mini-win-tabs"><span>docs</span><span class="on"><i></i>payments</span><span>infra</span></div>
+          <div class="mini-win-body"><div class="amber">╭─ Bash</div><div>│ npm install stripe@17.2.0</div><div class="amber">│ ❯ 1. Yes</div><div class="dim">│   2. No</div><div class="mini-win-ring"></div></div>
+        </div>
+      </div>
+      <div class="tile-body"><b>Takes you to the right place.</b><span>Opens the precise iTerm tab, Terminal tab or VS Code window, and outlines it with a brief focus ring.</span></div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-vis" aria-hidden="true">
+        <div class="queue">
+          <div class="queue-hl"></div>
+          <div class="queue-rows">
+            <div style="--c:var(--amber)"><i></i><b>payments-api</b><span>Permission</span><small>12s</small></div>
+            <div style="--c:var(--blue)"><i></i><b>dashboard-v2</b><span>Question</span><small>2m</small></div>
+            <div style="--c:var(--red)"><i></i><b>infra-terraform</b><span>Blocked</span><small>6m</small></div>
+          </div>
+        </div>
+        <kbd class="kbd-float">⌥⌘↓</kbd>
+      </div>
+      <div class="tile-body"><b>One queue, most urgent first.</b><span>Several agents waiting become one list: permission, then questions, then errors, oldest first. Cycle through it with ⌥⌘↓.</span></div>
+    </div>
+
+    <div class="tile wide">
+      <div class="tile-vis glance">
+        <img src="images/manager.png" alt="Session manager" width="1520" height="1340" loading="lazy" decoding="async">
+      </div>
+      <div class="tile-body"><b>Every session at a glance.</b><span>Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.</span></div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-vis" aria-hidden="true">
+        <div class="meters">
+          <div class="meter" style="--c:var(--amber)"><div class="meter-head"><span>Claude · 5-hour</span><b>64%</b></div><div class="meter-track"><div style="width:64%"></div></div><small>Resets in 2h 13m</small></div>
+          <div class="meter" style="--c:var(--red)"><div class="meter-head"><span>Codex · 5-hour</span><b>91%</b></div><div class="meter-track"><div style="width:91%"></div></div><small>Resets in 37m</small></div>
+        </div>
+      </div>
+      <div class="tile-body"><b>Knows how much you have left.</b><span>See how much of your Claude and Codex 5-hour and weekly limits you've used, when each resets, and get an alert at a threshold you set.</span></div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-vis sounds" aria-hidden="true">
+        <div class="sound"><div class="eq" style="--c:var(--amber);--d:0s"><i></i><i></i><i></i><i></i><i></i></div><span>Permission</span></div>
+        <div class="sound"><div class="eq" style="--c:var(--blue);--d:.2s"><i></i><i></i><i></i><i></i><i></i></div><span>Question</span></div>
+        <div class="sound"><div class="eq" style="--c:var(--red);--d:.4s"><i></i><i></i><i></i><i></i><i></i></div><span>Error</span></div>
+        <div class="sound"><div class="eq" style="--c:var(--green);--d:.6s"><i></i><i></i><i></i><i></i><i></i></div><span>Finished</span></div>
+      </div>
+      <div class="tile-body"><b>Sounds you can tell apart.</b><span>A different chime for permission, questions, errors and finished runs, each one changeable or silenced in Settings.</span></div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-vis away" aria-hidden="true">
+        <div class="pill"><div class="pill-pip"><div data-pip="multiple" data-size="20" data-opts="flat,noBadge"></div></div><div class="pill-count">3</div></div>
+        <div class="fullscreen"><div></div><span>full screen</span></div>
+      </div>
+      <div class="tile-body"><b>Stays out of the way.</b><span>Unanswered alerts fold into a small pill. In full screen Nudge shrinks to a thin glow, and it goes quiet while Zoom shares your screen or when you ask it to.</span></div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-vis readonly" aria-hidden="true">
+        <div data-pip="working" data-size="52"></div>
+        <div class="readonly-term"><div>Do you want to proceed?</div><div class="amber">❯ 1. Yes</div><div class="dim">  2. No</div><div class="note">You answer. Nudge only watches.</div></div>
+      </div>
+      <div class="tile-body"><b>Read-only by design.</b><span>Nudge never types into your terminal and never approves anything. Answers always happen in the real session.</span></div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-vis" aria-hidden="true">
+        <div class="paths">
+          <div><span class="ok">●</span><span class="path">~/Library/Nudge</span><span class="where">local</span></div>
+          <div><span class="ok">●</span><span class="path">~/.claude</span><span class="where">local</span></div>
+          <div class="remote"><span class="ok">↗</span><span class="path">github.com</span><span class="where">updates only</span></div>
+        </div>
+      </div>
+      <div class="tile-body"><b>Private.</b><span>Everything stays on your Mac. The only network request Nudge makes is its update check to GitHub.</span></div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-vis native" aria-hidden="true">
+        <div class="native-half"><div data-pip="success" data-size="50"></div></div>
+        <div class="native-half light"><div data-pip="success" data-size="50" data-ring="#eceef3"></div></div>
+        <div class="native-badge"><b>6 MB</b><span>Swift · SwiftUI</span></div>
+      </div>
+      <div class="tile-body"><b>Native.</b><span>Swift and SwiftUI, light and dark mode, Reduce Motion, about 6 MB.</span></div>
+    </div>
+
+  </div>
+</section>
+
+<section class="section closer">
+  <div class="closer-head">
+    <h2 class="h-lg">Every session, at a glance.</h2>
+    <p>Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.</p>
+  </div>
+  <div class="shots">
+    <figure>
+      <img src="images/manager.png" alt="The session manager with sessions that need you, working and finished" width="1520" height="1340" loading="lazy" decoding="async">
+      <figcaption><b>Session manager</b><span>What needs you, what's working, what finished.</span></figcaption>
+    </figure>
+    <figure>
+      <img src="images/history.png" alt="History of today's permission requests, finished runs and errors" width="1520" height="1340" loading="lazy" decoding="async">
+      <figcaption><b>History</b><span>A week of permission requests, errors and finished runs.</span></figcaption>
+    </figure>
+    <figure>
+      <img src="images/usage.png" alt="The Usage tab with Claude and Codex limits" width="1520" height="1340" loading="lazy" decoding="async">
+      <figcaption><b>Usage</b><span>5-hour and weekly limits for Claude and Codex, and when each resets.</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section moods">
+  <h2 class="h-lg">State lives in the eyes.</h2>
+  <p>Sleepy, busy, curious, eager, worried and happy.</p>
+  <div class="mood-grid">
+    <div class="mood"><div class="mood-pip" aria-hidden="true"><div data-pip="idle" data-size="60" data-opts="z"></div></div><span>Idle</span></div>
+    <div class="mood"><div class="mood-pip" aria-hidden="true"><div data-pip="working" data-size="60" data-opts="z"></div></div><span>Working</span></div>
+    <div class="mood"><div class="mood-pip" aria-hidden="true"><div data-pip="question" data-size="60" data-opts="z"></div></div><span>Question</span></div>
+    <div class="mood"><div class="mood-pip" aria-hidden="true"><div data-pip="permission" data-size="60" data-opts="z"></div></div><span>Permission</span></div>
+    <div class="mood"><div class="mood-pip" aria-hidden="true"><div data-pip="error" data-size="60" data-opts="z"></div></div><span>Error</span></div>
+    <div class="mood"><div class="mood-pip" aria-hidden="true"><div data-pip="success" data-size="60" data-opts="z"></div></div><span>Success</span></div>
+    <div class="mood"><div class="mood-pip" aria-hidden="true"><div data-pip="group" data-size="54"></div></div><span>Multiple</span></div>
+  </div>
+</section>
+
+<section class="section light-row">
+  <img class="shot" src="images/light.png" alt="Light mode: Nudge hangs below the black notch above a frosted light panel" width="1520" height="640" loading="lazy" decoding="async">
+  <div class="flow-text">
+    <h2 class="h-md">Native, light and dark.</h2>
+    <p class="lede">The notch stays black, so Nudge hangs from it and holds a light panel instead. Swift and SwiftUI, Reduce Motion, about 6 MB.</p>
+  </div>
+</section>
+
+<section id="how" class="section">
+  <div class="how">
+    <div class="how-intro">
+      <span class="eyebrow">HOW IT WORKS</span>
+      <h2 class="h-lg">Read-only by design. Everything stays on your Mac.</h2>
+      <p class="lede">The collector only records. It never answers, approves or blocks anything, prints nothing, and always exits immediately, so it can't slow your agent down or change what it does. The only network request Nudge makes is its update check to GitHub.</p>
+    </div>
+    <div class="sources">
+      <div class="source"><span>01</span><div><b>Claude Code's session list</b><span>Says which sessions are running and whether they're busy, idle or waiting. Read with no setup.</span><code>~/.claude/sessions</code></div></div>
+      <div class="source"><span>02</span><div><b>Claude Code hooks</b><span>Say why a session is waiting. The collector keeps only what Nudge shows and drops the rest, including transcripts.</span><code>~/.claude/settings.json</code></div></div>
+      <div class="source"><span>03</span><div><b>Codex hooks</b><span>Work the same way if Codex is installed. Trust Nudge's entries once with /hooks in Codex.</span><code>~/.codex/hooks.json</code></div></div>
+      <div class="source"><span>04</span><div><b>Usage</b><span>Codex writes rate limits to its session logs. For Claude, Nudge reads them from the status line.</span><code>~/.codex/sessions</code></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section shortcuts">
+  <div class="shortcuts-intro">
+    <h2 class="h-md">Stays out of the way.</h2>
+    <p class="lede">Unanswered alerts fold into a small pill. In full screen Nudge shrinks to a thin glow, and it goes quiet while Zoom shares your screen or when you ask it to. Nudge never takes the keyboard from your editor on its own.</p>
+  </div>
+  <dl class="keys">
+    <div><dt>Show or hide the session manager</dt><dd><kbd>⌥⌘.</kbd></dd></div>
+    <div><dt>Move to the next waiting agent</dt><dd><kbd>⌥⌘↓</kbd></dd></div>
+    <div><dt>Open the highlighted session</dt><dd><kbd>↵</kbd></dd></div>
+    <div><dt>Fold the alert into the pill</dt><dd><kbd>Esc</kbd></dd></div>
+    <div><dt>Open a row by number</dt><dd><kbd>⌘1–9</kbd></dd></div>
+  </dl>
+</section>
+
+<section id="install" class="section install-wrap">
+  <div class="install">
+    <div class="install-intro">
+      <img src="images/icon.png" alt="Nudge app icon" width="72" height="72" loading="lazy" decoding="async">
+      <h2 class="h-lg">Get Nudge.</h2>
+      <p class="lede">Free and open source. Requires macOS 14 Sonoma or later and Claude Code in a terminal, VS Code or the Claude app. Codex CLI is optional.</p>
+      <div class="install-ctas">
+        <a href="https://github.com/ahrefabhi/nudge/releases/latest" class="btn-primary">Download latest release</a>
+        <a href="https://github.com/ahrefabhi/Nudge" class="btn-secondary">Star on GitHub</a>
+      </div>
+    </div>
+    <div class="install-steps">
+      <ol>
+        <li><span>1</span><span>Download Nudge-x.y.z.zip from the latest release and unzip it.</span></li>
+        <li><span>2</span><span>Move Nudge.app to your Applications folder.</span></li>
+        <li><span>3</span><span>Open Nudge, and let macOS open it once.</span></li>
+        <li><span>4</span><span>Follow the short setup. It finds where your agents run and connects to Claude Code and Codex.</span></li>
+      </ol>
+      <div class="install-note">
+        <span>Nudge isn't notarized yet. On first launch, click Done, then Open Anyway in Privacy &amp; Security, or run:</span>
+        <div class="cmd">
+          <code>xattr -dr com.apple.quarantine /Applications/Nudge.app</code>
+          <button type="button" class="copy-cmd">Copy</button>
+        </div>
+      </div>
+      <div class="install-note">
+        <span>Or build from source (Xcode 26, Swift 6.2):</span>
+        <pre class="src">git clone https://github.com/ahrefabhi/nudge.git
+cd nudge
+swift run Nudge --demo</pre>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="footer-brand"><img src="images/icon.png" alt="" width="20" height="20" loading="lazy" decoding="async"><span>Nudge · MIT license</span></div>
+  <span>Works with Claude Code and Codex but isn't affiliated with or endorsed by Anthropic or OpenAI.</span>
+  <a href="https://github.com/ahrefabhi/Nudge" class="footer-repo">github.com/ahrefabhi/Nudge</a>
+</footer>
+
+<script src="site.js"></script>
+</body>
+</html>
