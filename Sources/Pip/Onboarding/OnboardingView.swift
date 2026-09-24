@@ -151,6 +151,15 @@ private struct PermissionsStep: View {
                 .padding(.vertical, 12)
                 .padding(.horizontal, 14)
             }
+            if model.suggestsReset {
+                HStack(spacing: 6) {
+                    Text("Already on in System Settings?")
+                        .foregroundStyle(Color.label(0.55))
+                    Button("Reset and ask again") { model.resetPermissions() }
+                        .buttonStyle(LinkTextStyle())
+                }
+                .font(.pip(11.5))
+            }
             Text("Pip only reads session state. It never types into your terminal or approves anything on your behalf.")
                 .font(.pip(11.5))
                 .lineSpacing(3)

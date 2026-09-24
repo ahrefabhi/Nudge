@@ -30,6 +30,24 @@ enum Permissions {
         }
     }
 
+    /// Clears Pip's own Accessibility and Automation entries, including stale ones an earlier
+    /// build left behind (switched on in System Settings, but no longer matching this Pip).
+    /// Only Pip's bundle ID is touched. Returns whether both resets succeeded.
+    @discardableResult
+    static func resetPipEntries() -> Bool {
+        guard let bundleID = Bundle.main.bundleIdentifier else { return false }
+        return ["Accessibility", "AppleEvents"].allSatisfy { service in
+            let reset = Process()
+            reset.executableURL = URL(filePath: "/usr/bin/tccutil")
+            reset.arguments = ["reset", service, bundleID]
+            reset.standardOutput = FileHandle.nullDevice
+            reset.standardError = FileHandle.nullDevice
+            guard (try? reset.run()) != nil else { return false }
+            reset.waitUntilExit()
+            return reset.terminationStatus == 0
+        }
+    }
+
     enum Pane: String {
         case accessibility = "Privacy_Accessibility"
         case automation = "Privacy_Automation"

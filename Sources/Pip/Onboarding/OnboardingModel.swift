@@ -119,6 +119,32 @@ final class OnboardingModel {
         Permissions.requestAccessibility()
     }
 
+    /// For when Pip shows as allowed in System Settings but isn't: that entry belongs to an
+    /// older build. Clears Pip's entries and asks again.
+    func resetPermissions() {
+        let alert = NSAlert()
+        alert.messageText = "Reset Pip's permissions?"
+        alert.informativeText = """
+        If Pip already looks switched on in System Settings but isn't working, macOS is remembering an older \
+        build of Pip. This removes Pip's Accessibility and Automation entries, then asks again. \
+        Nothing else in your privacy settings changes.
+        """
+        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Cancel")
+        NSApp.activate()
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        guard Permissions.resetPipEntries() else {
+            Permissions.open(.accessibility)
+            return
+        }
+        askedForAccessibility = false
+        allowAccessibility()
+        refresh()
+    }
+
+    /// Whether to offer the reset: Pip asked, but still isn't trusted.
+    var suggestsReset: Bool { askedForAccessibility && !accessibility }
+
     func allowAutomation() {
         if automation == .denied { return Permissions.open(.automation) }
         refreshAutomation(ask: true)

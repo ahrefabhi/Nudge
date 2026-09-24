@@ -122,8 +122,21 @@ struct SettingsView: View {
                 Text("Claude Code hooks")
                 Text(hooksDetail)
             }
-            permissionRow("Accessibility", detail: "Raises the exact window and draws the focus ring.",
-                          granted: model.setup.accessibility, action: model.setup.allowAccessibility)
+            LabeledContent {
+                if model.setup.accessibility {
+                    Label("Allowed", systemImage: "checkmark").foregroundStyle(.secondary)
+                } else {
+                    HStack {
+                        Button("Reset…") { model.setup.resetPermissions() }
+                        Button("Allow…") { model.setup.allowAccessibility() }
+                    }
+                }
+            } label: {
+                Text("Accessibility")
+                Text(model.setup.accessibility
+                     ? "Raises the exact window and draws the focus ring."
+                     : "Already switched on in System Settings but not working? That entry is for an older Pip: Reset clears it and asks again.")
+            }
             LabeledContent {
                 switch model.setup.automation {
                 case .granted: Label("Allowed", systemImage: "checkmark").foregroundStyle(.secondary)
@@ -185,19 +198,6 @@ struct SettingsView: View {
         case .installed: "Installed in \(model.setup.settingsPath). Pip sees why sessions wait."
         case .incomplete: "Some hooks are missing or out of date."
         case .notInstalled: "Without them Pip lists sessions but can't say why they wait."
-        }
-    }
-
-    private func permissionRow(_ title: String, detail: String, granted: Bool, action: @escaping () -> Void) -> some View {
-        LabeledContent {
-            if granted {
-                Label("Allowed", systemImage: "checkmark").foregroundStyle(.secondary)
-            } else {
-                Button("Allow…", action: action)
-            }
-        } label: {
-            Text(title)
-            Text(detail)
         }
     }
 
