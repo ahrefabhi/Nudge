@@ -48,6 +48,16 @@ struct SettingsView: View {
             if let error = model.loginError {
                 Text(error).font(.callout).foregroundStyle(.red)
             }
+            LabeledContent {
+                Button("Check Now") { model.updater?.checkForUpdates() }
+                    .disabled(!(model.updater?.canCheck ?? false))
+            } label: {
+                Toggle(isOn: Binding(get: { model.checksForUpdates }, set: { model.setChecksForUpdates($0) })) {
+                    Text("Check for updates automatically")
+                    Text(updateDetail)
+                }
+                .disabled(!(model.updater?.isAvailable ?? false))
+            }
         } header: {
             Text("General")
         }
@@ -150,6 +160,13 @@ struct SettingsView: View {
     }
 
     // MARK: Pieces
+
+    private var updateDetail: String {
+        guard model.updater?.isAvailable == true else { return "Available when Pip runs as an app." }
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        guard let last = model.lastUpdateCheck else { return "Pip \(version). Updates come from GitHub releases." }
+        return "Pip \(version). Last checked \(last.formatted(.relative(presentation: .named)))."
+    }
 
     private var hooksDetail: String {
         switch model.setup.hooks {

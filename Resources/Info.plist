@@ -26,5 +26,13 @@
 	<string>Pip focuses the terminal tab or editor window that holds the Claude Code session you open. It never types into it.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/ahrefabhi/pip/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>wURvj3pAvquFzcBeo3Pv+gbcOoABV9ZZZSlU6Z/pqmQ=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>

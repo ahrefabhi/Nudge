@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settings: SettingsWindow?
     private let focusRing = FocusRing()
     private let presence = PresenceMonitor()
+    private let updater = Updater()
     private let historyStore = HistoryStore()
     private lazy var history = HistoryRecorder(entries: historyStore.load())
 
@@ -43,6 +44,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showCharacterSheet: { [weak self] in self?.showCharacterSheet() },
             showSetup: { [weak self] in self?.showOnboarding() },
             showSettings: { [weak self] in self?.showSettings() },
+            canCheckForUpdates: { [weak self] in self?.updater.canCheck ?? false },
+            checkForUpdates: { [weak self] in self?.updater.checkForUpdates() },
             quietUntil: { Preferences.quietUntil.flatMap { $0 > Date() ? $0 : nil } },
             setQuiet: { [weak self] until in
                 Preferences.quietUntil = until
@@ -131,7 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let settings { return settings.show() }
         let setup = OnboardingModel(sessions: { [weak self] in self?.observation.sessions ?? [] }, hookSetup: hookSetup)
         setup.onEnvironmentsChanged = { [weak self] in self?.deliverSessions() }
-        let model = SettingsModel(setup: setup)
+        let model = SettingsModel(setup: setup, updater: updater)
         model.onPreferencesChanged = { [weak self] in self?.applyPreferences() }
         model.onQuietChanged = { [weak self] in self?.presence.refresh() }
         let window = SettingsWindow(model: model)

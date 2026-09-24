@@ -16,6 +16,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         var showCharacterSheet: () -> Void
         var showSetup: () -> Void
         var showSettings: () -> Void
+        var canCheckForUpdates: () -> Bool
+        var checkForUpdates: () -> Void
         var quietUntil: () -> Date?
         var setQuiet: (Date?) -> Void
         var toggleEnvironment: (HostApp) -> Void
@@ -76,6 +78,9 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         settings.keyEquivalent = ","
         settings.keyEquivalentModifierMask = [.command]
         menu.addItem(settings)
+        let updates = entry("Check for Updates…") { $0.actions.checkForUpdates() }
+        updates.isEnabled = actions.canCheckForUpdates()
+        menu.addItem(updates)
 
         let demoItem = entry("Demo Mode") { $0.actions.setDemo(!demo) }
         demoItem.state = demo ? .on : .off

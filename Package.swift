@@ -8,6 +8,10 @@ let package = Package(
         .executable(name: "Pip", targets: ["Pip"]),
         .executable(name: "pip-hook", targets: ["PipHook"]),
     ],
+    dependencies: [
+        // Updates, delivered through GitHub releases and verified with EdDSA.
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.0"),
+    ],
     targets: [
         /// The inbox record format, shared by the collector and the app.
         .target(name: "PipHookSchema"),
@@ -16,8 +20,10 @@ let package = Package(
         .executableTarget(name: "PipHook", dependencies: ["PipHookSchema"]),
         .executableTarget(
             name: "Pip",
-            dependencies: ["PipKit"],
-            swiftSettings: [.defaultIsolation(MainActor.self)]
+            dependencies: ["PipKit", .product(name: "Sparkle", package: "Sparkle")],
+            swiftSettings: [.defaultIsolation(MainActor.self)],
+            // Pip.app ships Sparkle.framework in Contents/Frameworks.
+            linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),
         .testTarget(name: "PipKitTests", dependencies: ["PipKit", "PipHookSchema"]),
     ]

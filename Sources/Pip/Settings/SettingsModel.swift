@@ -7,6 +7,9 @@ import PipKit
 @Observable
 final class SettingsModel {
     let setup: OnboardingModel
+    @ObservationIgnored let updater: Updater?
+    private(set) var checksForUpdates = false
+    private(set) var lastUpdateCheck: Date?
     private(set) var autoCollapse = Preferences.autoCollapse
     private(set) var popUpOnFinish = Preferences.popUpOnFinish
     private(set) var quietUntil: Date?
@@ -18,8 +21,9 @@ final class SettingsModel {
     @ObservationIgnored var onQuietChanged: (() -> Void)?
     @ObservationIgnored private var poll: Timer?
 
-    init(setup: OnboardingModel) {
+    init(setup: OnboardingModel, updater: Updater? = nil) {
         self.setup = setup
+        self.updater = updater
     }
 
     func start() {
@@ -39,6 +43,13 @@ final class SettingsModel {
     func refresh() {
         quietUntil = Preferences.quietUntil.flatMap { $0 > Date() ? $0 : nil }
         loginItem = LoginItem.status
+        checksForUpdates = updater?.checksAutomatically ?? false
+        lastUpdateCheck = updater?.lastChecked
+    }
+
+    func setChecksForUpdates(_ on: Bool) {
+        updater?.checksAutomatically = on
+        refresh()
     }
 
     // MARK: Actions
