@@ -94,9 +94,9 @@ enum Snapshots {
         }
     }
 
-    private typealias Drive = (PhaseMachine, ManualScheduler) -> Void
+    typealias Drive = (PhaseMachine, ManualScheduler) -> Void
 
-    private static let scenarios: [(String, Drive)] = [
+    static let scenarios: [(String, Drive)] = [
         ("idle", { machine, _ in machine.update(sessions: []) }),
         ("working", { _, _ in }),
         ("peek", { machine, clock in trigger(.permission, machine, clock) }),
@@ -113,13 +113,13 @@ enum Snapshots {
         ("celebrating", { machine, clock in trigger(.success, machine, clock) }),
     ]
 
-    private static func trigger(_ event: MockSessions.Event, _ machine: PhaseMachine, _ clock: ManualScheduler) {
+    static func trigger(_ event: MockSessions.Event, _ machine: PhaseMachine, _ clock: ManualScheduler) {
         machine.update(sessions: MockSessions.apply(event, to: machine.sessions, now: clock.now, staggered: true))
     }
 
     /// For views backed by AppKit controls (forms, toggles), which ImageRenderer can't draw:
     /// lays them out in an off-screen window and caches its display.
-    private static func writeWindowed<V: View>(_ view: V, size: CGSize, appearance: NSAppearance.Name, to url: URL) throws {
+    static func writeWindowed<V: View>(_ view: V, size: CGSize, appearance: NSAppearance.Name, to url: URL) throws {
         let window = NSWindow(contentRect: NSRect(origin: CGPoint(x: -10_000, y: -10_000), size: size),
                               styleMask: [.borderless], backing: .buffered, defer: false)
         window.appearance = NSAppearance(named: appearance)
@@ -137,7 +137,7 @@ enum Snapshots {
         print(url.path)
     }
 
-    private static func write<V: View>(_ view: V, to url: URL) throws {
+    static func write<V: View>(_ view: V, to url: URL) throws {
         let renderer = ImageRenderer(content: view.environment(\.pipStill, true))
         renderer.scale = 2
         guard let image = renderer.cgImage else { throw CocoaError(.fileWriteUnknown) }
