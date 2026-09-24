@@ -144,7 +144,7 @@ If you delete Pip.app directly instead, its hooks stay in your Claude settings. 
 
 **Open Session brings the app forward but not the right tab.** Allow Pip under System Settings → Privacy & Security → Automation for iTerm or Terminal.
 
-**macOS asks for permissions again after an update.** Pip isn't signed with an Apple Developer ID yet, and macOS ties these permissions to the app's signature. Allow them again; this goes away once releases are signed.
+**Pip asks for Accessibility, but it's already switched on in System Settings.** macOS ties Accessibility and Automation to the app's signature, and that switch belongs to an older build of Pip. In Pip's Settings (or the last setup step), choose **Reset…**: it removes Pip's entries and asks again. You can also select Pip in System Settings → Privacy & Security → Accessibility, click **−**, and allow it again. Builds signed with the same certificate keep their permissions across updates, so this should only happen once.
 
 **⌥⌘. does nothing.** Another app already uses that shortcut. The manager is also one click on the notch, or in the menu bar.
 
@@ -187,7 +187,9 @@ scripts/release.sh 0.2.0            # dry run: build, zip, sign, and write appca
 scripts/release.sh 0.2.0 --publish  # also push, tag v0.2.0 and upload both files to a GitHub release
 ```
 
-The script needs a clean working tree and uses the commit count as the build number, so it always grows. Updates are signed with a Sparkle EdDSA key kept in the maintainer's login Keychain (created once with `.build/artifacts/sparkle/Sparkle/bin/generate_keys`). Back it up with `generate_keys -x <file>`: without it, existing installs can't be updated.
+The script needs a clean working tree and uses the commit count as the build number, so it always grows.
+
+**Code signing.** `bundle.sh` signs with the `PIP_SIGN_IDENTITY` certificate if set, else a certificate named **Pip Code Signing** if your Keychain has one, else ad-hoc. Use a certificate for releases: macOS keys Accessibility and Automation to the signature, and an ad-hoc signature changes with every build, so permissions would go stale after each update. A self-signed code-signing certificate is enough for that (a Developer ID is still needed for notarization). Export it from Keychain Access (**My Certificates → Pip Code Signing → Export**) and keep the backup safe; a new certificate makes everyone allow Pip's permissions once more. Updates are signed with a Sparkle EdDSA key kept in the maintainer's login Keychain (created once with `.build/artifacts/sparkle/Sparkle/bin/generate_keys`). Back it up with `generate_keys -x <file>`: without it, existing installs can't be updated.
 
 ## Acknowledgements
 
