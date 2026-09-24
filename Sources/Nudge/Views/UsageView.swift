@@ -2,8 +2,8 @@ import NudgeKit
 import SwiftUI
 
 /// The manager's third tab: how much of each agent's rate limits is used, and when they reset,
-/// plus the alerts that say when one gets close. Readings only update while a session runs, so
-/// each agent says how old its numbers are.
+/// plus the alerts that say when one gets close. Nudge asks each agent every few minutes, and the
+/// status line and session logs fill in between, so each agent says how old its numbers are.
 struct UsageView: View {
     let machine: PhaseMachine
     /// Opens with the new-alert editor showing, and a typed percentage, for snapshots.
@@ -72,12 +72,13 @@ private struct AgentUsageSection: View {
 
     private var emptyText: String {
         switch (usage.agent, usage.source) {
-        case (.claude, .needsSetup): "Claude Code shares your 5-hour and weekly limits only with its status line. Nudge can read them from there."
+        case (.claude, .needsSetup): "Couldn't ask Claude Code for your limits. Nudge can also read them from its status line."
+        case (.claude, .unavailable): "Claude Code says this account has no rate limits to report."
         case (.claude, .waitingForStatusLine):
             "Waiting for Claude Code to run its status line. Only Claude Code in a terminal has one: start or restart a session in iTerm or Terminal. The VS Code extension and the Claude app don't."
         case (.claude, _):
             "Claude Code runs Nudge's status line but hasn't included usage. It shares usage only on Pro and Max plans, and only after a session's first reply."
-        case (.codex, _): "Shows up after your next Codex message."
+        case (.codex, _): "Codex didn't answer. Its limits show up after your next Codex message."
         }
     }
 }

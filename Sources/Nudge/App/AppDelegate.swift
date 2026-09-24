@@ -50,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.machine.usage = $0
             self?.deliverUsageAlerts()
         }
+        machine.onShowUsageTab = { [weak self] in self?.usage.refreshNow() }
         usage.start()
         machine.onSetUpUsage = { [weak self] agent in
             guard agent == .claude else { return }
