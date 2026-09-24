@@ -12,6 +12,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         var isDemo: () -> Bool
         var setDemo: (Bool) -> Void
         var simulate: (MockSessions.Event) -> Void
+        var simulateUsage: () -> Void
         var resetDemo: () -> Void
         var toggleManager: () -> Void
         var showCharacterSheet: () -> Void
@@ -44,6 +45,25 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         let count = actions.sessionCount()
         menu.addItem(disabled(demo ? "Showing demo sessions" : count == 0 ? "No agent sessions" : "Watching \(count) session\(count == 1 ? "" : "s")"))
 
+        // What Pip is watching, and how loudly.
+        let manager = entry("Session Manager") { $0.actions.toggleManager() }
+        // Shown for reference; the global hotkey does the work outside this menu.
+        manager.keyEquivalent = "."
+        manager.keyEquivalentModifierMask = [.option, .command]
+        menu.addItem(manager)
+        addQuiet(to: menu)
+
+        let environments = NSMenu()
+        let hiddenHosts = Preferences.disabledHosts
+        for host in Preferences.environments {
+            let item = entry(host.onboardingName) { $0.actions.toggleEnvironment(host) }
+            item.state = hiddenHosts.contains(host) ? .off : .on
+            environments.addItem(item)
+        }
+        menu.addItem(submenu("Watch Sessions In", environments))
+
+        // Hooks.
+        menu.addItem(.separator())
         for target in actions.hookTargets() {
             let name = target.agent.productName
             switch actions.hookStatus(target) {
@@ -60,32 +80,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
             }
         }
 
+        // Trying Pip out.
         menu.addItem(.separator())
-        let manager = entry("Session Manager") { $0.actions.toggleManager() }
-        // Shown for reference; the global hotkey does the work outside this menu.
-        manager.keyEquivalent = "."
-        manager.keyEquivalentModifierMask = [.option, .command]
-        menu.addItem(manager)
-
-        let environments = NSMenu()
-        let hiddenHosts = Preferences.disabledHosts
-        for host in Preferences.environments {
-            let item = entry(host.onboardingName) { $0.actions.toggleEnvironment(host) }
-            item.state = hiddenHosts.contains(host) ? .off : .on
-            environments.addItem(item)
-        }
-        let environmentsItem = NSMenuItem(title: "Watch Sessions In", action: nil, keyEquivalent: "")
-        environmentsItem.submenu = environments
-        menu.addItem(environmentsItem)
-        menu.addItem(entry("Set Up Pip…") { $0.actions.showSetup() })
-        let settings = entry("Settings…") { $0.actions.showSettings() }
-        settings.keyEquivalent = ","
-        settings.keyEquivalentModifierMask = [.command]
-        menu.addItem(settings)
-        let updates = entry("Check for Updates…") { $0.actions.checkForUpdates() }
-        updates.isEnabled = actions.canCheckForUpdates()
-        menu.addItem(updates)
-
         let demoItem = entry("Demo Mode") { $0.actions.setDemo(!demo) }
         demoItem.state = demo ? .on : .off
         menu.addItem(demoItem)
@@ -96,15 +92,30 @@ final class StatusMenu: NSObject, NSMenuDelegate {
                 ("Finished", .success), ("3 Agents Waiting", .multiple),
             ]
             for (title, event) in events { simulate.addItem(entry(title) { $0.actions.simulate(event) }) }
+            simulate.addItem(entry("Usage Limit") { $0.actions.simulateUsage() })
             simulate.addItem(.separator())
             simulate.addItem(entry("Reset") { $0.actions.resetDemo() })
-            let simulateItem = NSMenuItem(title: "Simulate", action: nil, keyEquivalent: "")
-            simulateItem.submenu = simulate
-            menu.addItem(simulateItem)
+            menu.addItem(submenu("Simulate", simulate))
         }
         menu.addItem(entry("Character Sheet") { $0.actions.showCharacterSheet() })
 
+        // The app itself. macOS indents a whole section when one item has an icon, so all of these get one.
         menu.addItem(.separator())
+        menu.addItem(symbol(entry("Set Up Pip…") { $0.actions.showSetup() }, "wand.and.stars"))
+        let updates = symbol(entry("Check for Updates…") { $0.actions.checkForUpdates() }, "arrow.triangle.2.circlepath")
+        updates.isEnabled = actions.canCheckForUpdates()
+        menu.addItem(updates)
+        let settings = symbol(entry("Settings…") { $0.actions.showSettings() }, "gearshape")
+        settings.keyEquivalent = ","
+        settings.keyEquivalentModifierMask = [.command]
+        menu.addItem(settings)
+
+        menu.addItem(.separator())
+        menu.addItem(symbol(entry("Uninstall Pip…") { _ in Uninstaller.confirmAndUninstall() }, "trash"))
+        menu.addItem(symbol(NSMenuItem(title: "Quit Pip", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"), "power"))
+    }
+
+    private func addQuiet(to menu: NSMenu) {
         if let until = actions.quietUntil() {
             menu.addItem(disabled("Quiet until \(until.formatted(date: Calendar.current.isDateInToday(until) ? .omitted : .abbreviated, time: .shortened))"))
             menu.addItem(entry("Resume Notifications") { $0.actions.setQuiet(nil) })
@@ -115,14 +126,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
                 let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))
                 $0.actions.setQuiet(tomorrow.flatMap { Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: $0) })
             })
-            let quietItem = NSMenuItem(title: "Quiet", action: nil, keyEquivalent: "")
-            quietItem.submenu = quiet
-            menu.addItem(quietItem)
+            menu.addItem(submenu("Quiet", quiet))
         }
-
-        menu.addItem(.separator())
-        menu.addItem(entry("Uninstall Pip…") { _ in Uninstaller.confirmAndUninstall() })
-        menu.addItem(NSMenuItem(title: "Quit Pip", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
     }
 
     // MARK: Items
@@ -134,6 +139,17 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         item.target = self
         item.tag = handlers.count + 1
         handlers[item.tag] = handler
+        return item
+    }
+
+    private func submenu(_ title: String, _ submenu: NSMenu) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.submenu = submenu
+        return item
+    }
+
+    private func symbol(_ item: NSMenuItem, _ name: String) -> NSMenuItem {
+        item.image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
         return item
     }
 
