@@ -54,8 +54,13 @@ struct IslandMetrics: Equatable {
             }
             return IslandMetrics(width: 420, height: alertHeight(machine.focused) + extra, radius: 30, shoulder: shoulder)
         case .manager:
-            return IslandMetrics(width: 460, height: 580 + extra, radius: 30, shoulder: shoulder)
+            // With nothing running and no history there's only the empty state to show.
+            return IslandMetrics(width: 460, height: (managerIsEmpty(machine) ? 350 : 580) + extra, radius: 30, shoulder: shoulder)
         }
+    }
+
+    static func managerIsEmpty(_ machine: PhaseMachine) -> Bool {
+        machine.sessions.isEmpty && machine.history.isEmpty
     }
 
     private static func alertHeight(_ session: PipSession?) -> CGFloat {
@@ -103,7 +108,8 @@ struct LightPanelLayout: Equatable {
             let need = machine.queue.filter(\.needsYou)
             let mood: PipMood = need.isEmpty ? .idle : need.count == 1 ? need[0].kind.mood : .multiple
             let pipTop = bar - (need.count > 1 ? 1 : 6)
-            return LightPanelLayout(width: 440, height: 560, top: pipTop + 40, pipSize: 34, pipTop: pipTop,
+            return LightPanelLayout(width: 440, height: IslandMetrics.managerIsEmpty(machine) ? 330 : 560, top: pipTop + 40,
+                                    pipSize: 34, pipTop: pipTop,
                                     pipMood: mood, count: need.count, fitsContent: false)
         default:
             return nil

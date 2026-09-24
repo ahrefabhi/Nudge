@@ -81,4 +81,18 @@ extension HostApp {
     var isRunning: Bool {
         bundleID.map { !NSRunningApplication.runningApplications(withBundleIdentifier: $0).isEmpty } ?? false
     }
+
+    var applicationURL: URL? {
+        bundleID.flatMap { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }
+    }
+
+    var icon: NSImage? { applicationURL.map { NSWorkspace.shared.icon(forFile: $0.path) } }
+
+    /// Opens (or brings forward) the app. It never starts Claude or types anything into it.
+    func launch() {
+        guard let url = applicationURL else { return }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration)
+    }
 }

@@ -69,7 +69,7 @@ enum Snapshots {
         try write(glow, to: directory.appending(path: "island-glow.png"))
 
         // Light mode: the same alerts and manager in the light panel under a black notch.
-        for name in ["alert-permission", "alert-question", "alert-multi", "manager"] {
+        for name in ["alert-permission", "alert-question", "alert-multi", "manager", "manager-empty"] {
             guard let drive = scenarios.first(where: { $0.0 == name })?.1 else { continue }
             let clock = ManualScheduler(start: Date())
             let machine = PhaseMachine(scheduler: clock)
@@ -111,6 +111,10 @@ enum Snapshots {
             machine.toggleManager()
         }),
         ("celebrating", { machine, clock in trigger(.success, machine, clock) }),
+        ("manager-empty", { machine, _ in
+            machine.update(sessions: [])
+            machine.toggleManager()
+        }),
     ]
 
     static func trigger(_ event: MockSessions.Event, _ machine: PhaseMachine, _ clock: ManualScheduler) {

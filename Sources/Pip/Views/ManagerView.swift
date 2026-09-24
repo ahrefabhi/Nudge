@@ -23,7 +23,10 @@ struct ManagerView: View {
             HStack {
                 HStack(spacing: 8) {
                     // The light panel has Pip hanging above it instead.
-                    if !palette.isLight { PipView(mood: headerMood(need), size: 22, flat: true, extras: false) }
+                    // Hidden in the light panel (Pip hangs above it) and when empty (the empty state has its own Pip).
+                    if !palette.isLight && !machine.sessions.isEmpty {
+                        PipView(mood: headerMood(need), size: 22, flat: true, extras: false)
+                    }
                     Text(need.isEmpty ? "All clear" : "\(need.count) need\(need.count == 1 ? "s" : "") you")
                         .font(.pip(12, .semibold))
                         .foregroundStyle(need.isEmpty ? palette.label(0.86) : palette.accent(.permission))
@@ -46,7 +49,19 @@ struct ManagerView: View {
         }
     }
 
+    @ViewBuilder
     private func nowList(_ need: [PipSession]) -> some View {
+        if machine.sessions.isEmpty {
+            EmptyNow { host in
+                host.launch()
+                machine.tapOutside()
+            }
+        } else {
+            sessionList(need)
+        }
+    }
+
+    private func sessionList(_ need: [PipSession]) -> some View {
         SnapshotSafeScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 if !need.isEmpty {
@@ -118,7 +133,8 @@ struct ManagerView: View {
         let hosts = HostApp.allCases.filter { host in machine.sessions.contains { $0.host == host } }
         let count = machine.sessions.count
         return HStack {
-            Text("\(count) agent\(count == 1 ? "" : "s")" + (hosts.isEmpty ? "" : " · " + hosts.map(\.displayName).joined(separator: ", ")))
+            Text(count == 0 ? "No agents running"
+                 : "\(count) agent\(count == 1 ? "" : "s")" + (hosts.isEmpty ? "" : " · " + hosts.map(\.displayName).joined(separator: ", ")))
             Spacer()
             Text("⌥⌘.").font(.pipMono(11))
         }
@@ -240,5 +256,79 @@ private struct QuietRow<Mark: View>: View {
         .accessibilityAddTraits(.isButton)
         .accessibilityHint("Opens this session")
         .accessibilityAction { onOpen(session) }
+    }
+}
+
+/// The Now tab with no Claude Code sessions: a sleepy Pip, what to do next, and a button for
+/// each app Pip watches that's installed and turned on.
+private struct EmptyNow: View {
+    let onLaunch: (HostApp) -> Void
+    @Environment(\.palette) private var palette
+
+    private var hosts: [HostApp] {
+        let hidden = Preferences.disabledHosts
+        return Preferences.environments.filter { $0.isInstalled && !hidden.contains($0) }
+    }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            // The light panel already has Pip hanging above it.
+            if !palette.isLight {
+                PipView(mood: .idle, size: 56, showZ: true)
+                    .padding(.top, 8)
+            }
+            VStack(spacing: 6) {
+                Text("Nothing running")
+                    .font(.pip(15, .semibold))
+                    .tracking(-0.15)
+                    .foregroundStyle(palette.primary)
+                Text("Start Claude Code in iTerm, Terminal, VS Code or the Claude app, and I'll let you know when it needs you.")
+                    .font(.pip(12))
+                    .lineSpacing(3)
+                    .foregroundStyle(palette.label(0.55))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 300)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .accessibilityElement(children: .combine)
+            if !hosts.isEmpty {
+                HStack(spacing: 8) {
+                    ForEach(hosts, id: \.self) { host in
+                        LaunchButton(host: host) { onLaunch(host) }
+                    }
+                }
+                .padding(.top, 6)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// "Open VS Code", with the app's own icon.
+private struct LaunchButton: View {
+    let host: HostApp
+    let action: () -> Void
+    @Environment(\.palette) private var palette
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 7) {
+                if let icon = host.icon {
+                    Image(nsImage: icon).resizable().frame(width: 16, height: 16)
+                }
+                Text(host.onboardingName)
+                    .font(.pip(12, .medium))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(palette.primary)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+            .background(Capsule().fill(palette.fill(hovering ? 0.13 : 0.08)))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .accessibilityLabel("Open \(host.onboardingName)")
     }
 }
