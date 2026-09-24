@@ -4,21 +4,41 @@
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:pip}",
-            "name": "Debug Pip",
-            "target": "Pip",
+            "cwd": "${workspaceFolder:Nudge}",
+            "name": "Debug Nudge",
+            "target": "Nudge",
             "configuration": "debug",
-            "preLaunchTask": "swift: Build Debug Pip"
+            "preLaunchTask": "swift: Build Debug Nudge"
         },
         {
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:pip}",
-            "name": "Release Pip",
-            "target": "Pip",
+            "cwd": "${workspaceFolder:Nudge}",
+            "name": "Release Nudge",
+            "target": "Nudge",
             "configuration": "release",
-            "preLaunchTask": "swift: Build Release Pip"
+            "preLaunchTask": "swift: Build Release Nudge"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Nudge}",
+            "name": "Debug nudge-hook",
+            "target": "nudge-hook",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug nudge-hook"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Nudge}",
+            "name": "Release nudge-hook",
+            "target": "nudge-hook",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release nudge-hook"
         }
     ]
 }

@@ -11,7 +11,7 @@ build/
 xcuserdata/
 DerivedData/
 
-# `Pip --snapshot` output
+# `Nudge --snapshot` output
 snapshots/
 
 # macOS
