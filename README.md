@@ -218,6 +218,8 @@ The script needs a clean working tree and uses the commit count as the build num
 
 ## Acknowledgements
 
+Nudge was inspired by [Orbit](https://github.com/syedmazharaliraza/orbit) by [@syedmazharaliraza](https://github.com/syedmazharaliraza).
+
 Nudge is built on [Sparkle](https://sparkle-project.org) for updates. It works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Codex](https://developers.openai.com/codex) but isn't affiliated with or endorsed by Anthropic or OpenAI.
 
 ## License
