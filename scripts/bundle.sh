@@ -24,14 +24,26 @@ cp Resources/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
 if [[ -n "${PIP_VERSION:-}" ]]; then plutil -replace CFBundleShortVersionString -string "$PIP_VERSION" "$app/Contents/Info.plist"; fi
 if [[ -n "${PIP_BUILD:-}" ]]; then plutil -replace CFBundleVersion -string "$PIP_BUILD" "$app/Contents/Info.plist"; fi
 
+# macOS ties Accessibility and Automation permissions to the signature. An ad-hoc signature
+# changes with every build, so permissions go stale after each update; a certificate keeps
+# them. Use PIP_SIGN_IDENTITY if set, else the "Pip Code Signing" certificate if this Mac has
+# it, else ad-hoc (fine for building from source).
+identity="${PIP_SIGN_IDENTITY:-}"
+if [[ -z "$identity" ]] && security find-identity -p codesigning 2>/dev/null | grep -q '"Pip Code Signing"'; then
+    identity="Pip Code Signing"
+fi
+identity="${identity:--}"
+sign() { codesign --force --sign "$identity" "$@"; }
+
 # Sign inside out: Sparkle's helpers, the framework, the collector, then the app.
 sparkle="$app/Contents/Frameworks/Sparkle.framework/Versions/B"
 for nested in "$sparkle"/XPCServices/*.xpc "$sparkle/Autoupdate" "$sparkle/Updater.app"; do
-    codesign --force --sign - "$nested"
+    sign "$nested"
 done
-codesign --force --sign - "$app/Contents/Frameworks/Sparkle.framework"
-codesign --force --sign - "$app/Contents/Helpers/pip-hook"
-codesign --force --sign - "$app"
+sign "$app/Contents/Frameworks/Sparkle.framework"
+sign --identifier app.pip.hook "$app/Contents/Helpers/pip-hook"
+sign "$app"
 codesign --verify --deep --strict "$app"
+[[ "$identity" == "-" ]] && echo "note: ad-hoc signed; macOS permissions won't carry over to the next build" >&2
 
 echo "$app"
