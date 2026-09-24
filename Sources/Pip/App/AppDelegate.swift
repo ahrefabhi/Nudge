@@ -25,6 +25,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let notch = NotchWindowController(machine: machine, presence: presence)
         machine.onOpen = { [weak self] session in self?.focus(session) }
         machine.onChime = { Sounds.play($0) }
+        machine.isInView = { [weak self] session in
+            guard let self, !self.demoMode, Preferences.quietInView else { return false }
+            return ForegroundSession.isInView(session, observed: self.observation.observed(session.id))
+        }
         applyPreferences()
         presence.onChange = { [weak self] state in self?.machine.muted = state.muted }
         presence.start()

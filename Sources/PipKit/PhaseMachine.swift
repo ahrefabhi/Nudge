@@ -72,6 +72,9 @@ public final class PhaseMachine {
     @ObservationIgnored public var onSetUpUsage: ((Agent) -> Void)?
     /// Called once per update that starts a new episode, with the most urgent one. Never while muted.
     @ObservationIgnored public var onChime: ((Chime) -> Void)?
+    /// Whether the user is already looking at this session, e.g. its terminal tab is in front.
+    /// A new episode in view is handled as if muted: the pill's count updates, and that's all.
+    @ObservationIgnored public var isInView: ((PipSession) -> Bool)?
 
     public let timing: Timing
 
@@ -134,11 +137,15 @@ public final class PhaseMachine {
         let justFinished = new.first(where: { $0.kind == .finished && !finishedBefore.contains($0.attentionKey) })
         if !isFirst, !expandFinished, let done = justFinished { celebrate(done) }
 
-        let arrived = queue.first(where: { !queuedBefore.contains($0.attentionKey) })
-        if !isFirst, let kind = arrived?.kind ?? justFinished?.kind { chime(kind) }
+        let arrived = queue.filter { !queuedBefore.contains($0.attentionKey) }
+        let unseen = arrived.filter { !(isInView?($0) ?? false) }
+        let finishedUnseen = justFinished.flatMap { isInView?($0) == true ? nil : $0 }
+        if !isFirst, let kind = unseen.first?.kind ?? finishedUnseen?.kind { chime(kind) }
 
-        if arrived != nil {
+        if !unseen.isEmpty {
             announce()
+        } else if !arrived.isEmpty {
+            if phase == .idle || phase == .working { setPhase(.pill) }
         } else {
             settleIfQuiet()
         }
