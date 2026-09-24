@@ -127,11 +127,13 @@ struct ManagerView: View {
     }
 
     private var footer: some View {
-        let hosts = HostApp.allCases.filter { host in machine.sessions.contains { $0.host == host } }
+        let hosts = machine.sessions.map(\.hostName).reduce(into: [String]()) { names, name in
+            if !names.contains(name) { names.append(name) }
+        }
         let count = machine.sessions.count
         return HStack {
             Text(count == 0 ? "No agents running"
-                 : "\(count) agent\(count == 1 ? "" : "s")" + (hosts.isEmpty ? "" : " · " + hosts.map(\.displayName).joined(separator: ", ")))
+                 : "\(count) agent\(count == 1 ? "" : "s")" + (hosts.isEmpty ? "" : " · " + hosts.joined(separator: ", ")))
             Spacer()
             Text("⌥⌘.").font(.nudgeMono(11))
         }

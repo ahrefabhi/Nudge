@@ -152,8 +152,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let observed = observation.observed(session.id)
         switch SessionOpener.open(session, observed: observed) {
         case .success:
-            // The hook's bundle id is the exact app (e.g. VS Code Insiders); the host type is the fallback.
-            if let bundleID = observed?.host.bundleID ?? session.host.bundleID {
+            // The hook's bundle id is the exact app (e.g. VS Code Insiders, Warp); the host type is the fallback.
+            if let bundleID = observed?.host.resolvedBundleID ?? session.host.bundleID {
                 focusRing.flash(appBundleID: bundleID, color: session.kind.accent)
             }
         case .failure(let failure):

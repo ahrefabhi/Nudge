@@ -30,12 +30,18 @@ enum SessionOpener {
             if let tty = observed?.pid.flatMap(terminalDevice) { return run(TerminalScript.selectTab(tty: tty), app: "Terminal") }
             return activate(bundleID: "com.apple.Terminal", name: "Terminal")
         case .vsCode:
-            return openFolder(observed?.cwd, bundleID: observed?.host.bundleID ?? "com.microsoft.VSCode", name: "VS Code")
+            return openFolder(observed?.cwd, bundleID: observed?.host.resolvedBundleID ?? "com.microsoft.VSCode", name: "VS Code")
         case .claude:
             return activate(bundleID: "com.anthropic.claudefordesktop", name: "Claude")
         case .other:
-            guard let bundleID = observed?.host.bundleID else { return .failure(.appNotRunning("The session's app")) }
-            return activate(bundleID: bundleID, name: "The session's app")
+            // Any other terminal or editor: the app, then its window by title when Accessibility allows.
+            guard let observed, let app = HostWindows.application(for: observed) else {
+                return .failure(.appNotRunning(observed?.host.appName ?? "The session's app"))
+            }
+            HostWindows.raise(observed, in: app)
+            app.unhide()
+            app.activate()
+            return .success(())
         }
     }
 

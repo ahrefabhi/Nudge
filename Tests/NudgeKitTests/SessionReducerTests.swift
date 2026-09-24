@@ -160,6 +160,59 @@ import Testing
         #expect(SessionProjection.itermSessionGUID(session) == guid)
         #expect(SessionProjection.itermSessionGUID(observed { $0.host.itermSessionID = "w0t0p0:not a guid\" & do shell" }) == nil)
     }
+
+    @Test func theAppFromTheProcessAncestryBeatsTheInheritedEnvironment() {
+        // A terminal started from iTerm inherits iTerm's __CFBundleIdentifier.
+        let warp = observed {
+            $0.host.bundleID = "com.googlecode.iterm2"
+            $0.host.appBundleID = "dev.warp.Warp-Stable"
+            $0.host.appName = "Warp"
+        }
+        #expect(SessionProjection.host(warp) == .other)
+        #expect(SessionProjection.session(warp, branch: nil).hostName == "Warp")
+        #expect(SessionProjection.host(observed { $0.host.appBundleID = "com.googlecode.iterm2"; $0.host.appName = "iTerm" }) == .iTerm)
+    }
+
+    @Test func anUnidentifiedAppIsNamedAfterTheAgent() {
+        #expect(SessionProjection.session(observed { _ in }, branch: nil).hostName == "Claude Code")
+        #expect(SessionProjection.session(observed { $0.agent = .codex }, branch: nil).hostName == "Codex")
+        // Known hosts keep their own names rather than the bundle's ("iTerm2").
+        let iterm = observed { $0.host.appBundleID = "com.googlecode.iterm2"; $0.host.appName = "iTerm2" }
+        #expect(SessionProjection.session(iterm, branch: nil).hostName == "iTerm")
+    }
+
+    @Test func laterEventsKeepTheAppWhenTheyDontFindOne() {
+        var hint = HookRecord.HostHint(appBundleID: "com.mitchellh.ghostty", appName: "Ghostty", appPID: 42)
+        hint.merge(HookRecord.HostHint(termProgram: "ghostty"))
+        #expect(hint.appBundleID == "com.mitchellh.ghostty")
+        #expect(hint.appPID == 42)
+        #expect(hint.termProgram == "ghostty")
+    }
+}
+
+@Suite struct WindowMatchTests {
+    let session: ObservedSession = {
+        var session = ObservedSession(id: "s1", cwd: "/Users/me/code/payments-api", since: Date(timeIntervalSince1970: 0))
+        session.title = "Upgrade Stripe"
+        return session
+    }()
+
+    @Test func claudesTitleBeatsTheFolder() {
+        let titles = ["zsh — ~/dotfiles", "payments-api — zsh", "✳ Upgrade Stripe"]
+        #expect(WindowMatch.best(titles, for: session) == 2)
+        #expect(WindowMatch.score("PAYMENTS-API", for: session) == 1)
+    }
+
+    @Test func tiesGoToTheFrontmostWindow() {
+        #expect(WindowMatch.best(["payments-api — 1", "payments-api — 2"], for: session) == 0)
+    }
+
+    @Test func nothingMatchesWithoutAClue() {
+        #expect(WindowMatch.best(["zsh", "Untitled"], for: session) == nil)
+        var bare = ObservedSession(id: "s2", cwd: "/", since: Date(timeIntervalSince1970: 0))
+        bare.title = "ab"
+        #expect(WindowMatch.best(["/", "ab"], for: bare) == nil)
+    }
 }
 
 @Suite struct TitleCleanerTests {

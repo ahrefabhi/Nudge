@@ -7,6 +7,7 @@ public enum SessionProjection {
         let (kind, quote, choices) = presentation(observed.phase)
         let project = observed.cwd.isEmpty ? (observed.title ?? observed.resolvedAgent.name) : (observed.cwd as NSString).lastPathComponent
         let agent = observed.resolvedAgent
+        let host = host(observed)
         return NudgeSession(
             id: observed.id,
             agent: agent,
@@ -14,7 +15,9 @@ public enum SessionProjection {
             branch: branch,
             task: TitleCleaner.title(from: observed.prompt) ?? observed.title ?? "\(agent.productName) session",
             activity: kind == .working ? observed.activity : nil,
-            host: host(observed),
+            host: host,
+            hostAppName: host == .other ? observed.host.appName : nil,
+            hostBundleID: host == .other ? observed.host.resolvedBundleID : nil,
             location: location(observed),
             kind: kind,
             quote: quote,
@@ -43,7 +46,7 @@ public enum SessionProjection {
 
     public static func host(_ observed: ObservedSession) -> HostApp {
         let hint = observed.host
-        switch hint.bundleID {
+        switch hint.resolvedBundleID {
         case "com.googlecode.iterm2": return .iTerm
         case "com.apple.Terminal": return .terminal
         case "com.microsoft.VSCode", "com.microsoft.VSCodeInsiders": return .vsCode

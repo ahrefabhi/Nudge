@@ -118,7 +118,7 @@ struct AlertCardView: View {
                             .lineLimit(1)
                     }
                 }
-                Text("Answer in \(session.host.displayName)")
+                Text("Answer in \(session.hostName)")
                     .font(.nudge(11))
                     .foregroundStyle(palette.label(0.45))
             }

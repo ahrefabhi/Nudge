@@ -73,13 +73,27 @@ public struct HookRecord: Codable, Sendable, Equatable {
         /// iTerm's `wNtNpN:GUID`, which names the exact tab and pane.
         public var itermSessionID: String?
         public var parentPID: Int32?
+        /// The app found by walking up the collector's process ancestry. More reliable than
+        /// `bundleID`, which is inherited and can name whichever app started the shell's parent.
+        public var appBundleID: String?
+        /// The name, as Finder shows it, of the app `resolvedBundleID` names, e.g. "Warp" or "Ghostty".
+        public var appName: String?
+        /// The app's main process.
+        public var appPID: Int32?
 
-        public init(bundleID: String? = nil, termProgram: String? = nil, itermSessionID: String? = nil, parentPID: Int32? = nil) {
+        public init(bundleID: String? = nil, termProgram: String? = nil, itermSessionID: String? = nil, parentPID: Int32? = nil,
+                    appBundleID: String? = nil, appName: String? = nil, appPID: Int32? = nil) {
             self.bundleID = bundleID
             self.termProgram = termProgram
             self.itermSessionID = itermSessionID
             self.parentPID = parentPID
+            self.appBundleID = appBundleID
+            self.appName = appName
+            self.appPID = appPID
         }
+
+        /// The session's app: the one from the process ancestry, else the inherited environment's.
+        public var resolvedBundleID: String? { appBundleID ?? bundleID }
     }
 
     public static func encoder() -> JSONEncoder {

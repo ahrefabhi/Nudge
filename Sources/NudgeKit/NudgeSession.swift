@@ -49,6 +49,10 @@ public struct NudgeSession: Identifiable, Hashable, Sendable {
     /// What it is doing right now, e.g. "Editing session.ts". Working rows prefer it.
     public var activity: String?
     public var host: HostApp
+    /// The app's own name when `host` is `.other`, e.g. "Warp" or "Ghostty".
+    public var hostAppName: String?
+    /// That app's bundle id, for hiding it.
+    public var hostBundleID: String?
     /// Where inside the host, e.g. "Tab 1" or "Window 1", when known.
     public var location: String?
     public var kind: SessionKind
@@ -60,7 +64,7 @@ public struct NudgeSession: Identifiable, Hashable, Sendable {
 
     public init(
         id: String, agent: Agent = .claude, project: String, branch: String? = nil, task: String, activity: String? = nil,
-        host: HostApp, location: String? = nil, kind: SessionKind, quote: String? = nil, choices: [String] = [], since: Date
+        host: HostApp, hostAppName: String? = nil, hostBundleID: String? = nil, location: String? = nil, kind: SessionKind, quote: String? = nil, choices: [String] = [], since: Date
     ) {
         self.id = id
         self.agent = agent
@@ -69,6 +73,8 @@ public struct NudgeSession: Identifiable, Hashable, Sendable {
         self.task = task
         self.activity = activity
         self.host = host
+        self.hostAppName = hostAppName
+        self.hostBundleID = hostBundleID
         self.location = location
         self.kind = kind
         self.quote = quote
@@ -81,8 +87,13 @@ public struct NudgeSession: Identifiable, Hashable, Sendable {
     /// Identifies one attention episode. Resolving it hides the session until it changes state again.
     public var attentionKey: String { "\(id)|\(kind)|\(since.timeIntervalSinceReferenceDate)" }
 
-    /// Where it's running, e.g. "iTerm". A usage alert belongs to the agent, not an app.
-    public var hostName: String { kind == .usage ? agent.productName : host.displayName }
+    /// Where it's running, e.g. "iTerm" or "Warp". A usage alert belongs to the agent, not an app,
+    /// and so does a session in an app Nudge couldn't identify.
+    public var hostName: String {
+        if kind == .usage { return agent.productName }
+        if host == .other { return hostAppName ?? agent.productName }
+        return host.displayName
+    }
 
     public var hostLabel: String {
         location.map { "\(hostName) · \($0)" } ?? hostName

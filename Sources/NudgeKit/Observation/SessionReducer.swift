@@ -240,5 +240,8 @@ extension HookRecord.HostHint {
         termProgram = newer.termProgram ?? termProgram
         itermSessionID = newer.itermSessionID ?? itermSessionID
         parentPID = newer.parentPID ?? parentPID
+        appBundleID = newer.appBundleID ?? appBundleID
+        appName = newer.appName ?? appName
+        appPID = newer.appPID ?? appPID
     }
 }
