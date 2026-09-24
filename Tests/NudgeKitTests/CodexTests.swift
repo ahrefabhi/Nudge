@@ -92,7 +92,7 @@ import Testing
             $0.toolInput = HookRecord.ToolInput()
             $0.toolInput?.command = "npm install"
         })
-        let session = SessionProjection.session(reducer.sessions["codex-1"]!, branch: nil)
+        let session = SessionProjection.session(reducer.sessions["codex-1"]!)
         #expect(session.agent == .codex)
         #expect(session.kind == .permission)
         #expect(session.quote == "npm install")

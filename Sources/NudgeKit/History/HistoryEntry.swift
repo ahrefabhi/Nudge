@@ -27,6 +27,10 @@ public struct HistoryEntry: Codable, Identifiable, Sendable, Equatable {
     public var agent: Agent?
     public var project: String
     public var host: HostApp
+    /// The app's own name when `host` is `.other`, e.g. "Warp". `nil` in entries saved before it was recorded.
+    public var hostName: String?
+    /// The app's bundle id when `host` is `.other`, for hiding it.
+    public var hostBundleID: String?
     public var kind: Kind
     public var at: Date
     /// The command, question, error, summary or task.
@@ -37,19 +41,26 @@ public struct HistoryEntry: Codable, Identifiable, Sendable, Equatable {
     /// How long a finished run took, from when it started working.
     public var duration: TimeInterval?
 
-    public init(id: String, sessionID: String, agent: Agent? = nil, project: String, host: HostApp, kind: Kind, at: Date,
+    public init(id: String, sessionID: String, agent: Agent? = nil, project: String, host: HostApp, hostName: String? = nil, hostBundleID: String? = nil, kind: Kind, at: Date,
                 detail: String? = nil, endedAt: Date? = nil, ended: Bool = false, duration: TimeInterval? = nil) {
         self.id = id
         self.sessionID = sessionID
         self.agent = agent
         self.project = project
         self.host = host
+        self.hostName = hostName
+        self.hostBundleID = hostBundleID
         self.kind = kind
         self.at = at
         self.detail = detail
         self.endedAt = endedAt
         self.ended = ended
         self.duration = duration
+    }
+
+    /// What the row shows as the app, like `NudgeSession.hostName`.
+    public var displayHostName: String {
+        host == .other ? hostName ?? (agent ?? .claude).productName : host.displayName
     }
 
     var isOpenEpisode: Bool { kind != .started && kind != .finished && !ended }

@@ -1,3 +1,4 @@
+import CoreServices
 import Darwin
 import Foundation
 import NudgeHookSchema
@@ -65,6 +66,7 @@ func record(event: String, payload: [String: Any]) -> HookRecord? {
     default:
         break
     }
+    record.branch = record.cwd.flatMap(GitBranch.current(in:)).flatMap { text($0, 256) }
 
     if let agent = argument(after: "--agent"), agent == "claude" || agent == "codex" {
         record.agent = agent
@@ -72,11 +74,16 @@ func record(event: String, payload: [String: Any]) -> HookRecord? {
     }
 
     let environment = ProcessInfo.processInfo.environment
+    let app = hostApp()
+    let bundleID = text(environment["__CFBundleIdentifier"], 256)
     record.host = HookRecord.HostHint(
-        bundleID: text(environment["__CFBundleIdentifier"], 256),
+        bundleID: bundleID,
         termProgram: text(environment["TERM_PROGRAM"], 128),
         itermSessionID: text(environment["ITERM_SESSION_ID"], 128),
-        parentPID: getppid()
+        parentPID: getppid(),
+        appBundleID: app.flatMap { text($0.bundleID, 256) },
+        appName: text(app?.name ?? bundleID.flatMap(appName(bundleID:)), 128),
+        appPID: app?.pid
     )
     return record
 }
@@ -106,6 +113,54 @@ func ancestor(namedLike prefix: String) -> Int32? {
         pid = next
     }
     return nil
+}
+
+func executablePath(_ pid: pid_t) -> String? {
+    var buffer = [UInt8](repeating: 0, count: 4 * Int(MAXPATHLEN))
+    let length = Int(proc_pidpath(pid, &buffer, UInt32(buffer.count)))
+    return length > 0 ? String(decoding: buffer.prefix(length), as: UTF8.self) : nil
+}
+
+/// The outermost app bundle an executable lives in: VS Code's helpers sit in
+/// "Visual Studio Code.app/Contents/Frameworks/Code Helper.app/…", and belong to VS Code.
+func outermostBundle(_ path: String) -> String? {
+    guard let range = path.range(of: ".app/") else { return nil }
+    return String(path[..<range.lowerBound]) + ".app"
+}
+
+/// The app the session runs in, whatever it is: the first ancestor inside an app bundle, then up
+/// to that app's main process. Finds Warp, Ghostty, Cursor and the rest without knowing them.
+/// Finds nothing under tmux, whose server's parent is launchd.
+func hostApp() -> (bundleID: String?, name: String, pid: pid_t)? {
+    var pid = getppid()
+    var found: (bundle: String, pid: pid_t)?
+    for _ in 0..<24 where pid > 1 {
+        guard let path = executablePath(pid) else { break }
+        if let current = found {
+            guard path.hasPrefix(current.bundle + "/") else { break }
+            found = (current.bundle, pid)
+        } else if let bundle = outermostBundle(path) {
+            found = (bundle, pid)
+        }
+        guard let next = parent(of: pid) else { break }
+        pid = next
+    }
+    guard let found else { return nil }
+    return (Bundle(path: found.bundle)?.bundleIdentifier, displayName(found.bundle), found.pid)
+}
+
+/// Names the app the environment points at, for when the ancestry has none (under tmux).
+func appName(bundleID: String) -> String? {
+    guard let urls = LSCopyApplicationURLsForBundleIdentifier(bundleID as CFString, nil)?.takeRetainedValue() as? [URL],
+          let url = urls.first else { return nil }
+    return displayName(url.path)
+}
+
+/// Finder's name for an app, without the ".app" it keeps when the user shows all extensions.
+func displayName(_ bundle: String) -> String {
+    var name = FileManager.default.displayName(atPath: bundle)
+    if name.hasSuffix(".app") { name.removeLast(4) }
+    return name
 }
 
 func encode(_ record: HookRecord) -> Data? {

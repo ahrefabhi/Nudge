@@ -31,7 +31,10 @@ public struct SessionReducer: Sendable {
     public mutating func apply(_ record: HookRecord) {
         let at = record.date
         var session = sessions[record.sessionID] ?? ObservedSession(id: record.sessionID, cwd: record.cwd ?? "", since: at)
-        if let cwd = record.cwd { session.cwd = cwd }
+        if let cwd = record.cwd {
+            session.cwd = cwd
+            session.branch = record.branch
+        }
         session.lastEventAt = max(session.lastEventAt, at)
         if let host = record.host { session.host.merge(host) }
         if let agent = record.agent.flatMap(Agent.init(rawValue:)) { session.agent = agent }
@@ -240,5 +243,8 @@ extension HookRecord.HostHint {
         termProgram = newer.termProgram ?? termProgram
         itermSessionID = newer.itermSessionID ?? itermSessionID
         parentPID = newer.parentPID ?? parentPID
+        appBundleID = newer.appBundleID ?? appBundleID
+        appName = newer.appName ?? appName
+        appPID = newer.appPID ?? appPID
     }
 }

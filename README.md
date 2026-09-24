@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/f4eff252-c91d-4fd4-8bd9-4aa0445a28f0
 ## Features
 
 - **Knows why a session is waiting.** Permission requests show the exact command, questions show their choices, errors show the error, and finished runs show the agent's last reply.
-- **Takes you to the right place.** Opens the precise iTerm tab, Terminal tab or VS Code window, and outlines it with a brief focus ring.
+- **Takes you to the right place.** Opens the precise iTerm tab, Terminal tab or VS Code window, and outlines it with a brief focus ring. Any other terminal or editor, like Warp, Ghostty, Zed or Cursor, comes to the front too, at the session's window when Nudge can tell which one it is.
 - **One queue, most urgent first.** Several agents waiting become one list: permission, then questions, then errors, oldest first. Cycle through it with ⌥⌘↓.
 - **Every session at a glance.** Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.
 - **Knows how much you have left.** The Usage tab shows how much of your Claude and Codex rate limits you've used (5-hour and weekly) and when each one resets, and alerts you when one reaches a threshold you set, for Claude, Codex or both.
@@ -113,7 +113,7 @@ You only do this once. Later versions arrive through Nudge's own updater and ope
 
 <p align="center"><img src="docs/images/onboarding.png" width="760" alt="Setup in three steps: Hi, I'm Nudge; where do your agents run, with iTerm, Terminal and VS Code found; and permissions for Claude Code and Codex hooks, Accessibility and Automation"></p>
 
-**Requirements:** macOS 14 Sonoma or later, and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in a terminal (iTerm or Terminal), in VS Code, or in the Claude app, and optionally the [Codex CLI](https://developers.openai.com/codex/cli). Nudge is designed for Macs with a notch, and works on other displays too (see [On a Mac without a notch](#on-a-mac-without-a-notch)).
+**Requirements:** macOS 14 Sonoma or later, and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in any terminal or editor, or in the Claude app, and optionally the [Codex CLI](https://developers.openai.com/codex/cli). Nudge is designed for Macs with a notch, and works on other displays too (see [On a Mac without a notch](#on-a-mac-without-a-notch)).
 
 Want to look around first? Choose **Demo Mode** from the menu bar and use **Simulate** to trigger each kind of alert.
 
@@ -122,14 +122,14 @@ Want to look around first? Choose **Demo Mode** from the menu bar and use **Simu
 Nudge combines these sources, all on your Mac:
 
 1. **Claude Code's session list** (`~/.claude/sessions`) says which sessions are running and whether they're busy, idle or waiting. Nudge reads it with no setup.
-2. **Claude Code hooks** say *why* a session is waiting. Setup adds entries to `~/.claude/settings.json` that run Nudge's small collector, `nudge-hook`, for each event. The collector keeps only what Nudge shows (the command, the question and its choices, the error, Claude's summary, and which app and tab the session is in) and drops the rest, including transcripts. Records go into `~/Library/Application Support/Nudge/inbox` and are deleted as soon as Nudge reads them.
+2. **Claude Code hooks** say *why* a session is waiting. Setup adds entries to `~/.claude/settings.json` that run Nudge's small collector, `nudge-hook`, for each event. The collector keeps only what Nudge shows (the command, the question and its choices, the error, Claude's summary, the git branch, and which app and tab the session is in) and drops the rest, including transcripts. Because the collector reads the branch from inside your session, Nudge itself never opens your project folders, so it never asks for access to Documents, Desktop or iCloud Drive. Records go into `~/Library/Application Support/Nudge/inbox` and are deleted as soon as Nudge reads them.
 3. **Codex hooks**, if Codex is installed, work the same way through `~/.codex/hooks.json`. Codex has no session list, so the collector also notes the Codex process, and Nudge drops the session when that process ends. Codex runs new hooks only after you trust them: after installing, type `/hooks` in Codex and trust Nudge's entries. Nudge never does this for you.
 
 4. **Usage.** Codex writes your rate limits into its session logs (`~/.codex/sessions`) after every turn, and Nudge reads the latest one. Claude Code shares your limits only with its status line, so to show them Nudge asks to become that status line: it sets `statusLine` in `~/.claude/settings.json` to run the collector, which saves the numbers to `~/Library/Application Support/Nudge/usage` and prints nothing. If you already have a status line, the collector runs it with the same input, so what you see doesn't change, and Nudge puts it back when you remove this. Two limits come from Claude Code: only Claude Code in a terminal runs a status line (not the VS Code extension or the Claude app), and it includes usage only on Pro and Max plans. With any status line set, Claude Code also hides some footer hints, like "esc to interrupt".
 
 The collector only records. It never answers, approves or blocks anything, prints nothing, and always exits immediately, so it can't slow your agent down or change what it does. Your other settings and hooks are left exactly as they were, and your settings file is backed up before any change.
 
-Nudge asks macOS for two permissions. **Automation** lets it select the right iTerm or Terminal tab; without it, Open Session can't switch tabs there and points you to the setting. **Accessibility** lets it find the exact window for the focus ring; without it, Nudge outlines the app's front window instead.
+Nudge asks macOS for two permissions. **Automation** lets it select the right iTerm or Terminal tab; without it, Open Session can't switch tabs there and points you to the setting. **Accessibility** lets it find the exact window for the focus ring, and in apps other than iTerm and Terminal, pick the session's window by its title (which usually shows the project folder); without it, Nudge brings the app forward and outlines its front window instead.
 
 ## Using Nudge
 
@@ -145,9 +145,11 @@ Nudge asks macOS for two permissions. **Automation** lets it select the right iT
 
 **Staying out of the way.** When an app is full screen (or the menu bar is set to hide), Nudge shrinks to a 4px glow along the top edge, only while something is waiting; click it to see what. While Zoom is sharing your screen, or when you turn on **Quiet** from the menu bar, new alerts only update the count, no sound plays and the notch doesn't open by itself. macOS doesn't let apps read Focus modes, so use Quiet for those.
 
-**Already looking at it.** If the session that starts waiting is the one in front of you (its iTerm or Terminal tab is selected, its VS Code window is focused, or the Claude app is in front) and you've used your Mac in the last minute, Nudge stays quiet for it, just as in Quiet: the count updates, but there's no pop-up and no sound. Other sessions still announce themselves. Turn this off in Settings with **Stay quiet for the session in front**.
+**Already looking at it.** If the session that starts waiting is the one in front of you (its iTerm or Terminal tab is selected, its window is focused in VS Code or any other app, or the Claude app is in front) and you've used your Mac in the last minute, Nudge stays quiet for it, just as in Quiet: the count updates, but there's no pop-up and no sound. Other sessions still announce themselves. Turn this off in Settings with **Stay quiet for the session in front**.
 
 <p align="center"><img src="docs/images/settings.png" width="360" alt="Nudge's settings: appearance, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
+
+**Which apps to watch.** Under **Watch Sessions In** in the menu bar (or in Settings), turn off an app to hide its sessions. iTerm, Terminal, VS Code and the Claude app are always listed, and any other app appears once a session runs in it. Sessions whose app Nudge can't tell, such as some under tmux, share one **Other Apps** switch.
 
 **Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, staying quiet for the session in front, usage alerts, sounds for each state, Quiet, which apps to watch, hooks, Claude usage and permissions.
 
@@ -173,7 +175,7 @@ If you delete Nudge.app directly instead, its hooks stay in your Claude (and Cod
 
 **The Usage tab doesn't show Claude's numbers.** It says why. *Waiting for Claude Code to run its status line* means no terminal session has run it yet: start or restart Claude Code in iTerm or Terminal (the VS Code extension and the Claude app don't run status lines). *Hasn't included usage* means the status line runs but Claude Code leaves usage out, as it does on plans other than Pro and Max, and in a new session until Claude's first reply.
 
-**Open Session brings the app forward but not the right tab.** Allow Nudge under System Settings → Privacy & Security → Automation for iTerm or Terminal.
+**Open Session brings the app forward but not the right tab.** Allow Nudge under System Settings → Privacy & Security → Automation for iTerm or Terminal. In other apps, Nudge picks the window whose title shows the session's project folder, so it needs Accessibility, and it can't pick a tab inside a window (Warp, for example, keeps every tab in one window).
 
 **Nudge asks for Accessibility, but it's already switched on in System Settings.** macOS ties Accessibility and Automation to the app's signature, and that switch belongs to an older build of Nudge. In Nudge's Settings (or the last setup step), choose **Reset…**: it removes Nudge's entries and asks again. You can also select Nudge in System Settings → Privacy & Security → Accessibility, click **−**, and allow it again. Builds signed with the same certificate keep their permissions across updates, so this should only happen once.
 

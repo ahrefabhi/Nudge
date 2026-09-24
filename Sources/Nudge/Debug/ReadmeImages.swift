@@ -87,10 +87,10 @@ enum ReadmeImages {
         model.automation = .needsAsk
         // The picture shouldn't depend on which apps this Mac happens to have installed.
         model.environments = [
-            .init(host: .iTerm, detail: "3 sessions found", enabled: true),
-            .init(host: .terminal, detail: "1 session found", enabled: true),
-            .init(host: .vsCode, detail: "Claude Code extension · 1 session", enabled: true),
-            .init(host: .claude, detail: "Not running", enabled: false),
+            .init(id: .host(.iTerm), detail: "3 sessions found", enabled: true),
+            .init(id: .host(.terminal), detail: "1 session found", enabled: true),
+            .init(id: .host(.vsCode), detail: "Claude Code extension · 1 session", enabled: true),
+            .init(id: .host(.claude), detail: "Not running", enabled: false),
         ]
         return model
     }

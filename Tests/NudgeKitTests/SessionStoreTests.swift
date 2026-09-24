@@ -22,7 +22,7 @@ import Testing
         let restored = SessionReducer(restoring: SessionStore(url: url).load())
 
         #expect(restored.sessions == reducer.sessions)
-        let session = SessionProjection.session(restored.sessions["s1"]!, branch: nil)
+        let session = SessionProjection.session(restored.sessions["s1"]!)
         #expect(session.kind == .question)
         #expect(session.choices == ["Reuse", "New"])
         #expect(session.host == .vsCode)

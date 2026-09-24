@@ -25,6 +25,14 @@ public struct HistoryRecorder: Sendable {
         receivedFirstSnapshot = true
         var changed = false
 
+        // Entries saved before apps were recorded learn theirs while the session still runs.
+        for index in entries.indices where entries[index].host == .other && entries[index].hostBundleID == nil {
+            guard let session = current[entries[index].sessionID], session.host == .other, let bundleID = session.hostBundleID else { continue }
+            entries[index].hostBundleID = bundleID
+            entries[index].hostName = session.hostAppName
+            changed = true
+        }
+
         // Close waiting episodes the session has moved on from. On the first snapshot after a
         // restart the true end time is unknown, so none is recorded.
         for index in entries.indices where entries[index].isOpenEpisode {
@@ -40,7 +48,7 @@ public struct HistoryRecorder: Sendable {
 
             if session.needsYou, let kind = HistoryEntry.Kind(session.kind) {
                 changed = insert(HistoryEntry(id: session.attentionKey, sessionID: session.id, agent: session.agent, project: session.project,
-                                              host: session.host, kind: kind, at: session.since,
+                                              host: session.host, hostName: session.hostAppName, hostBundleID: session.hostBundleID, kind: kind, at: session.since,
                                               detail: session.quote ?? session.task)) || changed
             }
 
@@ -50,13 +58,13 @@ public struct HistoryRecorder: Sendable {
             if session.kind == .finished, before?.kind != .finished {
                 let duration = workingSince[session.id].map { session.since.timeIntervalSince($0) }
                 changed = insert(HistoryEntry(id: session.attentionKey, sessionID: session.id, agent: session.agent, project: session.project,
-                                              host: session.host, kind: .finished, at: session.since,
+                                              host: session.host, hostName: session.hostAppName, hostBundleID: session.hostBundleID, kind: .finished, at: session.since,
                                               detail: session.quote ?? session.task, duration: duration)) || changed
             }
 
             if session.kind == .working, before == nil || before?.kind == .idle {
                 changed = insert(HistoryEntry(id: "started|\(session.id)|\(session.since.timeIntervalSinceReferenceDate)",
-                                              sessionID: session.id, agent: session.agent, project: session.project, host: session.host,
+                                              sessionID: session.id, agent: session.agent, project: session.project, host: session.host, hostName: session.hostAppName, hostBundleID: session.hostBundleID,
                                               kind: .started, at: session.since, detail: session.task)) || changed
             }
         }

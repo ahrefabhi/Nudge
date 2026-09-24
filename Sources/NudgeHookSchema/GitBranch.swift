@@ -1,6 +1,8 @@
 import Foundation
 
 /// Reads the current branch straight from `.git/HEAD`, without running git. Handles worktrees.
+/// The collector runs it, not the app: it inherits the terminal's access to the project folder,
+/// so Nudge never has to ask for Documents, Desktop or iCloud Drive.
 public enum GitBranch {
     public static func current(in directory: String) -> String? {
         guard let gitDirectory = gitDirectory(from: URL(filePath: directory, directoryHint: .isDirectory)),

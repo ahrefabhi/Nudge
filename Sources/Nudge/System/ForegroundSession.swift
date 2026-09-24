@@ -12,7 +12,7 @@ enum ForegroundSession {
 
     static func isInView(_ session: NudgeSession, observed: ObservedSession?) -> Bool {
         guard let front = NSWorkspace.shared.frontmostApplication,
-              let bundleID = observed?.host.bundleID ?? session.host.bundleID,
+              let bundleID = observed?.host.resolvedBundleID ?? session.host.bundleID,
               front.bundleIdentifier == bundleID,
               secondsSinceInput < idleLimit else { return false }
         switch session.host {
@@ -26,11 +26,11 @@ enum ForegroundSession {
         case .terminal:
             guard automationGranted(bundleID), let tty = observed?.pid.flatMap(SessionOpener.terminalDevice) else { return false }
             return runScript(TerminalFront.script) == tty
-        case .vsCode:
-            guard let folder = observed.map({ URL(filePath: $0.cwd).lastPathComponent }), !folder.isEmpty,
-                  let title = focusedWindowTitle(pid: front.processIdentifier) else { return false }
-            return title.contains(folder)
-        case .claude, .other:
+        case .vsCode, .other:
+            // Editors and most terminals title the window with the folder or the program's title.
+            guard let observed, let title = HostWindows.focusedTitle(pid: front.processIdentifier) else { return false }
+            return WindowMatch.score(title, for: observed) > 0
+        case .claude:
             // No way to tell which conversation is showing, so the app being in front is enough.
             return true
         }
@@ -45,18 +45,6 @@ enum ForegroundSession {
     /// Never prompts: asking mid-alert would be worse than notifying.
     private static func automationGranted(_ bundleID: String) -> Bool {
         Permissions.automation(bundleID: bundleID, ask: false) == .granted
-    }
-
-    /// VS Code titles its windows with the open folder, e.g. "session.ts — payments-api".
-    private static func focusedWindowTitle(pid: pid_t) -> String? {
-        guard Permissions.accessibilityTrusted else { return nil }
-        let app = AXUIElementCreateApplication(pid)
-        var window: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &window) == .success,
-              let window, CFGetTypeID(window) == AXUIElementGetTypeID() else { return nil }
-        var title: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(window as! AXUIElement, kAXTitleAttribute as CFString, &title) == .success else { return nil }
-        return title as? String
     }
 
     private static func runScript(_ source: String) -> String? {

@@ -32,6 +32,9 @@ final class OnboardingWindow: NSObject, NSWindowDelegate {
         window.center()
         NSApp.activate()
         window.makeKeyAndOrderFront(nil)
+        // Opened from Terminal (say, right after removing the quarantine flag), macOS may not
+        // let Nudge become active, and the window would open behind Terminal.
+        window.orderFrontRegardless()
     }
 
     func windowWillClose(_ notification: Notification) {

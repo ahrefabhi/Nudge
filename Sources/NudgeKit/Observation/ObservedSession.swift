@@ -48,6 +48,8 @@ public struct ObservedSession: Sendable, Equatable, Codable {
     public let id: String
     public var pid: Int32?
     public var cwd: String
+    /// The branch the collector read in `cwd` at the latest event.
+    public var branch: String?
     /// Claude's own short title for the session, from the registry.
     public var title: String?
     /// e.g. "cli" or "claude-vscode".

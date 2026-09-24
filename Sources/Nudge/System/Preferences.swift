@@ -16,6 +16,17 @@ enum Preferences {
         set { defaults.set(newValue.map(\.rawValue).sorted(), forKey: "disabledHosts") }
     }
 
+    /// Other apps whose sessions Nudge ignores, by bundle id, with their names so they stay in the
+    /// menu to turn back on after their sessions end.
+    static var disabledApps: [String: String] {
+        get { defaults.dictionary(forKey: "disabledApps") as? [String: String] ?? [:] }
+        set { defaults.set(newValue, forKey: "disabledApps") }
+    }
+
+    static var hostFilter: HostFilter {
+        HostFilter(hiddenHosts: disabledHosts, hiddenApps: Set(disabledApps.keys))
+    }
+
     /// Quiet mode: no pop-ups until this time. The count still updates.
     static var quietUntil: Date? {
         get { defaults.object(forKey: "quietUntil") as? Date }
@@ -74,4 +85,46 @@ enum Preferences {
 
     /// The apps shown in onboarding and the Environments menu.
     static let environments: [HostApp] = [.iTerm, .terminal, .vsCode, .claude]
+
+    /// The built-in apps, then every other app sessions have run in.
+    static func watchedApps(others: [OtherApp]) -> [WatchedApp] {
+        environments.map(WatchedApp.host) + others.map(WatchedApp.other)
+    }
+
+    static func isHidden(_ app: WatchedApp) -> Bool {
+        switch app {
+        case .host(let host): disabledHosts.contains(host)
+        case .other(let other): disabledApps[other.bundleID] != nil
+        }
+    }
+
+    static func toggle(_ app: WatchedApp) {
+        switch app {
+        case .host(let host):
+            var disabled = disabledHosts
+            if disabled.contains(host) { disabled.remove(host) } else { disabled.insert(host) }
+            disabledHosts = disabled
+        case .other(let other):
+            var disabled = disabledApps
+            disabled[other.bundleID] = disabled[other.bundleID] == nil ? other.name : nil
+            disabledApps = disabled
+        }
+    }
+}
+
+/// An app whose sessions Nudge can watch or ignore: one it knows, or any other it has seen.
+enum WatchedApp: Hashable {
+    case host(HostApp)
+    case other(OtherApp)
+
+    var name: String {
+        switch self {
+        case .host(let host): host.onboardingName
+        case .other(let other): other.name
+        }
+    }
+
+    var host: HostApp? {
+        if case .host(let host) = self { host } else { nil }
+    }
 }

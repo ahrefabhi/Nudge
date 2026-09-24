@@ -105,8 +105,8 @@ private struct EnvironmentsStep: View {
             }
             OnboardingList(rows: model.environments) { environment in
                 HStack(spacing: 12) {
-                    RowText(title: environment.host.onboardingName, detail: environment.detail)
-                    NudgeToggle(isOn: environment.enabled) { model.toggle(environment.host) }
+                    RowText(title: environment.name, detail: environment.detail)
+                    NudgeToggle(isOn: environment.enabled) { model.toggle(environment.id) }
                 }
                 .padding(.vertical, 11)
                 .padding(.horizontal, 14)
