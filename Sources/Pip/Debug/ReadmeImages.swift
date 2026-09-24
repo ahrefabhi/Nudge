@@ -30,8 +30,9 @@ enum ReadmeImages {
         tabs.update(sessions: MockSessions.calm())
         tabs.history = MockSessions.history()
         tabs.usage = MockSessions.usage()
-        func manager(_ tab: ManagerView.Tab) -> some View {
-            ManagerView(machine: tabs, bar: 32, initialTab: tab)
+        func manager(_ tab: ManagerTab) -> some View {
+            tabs.managerTab = tab
+            return ManagerView(machine: tabs, bar: 32)
                 .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
                 .background(Color.black)
                 .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))

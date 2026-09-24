@@ -8,7 +8,7 @@ extension SessionKind {
         switch self {
         case .idle: .idle
         case .working: .working
-        case .permission: .permission
+        case .permission, .usage: .permission
         case .question, .waiting: .question
         case .error: .error
         case .finished: .success

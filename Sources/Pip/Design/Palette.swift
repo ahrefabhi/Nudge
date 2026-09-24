@@ -35,7 +35,7 @@ struct Palette: Sendable {
     func accent(_ kind: SessionKind) -> Color {
         guard isLight else { return kind.accent }
         switch kind {
-        case .permission: return Color(oklch: 0.56, 0.13, 65)
+        case .permission, .usage: return Color(oklch: 0.56, 0.13, 65)
         case .question, .waiting: return Color(oklch: 0.52, 0.14, 250)
         case .error: return Color(oklch: 0.55, 0.17, 25)
         case .finished, .working: return Color(oklch: 0.52, 0.13, 152)

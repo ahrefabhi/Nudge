@@ -28,7 +28,8 @@ enum Snapshots {
         let historyMachine = PhaseMachine(scheduler: ManualScheduler(start: Date()))
         historyMachine.update(sessions: MockSessions.calm())
         historyMachine.history = MockSessions.history()
-        let history = ManagerView(machine: historyMachine, bar: 32, initialTab: .history)
+        historyMachine.managerTab = .history
+        let history = ManagerView(machine: historyMachine, bar: 32)
             .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
             .background(Color.black)
             .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
@@ -38,7 +39,9 @@ enum Snapshots {
         try write(history, to: directory.appending(path: "manager-history.png"))
 
         historyMachine.usage = MockSessions.usage()
-        let usage = ManagerView(machine: historyMachine, bar: 32, initialTab: .usage)
+        historyMachine.setUsageAlertRules([UsageAlertRule(scope: .claude, threshold: 75)] + UsageAlertRule.defaults)
+        historyMachine.managerTab = .usage
+        let usage = ManagerView(machine: historyMachine, bar: 32)
             .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
             .background(Color.black)
             .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
@@ -47,11 +50,20 @@ enum Snapshots {
             .environment(\.colorScheme, .dark)
         try write(usage, to: directory.appending(path: "manager-usage.png"))
 
+        let editor = UsageView(machine: historyMachine, adding: true, custom: "83")
+            .frame(width: 460, height: 720)
+            .background(Color.black)
+            .environment(\.colorScheme, .dark)
+        // The custom percentage is a text field, which ImageRenderer can't draw.
+        try writeWindowed(editor, size: CGSize(width: 460, height: 720), appearance: .darkAqua,
+                          to: directory.appending(path: "usage-alert-editor.png"))
+
         let setupMachine = PhaseMachine(scheduler: ManualScheduler(start: Date()))
         setupMachine.update(sessions: MockSessions.calm())
         setupMachine.usage = [AgentUsage(agent: .claude, source: .needsSetup, report: nil),
                               AgentUsage(agent: .codex, source: .connected, report: nil)]
-        let setup = ManagerView(machine: setupMachine, bar: 32, initialTab: .usage)
+        setupMachine.managerTab = .usage
+        let setup = ManagerView(machine: setupMachine, bar: 32)
             .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
             .background(Color.black)
             .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
@@ -94,7 +106,7 @@ enum Snapshots {
         try write(glow, to: directory.appending(path: "island-glow.png"))
 
         // Light mode: the same alerts and manager in the light panel under a black notch.
-        for name in ["alert-permission", "alert-question", "alert-multi", "manager", "manager-empty"] {
+        for name in ["alert-permission", "alert-question", "alert-multi", "alert-usage", "manager", "manager-empty"] {
             guard let drive = scenarios.first(where: { $0.0 == name })?.1 else { continue }
             let clock = ManualScheduler(start: Date())
             let machine = PhaseMachine(scheduler: clock)
@@ -129,6 +141,15 @@ enum Snapshots {
         ("alert-question", { machine, clock in trigger(.question, machine, clock); clock.advance(by: 1.5) }),
         ("alert-error", { machine, clock in trigger(.error, machine, clock); clock.advance(by: 1.5) }),
         ("alert-multi", { machine, clock in trigger(.multiple, machine, clock); clock.advance(by: 1.5) }),
+        ("alert-usage", { machine, clock in
+            machine.update(usageAlerts: [MockSessions.usageAlert(now: clock.now)])
+            clock.advance(by: 1.5)
+        }),
+        ("alert-multi-usage", { machine, clock in
+            trigger(.error, machine, clock)
+            machine.update(usageAlerts: [MockSessions.usageAlert(now: clock.now)])
+            clock.advance(by: 1.5)
+        }),
         ("pill", { machine, clock in trigger(.multiple, machine, clock); clock.advance(by: 1); machine.later() }),
         ("manager", { machine, clock in
             machine.update(sessions: MockSessions.sample(now: clock.now))

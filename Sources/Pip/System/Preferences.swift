@@ -46,6 +46,22 @@ enum Preferences {
         set { defaults.set(newValue, forKey: "soundsEnabled") }
     }
 
+    /// The usage alerts made in the Usage tab. Claude and Codex at 90% until the user changes them.
+    static var usageAlertRules: [UsageAlertRule] {
+        get {
+            guard let data = defaults.data(forKey: "usageAlertRules"),
+                  let rules = try? JSONDecoder().decode([UsageAlertRule].self, from: data) else { return UsageAlertRule.defaults }
+            return rules
+        }
+        set { defaults.set(try? JSONEncoder().encode(newValue), forKey: "usageAlertRules") }
+    }
+
+    /// Usage alerts already opened, so a relaunch doesn't show them again. See `UsageAlerts.handled`.
+    static var handledUsageAlerts: [String: Int] {
+        get { defaults.dictionary(forKey: "handledUsageAlerts") as? [String: Int] ?? [:] }
+        set { defaults.set(newValue, forKey: "handledUsageAlerts") }
+    }
+
     /// The system sound for each chime, or nil for none.
     static func sound(for chime: Chime) -> String? {
         guard let name = defaults.string(forKey: "sound.\(chime.rawValue)") else { return chime.defaultSound }

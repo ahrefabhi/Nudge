@@ -77,7 +77,7 @@ extension PipMood {
 extension SessionKind {
     var accent: Color {
         switch self {
-        case .permission: Tokens.Accent.permission
+        case .permission, .usage: Tokens.Accent.permission
         case .question, .waiting: Tokens.Accent.question
         case .error: Tokens.Accent.error
         case .finished, .working: Tokens.Accent.success
@@ -94,6 +94,7 @@ extension SessionKind {
         case .finished: "Finished"
         case .working: "Working"
         case .idle: "Idle"
+        case .usage: "Usage"
         }
     }
 
@@ -107,6 +108,7 @@ extension SessionKind {
         case .finished: "\(name) finished"
         case .working: "\(name) is working"
         case .idle: "\(name) is ready"
+        case .usage: "\(name) reached your usage alert"
         }
     }
 }

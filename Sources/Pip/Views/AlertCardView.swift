@@ -79,7 +79,7 @@ struct AlertCardView: View {
             HStack(spacing: 8) {
                 Button(action: onOpen) {
                     HStack(spacing: 8) {
-                        Text("Open Session")
+                        Text(session.kind == .usage ? "Show Usage" : "Open Session")
                         Text("↵").font(.pip(11)).opacity(0.45)
                     }
                 }

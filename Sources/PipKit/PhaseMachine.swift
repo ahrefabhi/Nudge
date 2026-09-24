@@ -17,6 +17,11 @@ public enum Phase: String, Sendable, Hashable, CaseIterable {
     }
 }
 
+/// The session manager's tabs.
+public enum ManagerTab: Sendable, Hashable {
+    case now, history, usage
+}
+
 /// Owns what the notch shows and when. Views read it; inputs come from sessions, clicks and keys.
 @MainActor
 @Observable
@@ -36,6 +41,10 @@ public final class PhaseMachine {
 
     public private(set) var phase: Phase = .idle
     public private(set) var sessions: [PipSession] = []
+    /// Rate limits past the user's threshold. They queue like sessions but aren't counted as agents.
+    public private(set) var usageAlerts: [PipSession] = []
+    /// The manager's selected tab.
+    public var managerTab: ManagerTab = .now
     /// Attention episodes the user already opened; hidden until the session changes state.
     public private(set) var resolved: Set<String> = []
     /// Focused queue row, moved by ⌥⌘↓.
@@ -51,6 +60,8 @@ public final class PhaseMachine {
     public var history: [HistoryEntry] = []
     /// Each agent's latest rate limit reading, for the manager's Usage tab.
     public var usage: [AgentUsage] = []
+    /// The user's usage alerts, edited in the Usage tab.
+    public private(set) var usageAlertRules: [UsageAlertRule] = []
 
     public var autoCollapse = true
     public var expandFinished = false
@@ -66,8 +77,10 @@ public final class PhaseMachine {
             }
         }
     }
-    /// Called at the moment the target session should be focused.
+    /// Called at the moment the target session should be focused, or when a usage alert is opened.
     @ObservationIgnored public var onOpen: ((PipSession) -> Void)?
+    /// Called after the Usage tab adds or removes an alert, so the app can save it.
+    @ObservationIgnored public var onUsageAlertRulesChanged: (([UsageAlertRule]) -> Void)?
     /// Called when the Usage tab's "Set Up…" is clicked for an agent Pip can't read yet.
     @ObservationIgnored public var onSetUpUsage: ((Agent) -> Void)?
     /// Called once per update that starts a new episode, with the most urgent one. Never while muted.
@@ -95,7 +108,7 @@ public final class PhaseMachine {
     // MARK: Derived lists
 
     public var queue: [PipSession] {
-        AttentionQueue.ordered(sessions, resolved: resolved, includeFinished: expandFinished)
+        AttentionQueue.ordered(sessions + usageAlerts, resolved: resolved, includeFinished: expandFinished)
     }
 
     /// Running sessions, plus opened ones the user is now answering.
@@ -130,17 +143,32 @@ public final class PhaseMachine {
         receivedFirstUpdate = true
 
         sessions = new
-        resolved.formIntersection(new.map(\.attentionKey))
-        clampCursor()
+        pruneResolved()
 
         // Sessions that were already finished when Pip started are not news.
         let justFinished = new.first(where: { $0.kind == .finished && !finishedBefore.contains($0.attentionKey) })
         if !isFirst, !expandFinished, let done = justFinished { celebrate(done) }
+        let finishedUnseen = justFinished.flatMap { isInView?($0) == true ? nil : $0 }
+        react(queuedBefore: queuedBefore, chimes: !isFirst, finished: finishedUnseen)
+    }
 
+    public func update(usageAlerts new: [PipSession]) {
+        let queuedBefore = Set(queue.map(\.attentionKey))
+        usageAlerts = new
+        pruneResolved()
+        react(queuedBefore: queuedBefore, chimes: true, finished: nil)
+    }
+
+    private func pruneResolved() {
+        resolved.formIntersection((sessions + usageAlerts).map(\.attentionKey))
+        clampCursor()
+    }
+
+    /// Announces what joined the queue, or settles if nothing did.
+    private func react(queuedBefore: Set<String>, chimes: Bool, finished: PipSession?) {
         let arrived = queue.filter { !queuedBefore.contains($0.attentionKey) }
         let unseen = arrived.filter { !(isInView?($0) ?? false) }
-        let finishedUnseen = justFinished.flatMap { isInView?($0) == true ? nil : $0 }
-        if !isFirst, let kind = unseen.first?.kind ?? finishedUnseen?.kind { chime(kind) }
+        if chimes, let kind = unseen.first?.kind ?? finished?.kind { chime(kind) }
 
         if !unseen.isEmpty {
             announce()
@@ -177,8 +205,31 @@ public final class PhaseMachine {
         }
     }
 
+    public func setUsageAlertRules(_ rules: [UsageAlertRule]) {
+        usageAlertRules = UsageAlertRule.sorted(rules)
+    }
+
+    /// Adds an alert from the Usage tab. One that already exists, or outside 1–100%, is left alone.
+    public func addUsageAlertRule(scope: UsageAlertRule.Scope, threshold: Int) {
+        guard UsageAlertRule.validThresholds.contains(threshold),
+              !usageAlertRules.contains(where: { $0.scope == scope && $0.threshold == threshold }) else { return }
+        setUsageAlertRules(usageAlertRules + [UsageAlertRule(scope: scope, threshold: threshold)])
+        onUsageAlertRulesChanged?(usageAlertRules)
+    }
+
+    public func removeUsageAlertRule(_ id: UUID) {
+        setUsageAlertRules(usageAlertRules.filter { $0.id != id })
+        onUsageAlertRulesChanged?(usageAlertRules)
+    }
+
     /// "Later" folds the alert to the pill. The pill never re-expands on its own.
     public func later() { fold() }
+
+    /// Opens the manager on its Usage tab, e.g. from Settings.
+    public func showUsage() {
+        guard phase != .opening else { return }
+        openManager(on: .usage)
+    }
 
     public func toggleManager() {
         phase == .manager ? closeManager() : openManager()
@@ -209,8 +260,15 @@ public final class PhaseMachine {
         open(items[number - 1].id)
     }
 
-    /// Jumps to any session, waiting or not.
+    /// Jumps to any session, waiting or not. A usage alert opens the manager's Usage tab instead.
     public func open(_ sessionID: String) {
+        if let alert = usageAlerts.first(where: { $0.id == sessionID }) {
+            resolved.insert(alert.attentionKey)
+            clampCursor()
+            openManager(on: .usage)
+            onOpen?(alert)
+            return
+        }
         guard let session = sessions.first(where: { $0.id == sessionID }) else { return }
         cancelAll()
         setPhase(.opening)
@@ -295,8 +353,9 @@ public final class PhaseMachine {
         setPhase(queue.isEmpty ? quietPhase : .pill)
     }
 
-    private func openManager() {
+    private func openManager(on tab: ManagerTab = .now) {
         cancel(.alert, .collapse, .peekHold, .nextPeek)
+        managerTab = tab
         setPhase(.manager)
     }
 

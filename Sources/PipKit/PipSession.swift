@@ -19,10 +19,12 @@ public enum SessionKind: Sendable, Hashable {
     /// Started, with no prompt yet.
     case idle
     case working, permission, question, waiting, error, finished
+    /// Not a session: one of the agent's rate limits has passed the user's alert threshold.
+    case usage
 
     public var needsYou: Bool {
         switch self {
-        case .permission, .question, .waiting, .error: true
+        case .permission, .question, .waiting, .error, .usage: true
         case .idle, .working, .finished: false
         }
     }
@@ -79,7 +81,10 @@ public struct PipSession: Identifiable, Hashable, Sendable {
     /// Identifies one attention episode. Resolving it hides the session until it changes state again.
     public var attentionKey: String { "\(id)|\(kind)|\(since.timeIntervalSinceReferenceDate)" }
 
+    /// Where it's running, e.g. "iTerm". A usage alert belongs to the agent, not an app.
+    public var hostName: String { kind == .usage ? agent.productName : host.displayName }
+
     public var hostLabel: String {
-        location.map { "\(host.displayName) · \($0)" } ?? host.displayName
+        location.map { "\(hostName) · \($0)" } ?? hostName
     }
 }

@@ -16,14 +16,20 @@ final class DemoController {
         machine.update(sessions: sessions)
     }
 
+    func triggerUsage() {
+        machine.update(usageAlerts: [MockSessions.usageAlert()])
+    }
+
     func reset() {
         sessions = MockSessions.calm()
         machine.update(sessions: sessions)
+        machine.update(usageAlerts: [])
         machine.history = MockSessions.history()
     }
 
     /// Stands in for focusing a real session: the user "answers" a few seconds later.
     func didOpen(_ session: PipSession) {
+        if session.kind == .usage { return machine.update(usageAlerts: []) }
         print("[Pip] would focus \(session.project) in \(session.hostLabel)")
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
             MainActor.assumeIsolated {

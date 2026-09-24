@@ -13,7 +13,7 @@ public struct HistoryEntry: Codable, Identifiable, Sendable, Equatable {
             case .waiting: self = .waiting
             case .error: self = .error
             case .finished: self = .finished
-            case .idle, .working: return nil
+            case .idle, .working, .usage: return nil
             }
         }
 

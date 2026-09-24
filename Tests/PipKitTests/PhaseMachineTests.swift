@@ -256,3 +256,84 @@ import Testing
         #expect(chimes == [.question], "the sound is for the most urgent session not in view")
     }
 }
+
+@MainActor
+@Suite struct UsageAlertPhaseTests {
+    let clock = ManualScheduler()
+    let machine: PhaseMachine
+
+    init() {
+        machine = PhaseMachine(scheduler: clock)
+        machine.update(sessions: MockSessions.calm(now: clock.now))
+    }
+
+    @Test func usageAlertAnnouncesAndChimes() {
+        var chimes: [Chime] = []
+        machine.onChime = { chimes.append($0) }
+        machine.update(usageAlerts: [MockSessions.usageAlert(now: clock.now)])
+        #expect(machine.phase == .peek)
+        clock.advance(by: 0.72)
+        #expect(machine.phase == .alert)
+        #expect(machine.focused?.kind == .usage)
+        #expect(chimes == [.usage])
+        #expect(machine.sessions.count == MockSessions.calm().count, "a usage alert isn't an agent")
+    }
+
+    @Test func queuesAfterSessionsThatNeedYou() {
+        machine.update(sessions: MockSessions.apply(.error, to: machine.sessions, now: clock.now))
+        machine.update(usageAlerts: [MockSessions.usageAlert(now: clock.now)])
+        #expect(machine.queue.map(\.kind) == [.error, .usage])
+    }
+
+    @Test func openingShowsTheUsageTab() {
+        var opened: [PipSession] = []
+        machine.onOpen = { opened.append($0) }
+        let alert = MockSessions.usageAlert(now: clock.now)
+        machine.update(usageAlerts: [alert])
+        clock.advance(by: 0.72)
+        machine.openFocused()
+        #expect(machine.phase == .manager)
+        #expect(machine.managerTab == .usage)
+        #expect(opened.map(\.id) == [alert.id])
+        #expect(machine.queue.isEmpty)
+    }
+
+    @Test func mutedUsageAlertOnlyShowsThePill() {
+        machine.muted = true
+        machine.update(usageAlerts: [MockSessions.usageAlert(now: clock.now)])
+        #expect(machine.phase == .pill)
+    }
+}
+
+@MainActor
+@Suite struct UsageAlertRuleEditingTests {
+    @Test func addsRemovesAndIgnoresDuplicates() {
+        let machine = PhaseMachine(scheduler: ManualScheduler())
+        var saved: [[UsageAlertRule]] = []
+        machine.onUsageAlertRulesChanged = { saved.append($0) }
+        machine.addUsageAlertRule(scope: .codex, threshold: 75)
+        machine.addUsageAlertRule(scope: .claude, threshold: 90)
+        machine.addUsageAlertRule(scope: .claude, threshold: 90)
+        #expect(machine.usageAlertRules.map(\.scope) == [.claude, .codex])
+        #expect(saved.count == 2)
+        machine.removeUsageAlertRule(machine.usageAlertRules[0].id)
+        #expect(machine.usageAlertRules.map(\.threshold) == [75])
+        #expect(saved.last?.count == 1)
+    }
+
+    @Test func showUsageOpensTheUsageTab() {
+        let machine = PhaseMachine(scheduler: ManualScheduler())
+        machine.showUsage()
+        #expect(machine.phase == .manager)
+        #expect(machine.managerTab == .usage)
+    }
+}
+
+@MainActor
+@Suite struct CustomThresholdTests {
+    @Test func acceptsAnyPercentageFromOneToAHundred() {
+        let machine = PhaseMachine(scheduler: ManualScheduler())
+        for value in [0, 1, 83, 100, 101] { machine.addUsageAlertRule(scope: .claude, threshold: value) }
+        #expect(machine.usageAlertRules.map(\.threshold) == [1, 83, 100])
+    }
+}
