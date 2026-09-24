@@ -57,6 +57,8 @@ public enum CodexPaths {
 
     public static var hooks: URL { home.appending(path: "hooks.json") }
     public static var config: URL { home.appending(path: "config.toml") }
+    /// Session logs, as `YYYY/MM/DD/rollout-….jsonl`.
+    public static var sessions: URL { home.appending(path: "sessions", directoryHint: .isDirectory) }
 
     /// Codex looks installed when its home folder exists.
     public static var isInstalled: Bool { FileManager.default.fileExists(atPath: home.path) }

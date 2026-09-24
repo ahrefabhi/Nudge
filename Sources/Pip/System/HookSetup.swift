@@ -82,6 +82,64 @@ final class HookSetup {
         }
     }
 
+    // MARK: Claude usage
+
+    func statusLineStatus() -> HookInstaller.Status {
+        HookInstaller(target: .claude).statusLineStatus(bundledCollector: Self.bundledCollector)
+    }
+
+    /// Claude Code shares subscription usage only with its status line, so Pip becomes it.
+    /// Returns true when it's set up.
+    @discardableResult
+    func confirmAndInstallStatusLine() -> Bool {
+        let installer = HookInstaller(target: .claude)
+        let hasOwn = Self.currentStatusLineCommand(in: installer.settingsURL) != nil
+        let alert = NSAlert()
+        alert.messageText = "Show your Claude usage in Pip?"
+        alert.informativeText = """
+        Claude Code shares your 5-hour and weekly limits only with its status line, so Pip will set \
+        \(tilde(installer.settingsURL))'s "statusLine" to run Pip's collector, which saves those numbers for Pip to show.
+
+        \(hasOwn ? "Your own status line keeps working: Pip runs it after saving the numbers, and puts it back if you remove this."
+                 : "Pip's status line is blank. With any status line set, Claude Code hides some of its footer hints, like \"esc to interrupt\".")
+
+        Only Claude Code in a terminal runs a status line (not the VS Code extension or the Claude app), and usage \
+        is only shared on Pro and Max plans. Sessions that are already running need a restart.
+        """
+        alert.addButton(withTitle: "Show Usage")
+        alert.addButton(withTitle: "Cancel")
+        NSApp.activate()
+        guard alert.runModal() == .alertFirstButtonReturn else { return false }
+        do {
+            guard let collector = Self.bundledCollector else { throw HookInstaller.InstallError.collectorMissing }
+            try installer.installStatusLine(collectorSource: collector)
+            return true
+        } catch {
+            show(error: error)
+            return false
+        }
+    }
+
+    func confirmAndRemoveStatusLine() {
+        let alert = NSAlert()
+        alert.messageText = "Stop showing Claude usage?"
+        alert.informativeText = "Pip will put back the status line you had before, or remove its own."
+        alert.addButton(withTitle: "Stop")
+        alert.addButton(withTitle: "Cancel")
+        NSApp.activate()
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        do {
+            try HookInstaller(target: .claude).uninstallStatusLine()
+        } catch {
+            show(error: error)
+        }
+    }
+
+    private static func currentStatusLineCommand(in settings: URL) -> String? {
+        guard let data = try? Data(contentsOf: settings), let json = try? OrderedJSON.parse(data) else { return nil }
+        return json["statusLine"]?["command"]?.stringValue
+    }
+
     private func showCodexTrustReminder() {
         let alert = NSAlert()
         alert.messageText = "One more step in Codex"

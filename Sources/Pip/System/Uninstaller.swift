@@ -13,7 +13,7 @@ enum Uninstaller {
         let alert = NSAlert()
         alert.messageText = "Uninstall Pip?"
         alert.informativeText = """
-        Pip will remove its hooks from \(files) (your other settings and hooks stay), delete its history and \
+        Pip will remove its hooks and status line from \(files) (your other settings and hooks stay), delete its history and \
         saved data, stop opening at login, and move itself to the Trash.
 
         Backups Pip made of those files (….pip-backup-…) are left where they are.
@@ -27,6 +27,8 @@ enum Uninstaller {
         // Hooks first: if they can't be removed, stop before deleting the collector they point at.
         do {
             for installer in installers { try installer.uninstall() }
+            // Puts back the user's own status line, if Pip had taken its place.
+            try HookInstaller(target: .claude).uninstallStatusLine()
         } catch {
             NSApp.activate()
             NSAlert(error: error).runModal()

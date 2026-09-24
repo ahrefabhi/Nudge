@@ -4,6 +4,7 @@ import PipHookSchema
 
 // Claude Code and Codex run this for every registered hook event. It only records what happened:
 // it never prints, never decides anything for the agent, and always exits 0 quickly.
+// Claude Code also runs it as its status line, to pass along subscription usage (see `runStatusLine`).
 
 let maximumInput = 8 * 1024 * 1024
 
@@ -173,7 +174,80 @@ func capture(_ input: Data, to directory: String) {
     FileManager.default.createFile(atPath: "\(directory)/\(Int64(Date().timeIntervalSince1970 * 1000))-\(getpid()).json", contents: data)
 }
 
+// MARK: Status line
+
+/// Claude Code runs `pip-hook statusline` as its status line command. It saves the subscription
+/// usage Claude passes in, then hands the same input to the user's own status line command (kept
+/// base64-encoded after `--then`), so what they see doesn't change. It never prints anything itself.
+func runStatusLine() {
+    let input = (try? FileHandle.standardInput.read(upToCount: maximumInput)) ?? Data()
+    markSeen(argument(after: "--usage").map { URL(filePath: $0).deletingLastPathComponent().appending(path: "claude-statusline-seen") }
+             ?? PipPaths.default.claudeStatusLineSeen)
+    if let payload = (try? JSONSerialization.jsonObject(with: input)) as? [String: Any],
+       let limits = payload["rate_limits"] as? [String: Any] {
+        let file = argument(after: "--usage").map { URL(filePath: $0) } ?? PipPaths.default.claudeUsage
+        saveUsage(limits, to: file)
+    }
+    if let encoded = argument(after: "--then"), let data = Data(base64Encoded: encoded),
+       let command = String(data: data, encoding: .utf8), !command.isEmpty {
+        forward(input, to: command)
+    }
+}
+
+/// The status line refreshes after every message. Unchanged numbers are rewritten at most once a
+/// minute, which is enough for Pip's "updated … ago".
+func saveUsage(_ limits: [String: Any], to file: URL) {
+    let manager = FileManager.default
+    if let data = try? Data(contentsOf: file),
+       let saved = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+       (saved["rateLimits"] as? NSDictionary)?.isEqual(to: limits) == true,
+       let modified = (try? manager.attributesOfItem(atPath: file.path))?[.modificationDate] as? Date,
+       Date().timeIntervalSince(modified) < 60 { return }
+
+    let snapshot: [String: Any] = ["observedAt": Int64(Date().timeIntervalSince1970 * 1000), "rateLimits": limits]
+    guard let data = try? JSONSerialization.data(withJSONObject: snapshot, options: [.sortedKeys]) else { return }
+    let directory = file.deletingLastPathComponent()
+    try? manager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+    let temporary = directory.appending(path: ".\(file.lastPathComponent).\(getpid()).tmp")
+    guard manager.createFile(atPath: temporary.path, contents: data, attributes: [.posixPermissions: 0o600]) else { return }
+    if rename(temporary.path, file.path) != 0 { unlink(temporary.path) }
+}
+
+/// Lets Pip tell "the status line never ran" from "Claude didn't include usage". Touched at most once a minute.
+func markSeen(_ file: URL) {
+    let manager = FileManager.default
+    if let modified = (try? manager.attributesOfItem(atPath: file.path))?[.modificationDate] as? Date,
+       Date().timeIntervalSince(modified) < 60 { return }
+    try? manager.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+    if manager.fileExists(atPath: file.path) {
+        try? manager.setAttributes([.modificationDate: Date()], ofItemAtPath: file.path)
+    } else {
+        manager.createFile(atPath: file.path, contents: nil, attributes: [.posixPermissions: 0o600])
+    }
+}
+
+/// Runs the user's own status line with the same input, its output going straight to Claude Code.
+func forward(_ input: Data, to command: String) {
+    signal(SIGPIPE, SIG_IGN)
+    let process = Process()
+    process.executableURL = URL(filePath: "/bin/sh")
+    process.arguments = ["-c", command]
+    let pipe = Pipe()
+    process.standardInput = pipe
+    guard (try? process.run()) != nil else { return }
+    // Written from another thread, so a command that never reads its input can't block us.
+    let writer = pipe.fileHandleForWriting
+    Thread.detachNewThread {
+        try? writer.write(contentsOf: input)
+        try? writer.close()
+    }
+    process.waitUntilExit()
+}
+
+// MARK: Hooks
+
 func run() {
+    if CommandLine.arguments.dropFirst().first == "statusline" { return runStatusLine() }
     guard let input = try? FileHandle.standardInput.read(upToCount: maximumInput + 1), input.count <= maximumInput else { return }
     if let directory = argument(after: "--capture") { capture(input, to: directory) }
     guard let payload = (try? JSONSerialization.jsonObject(with: input)) as? [String: Any],

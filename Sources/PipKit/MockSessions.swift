@@ -101,4 +101,21 @@ public enum MockSessions {
                    host: .iTerm, location: "Tab 3", kind: .finished,
                    quote: "Migrated 14 pages to MDX · build passes · 2m 41s", since: since)
     }
+
+    /// Readings for the Usage tab: Claude comfortable, Codex close to its 5-hour limit.
+    public static func usage(now: Date = Date()) -> [AgentUsage] {
+        func window(_ id: String, _ minutes: Int, _ used: Double, resetsIn: TimeInterval) -> UsageWindow {
+            UsageWindow(id: id, minutes: minutes, usedPercent: used, resetsAt: now.addingTimeInterval(resetsIn))
+        }
+        return [
+            AgentUsage(agent: .claude, source: .connected, report: UsageReport(
+                agent: .claude,
+                windows: [window("five_hour", 300, 64, resetsIn: 2 * 3600 + 14 * 60), window("seven_day", 10_080, 38, resetsIn: 3 * 86_400 + 3600)],
+                observedAt: now.addingTimeInterval(-90))),
+            AgentUsage(agent: .codex, source: .connected, report: UsageReport(
+                agent: .codex,
+                windows: [window("primary", 300, 91, resetsIn: 38 * 60), window("secondary", 10_080, 22, resetsIn: 5 * 86_400)],
+                plan: "plus", observedAt: now.addingTimeInterval(-720))),
+        ]
+    }
 }

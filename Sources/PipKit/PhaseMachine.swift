@@ -48,6 +48,8 @@ public final class PhaseMachine {
 
     /// Past moments for the manager's History tab, newest first.
     public var history: [HistoryEntry] = []
+    /// Each agent's latest rate limit reading, for the manager's Usage tab.
+    public var usage: [AgentUsage] = []
 
     public var autoCollapse = true
     public var expandFinished = false
@@ -65,6 +67,8 @@ public final class PhaseMachine {
     }
     /// Called at the moment the target session should be focused.
     @ObservationIgnored public var onOpen: ((PipSession) -> Void)?
+    /// Called when the Usage tab's "Set Up…" is clicked for an agent Pip can't read yet.
+    @ObservationIgnored public var onSetUpUsage: ((Agent) -> Void)?
 
     public let timing: Timing
 

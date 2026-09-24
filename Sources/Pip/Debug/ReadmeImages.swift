@@ -23,22 +23,25 @@ enum ReadmeImages {
 
         try write(island("alert-permission", height: 300), "alert")
         try write(island("alert-multi", height: 330), "multiple")
-        try write(island("manager", height: 640), "manager")
+        try write(island("manager", height: 670), "manager")
         try write(island("alert-permission", light: true, height: 320), "light")
 
-        let history = PhaseMachine(scheduler: ManualScheduler(start: Date()))
-        history.update(sessions: MockSessions.calm())
-        history.history = MockSessions.history()
-        try write(
-            ManagerView(machine: history, bar: 32, initialTab: .history)
-                .frame(width: 460, height: 580)
+        let tabs = PhaseMachine(scheduler: ManualScheduler(start: Date()))
+        tabs.update(sessions: MockSessions.calm())
+        tabs.history = MockSessions.history()
+        tabs.usage = MockSessions.usage()
+        func manager(_ tab: ManagerView.Tab) -> some View {
+            ManagerView(machine: tabs, bar: 32, initialTab: tab)
+                .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
                 .background(Color.black)
                 .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
                 .shadow(color: .black.opacity(0.55), radius: 30, y: 24)
                 .environment(\.colorScheme, .dark)
-                .frame(width: 760, height: 640, alignment: .top)
-                .background(Desktop()),
-            "history")
+                .frame(width: 760, height: 670, alignment: .top)
+                .background(Desktop())
+        }
+        try write(manager(.history), "history")
+        try write(manager(.usage), "usage")
 
         try write(NotchStates().background(Desktop()), "notch")
         try write(CharacterSheet(), "states")
@@ -58,6 +61,7 @@ enum ReadmeImages {
 
         let settings = SettingsModel(setup: onboardingModel(.permissions))
         settings.setup.accessibility = true
+        settings.setup.claudeUsage = .installed
         try Snapshots.writeWindowed(SettingsView(model: settings), size: CGSize(width: 480, height: 640),
                                     appearance: .darkAqua, to: directory.appending(path: "settings.png"))
 

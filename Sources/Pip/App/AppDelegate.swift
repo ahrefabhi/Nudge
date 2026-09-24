@@ -5,6 +5,7 @@ import PipKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let machine = PhaseMachine()
     private let observation = ObservationService()
+    private let usage = UsageService()
     private let hookSetup = HookSetup()
     private lazy var demo = DemoController(machine: machine)
     private var demoMode = CommandLine.arguments.contains("--demo")
@@ -29,6 +30,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         observation.onChange = { [weak self] _ in self?.deliverSessions() }
         observation.start()
+        usage.onChange = { [weak self] in self?.machine.usage = $0 }
+        usage.start()
+        machine.onSetUpUsage = { [weak self] agent in
+            guard agent == .claude else { return }
+            // The notch panel floats above ordinary windows, so close the manager before the alert shows.
+            self?.machine.tapOutside()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                guard let self, self.hookSetup.confirmAndInstallStatusLine() else { return }
+                self.usage.refresh()
+            }
+        }
         if demoMode { demo.reset() }
 
         statusMenu = StatusMenu(actions: .init(
@@ -72,6 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         observation.stop()
+        usage.stop()
     }
 
     // MARK: Sessions

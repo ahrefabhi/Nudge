@@ -29,6 +29,7 @@ Pip fixes that. It sits invisibly inside the notch while your agents work. When 
 - **Takes you to the right place.** Opens the precise iTerm tab, Terminal tab or VS Code window, and outlines it with a brief focus ring.
 - **One queue, most urgent first.** Several agents waiting become one list: permission, then questions, then errors, oldest first. Cycle through it with ⌥⌘↓.
 - **Every session at a glance.** Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.
+- **Knows how much you have left.** The Usage tab shows how much of your Claude and Codex rate limits you've used (5-hour and weekly) and when each one resets.
 - **Stays out of the way.** Unanswered alerts fold into a small pill. In full screen Pip shrinks to a thin glow, and it goes quiet while Zoom shares your screen or when you ask it to.
 - **Read-only by design.** Pip never types into your terminal and never approves anything. Answers always happen in the real session.
 - **Private.** Everything stays on your Mac. The only network request Pip makes is its update check to GitHub.
@@ -54,6 +55,12 @@ Pip never stacks notifications. One creature, one queue, most urgent first.
   <img src="docs/images/manager.png" width="49%" alt="The session manager: three sessions that need you with their commands and questions, two working, one finished">
   <img src="docs/images/history.png" width="49%" alt="History: today's permission requests with how long they took to answer, a finished run, a cleared error and a new task">
 </p>
+
+### How much you have left
+
+Codex usage shows up with no setup. For Claude, choose **Set Up…** in the Usage tab or Settings (see [How it works](#how-it-works)). Numbers update while a session runs, so each agent says how old its reading is, and a window that has since reset says so rather than showing a stale percentage.
+
+<p align="center"><img src="docs/images/usage.png" width="49%" alt="The Usage tab: Claude Code at 64% of its 5-hour limit, resetting in 2h 13m, and 38% of its weekly limit; Codex on the Plus plan at 91% of its 5-hour limit in red, resetting in 37m, and 22% of its weekly limit"></p>
 
 ### Light mode
 
@@ -105,6 +112,8 @@ Pip combines these sources, all on your Mac:
 2. **Claude Code hooks** say *why* a session is waiting. Setup adds entries to `~/.claude/settings.json` that run Pip's small collector, `pip-hook`, for each event. The collector keeps only what Pip shows (the command, the question and its choices, the error, Claude's summary, and which app and tab the session is in) and drops the rest, including transcripts. Records go into `~/Library/Application Support/Pip/inbox` and are deleted as soon as Pip reads them.
 3. **Codex hooks**, if Codex is installed, work the same way through `~/.codex/hooks.json`. Codex has no session list, so the collector also notes the Codex process, and Pip drops the session when that process ends. Codex runs new hooks only after you trust them: after installing, type `/hooks` in Codex and trust Pip's entries. Pip never does this for you.
 
+4. **Usage.** Codex writes your rate limits into its session logs (`~/.codex/sessions`) after every turn, and Pip reads the latest one. Claude Code shares your limits only with its status line, so to show them Pip asks to become that status line: it sets `statusLine` in `~/.claude/settings.json` to run the collector, which saves the numbers to `~/Library/Application Support/Pip/usage` and prints nothing. If you already have a status line, the collector runs it with the same input, so what you see doesn't change, and Pip puts it back when you remove this. Two limits come from Claude Code: only Claude Code in a terminal runs a status line (not the VS Code extension or the Claude app), and it includes usage only on Pro and Max plans. With any status line set, Claude Code also hides some footer hints, like "esc to interrupt".
+
 The collector only records. It never answers, approves or blocks anything, prints nothing, and always exits immediately, so it can't slow your agent down or change what it does. Your other settings and hooks are left exactly as they were, and your settings file is backed up before any change.
 
 Pip asks macOS for two permissions. **Automation** lets it select the right iTerm or Terminal tab; without it, Open Session can't switch tabs there and points you to the setting. **Accessibility** lets it find the exact window for the focus ring; without it, Pip outlines the app's front window instead.
@@ -125,7 +134,7 @@ Pip asks macOS for two permissions. **Automation** lets it select the right iTer
 
 <p align="center"><img src="docs/images/settings.png" width="360" alt="Pip's settings: appearance, open at login, update checks, notification options, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
 
-**Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, Quiet, which apps to watch, hooks and permissions.
+**Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, Quiet, which apps to watch, hooks, Claude usage and permissions.
 
 ## Updates
 
@@ -133,7 +142,7 @@ Pip checks for updates once a day through [Sparkle](https://sparkle-project.org)
 
 ## Uninstall
 
-Choose **Uninstall Pip…** from the menu bar or Settings. After you confirm, Pip removes its hooks from `~/.claude/settings.json` (and `~/.codex/hooks.json`), deletes its data in `~/Library/Application Support/Pip`, turns off opening at login, and moves itself to the Trash. Backups Pip made of those files (`….pip-backup-…`) are left next to them.
+Choose **Uninstall Pip…** from the menu bar or Settings. After you confirm, Pip removes its hooks from `~/.claude/settings.json` (and `~/.codex/hooks.json`), puts back the status line you had before if Pip was showing Claude usage, deletes its data in `~/Library/Application Support/Pip`, turns off opening at login, and moves itself to the Trash. Backups Pip made of those files (`….pip-backup-…`) are left next to them.
 
 If you delete Pip.app directly instead, its hooks stay in your Claude (and Codex) settings. They're harmless (the collector stops writing once 10,000 unread events pile up, about 5 MB), but to remove them, reinstall Pip and choose Uninstall, or delete the entries whose command ends in `Application Support/Pip/bin/pip-hook`.
 
@@ -144,6 +153,8 @@ If you delete Pip.app directly instead, its hooks stay in your Claude (and Codex
 **Pip lists a session but doesn't say why it's waiting.** The hooks aren't installed, or the session started before they were. Install them from the menu bar (or Settings → Claude Code); a session that was already running may need a restart before it reports to Pip.
 
 **Pip doesn't see Codex sessions.** Install Codex hooks from the menu bar or Settings, then type `/hooks` in Codex and trust Pip's entries; Codex skips untrusted hooks. Restart any Codex session that was already running.
+
+**The Usage tab doesn't show Claude's numbers.** It says why. *Waiting for Claude Code to run its status line* means no terminal session has run it yet: start or restart Claude Code in iTerm or Terminal (the VS Code extension and the Claude app don't run status lines). *Hasn't included usage* means the status line runs but Claude Code leaves usage out, as it does on plans other than Pro and Max, and in a new session until Claude's first reply.
 
 **Open Session brings the app forward but not the right tab.** Allow Pip under System Settings → Privacy & Security → Automation for iTerm or Terminal.
 
@@ -164,7 +175,7 @@ open build/Pip.app
 ```
 
 ```sh
-swift test                                    # unit tests: queue, phases, hooks, installer, history
+swift test                                    # unit tests: queue, phases, hooks, installer, history, usage
 swift run Pip --snapshot snapshots            # render every state to PNG for checking against the design
 swift run Pip --dump-sessions                 # print the sessions Pip sees right now
 swift run Pip --readme-images docs/images     # re-render the images in this README (then pngquant them)
@@ -176,8 +187,8 @@ PIP_HOME=/tmp/pip swift run Pip               # use a scratch data folder
 
 | Path | What's there |
 |---|---|
-| `Sources/PipKit` | The model, attention queue and phase machine, observation of Claude Code and Codex (inbox, registry, reducer), the hook installer and history. No UI; unit-tested. |
-| `Sources/PipHook` | `pip-hook`, the collector Claude Code and Codex run for each hook event. |
+| `Sources/PipKit` | The model, attention queue and phase machine, observation of Claude Code and Codex (inbox, registry, reducer), the hook and status line installer, history and usage readers. No UI; unit-tested. |
+| `Sources/PipHook` | `pip-hook`, the collector Claude Code and Codex run for each hook event, and Claude Code's status line when Pip shows Claude usage. |
 | `Sources/PipHookSchema` | The inbox record format shared by the collector and the app. |
 | `Sources/Pip` | The app: the notch panel and island, Pip, the views, onboarding, settings and macOS integration. |
 | `Tests/PipKitTests` | Tests for everything in PipKit. |
