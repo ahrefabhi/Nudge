@@ -143,29 +143,6 @@ private struct HistoryRow: View {
 }
 
 /// Filter chip: 4×10 capsule, `.14` when selected.
-private struct ChipStyle: ButtonStyle {
-    let selected: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        Chip(label: configuration.label, selected: selected, pressed: configuration.isPressed)
-    }
-
-    private struct Chip<Label: View>: View {
-        let label: Label
-        let selected: Bool
-        let pressed: Bool
-        @Environment(\.palette) private var palette
-
-        var body: some View {
-            label
-                .font(.pip(11.5))
-                .foregroundStyle(selected ? palette.primary : palette.label(0.6))
-                .padding(.vertical, 4)
-                .padding(.horizontal, 10)
-                .background(Capsule().fill(palette.fill(selected ? 0.14 : pressed ? 0.09 : 0.05)))
-        }
-    }
-}
 
 extension HistoryEntry.Kind {
     var label: String {

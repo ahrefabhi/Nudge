@@ -30,6 +30,7 @@ extension Chime {
         case .question: "Pop"
         case .error: "Basso"
         case .finished: "Hero"
+        case .usage: "Purr"
         }
     }
 
@@ -39,6 +40,7 @@ extension Chime {
         case .question: "Has a question"
         case .error: "Blocked by an error"
         case .finished: "Finished"
+        case .usage: "Near a usage limit"
         }
     }
 }

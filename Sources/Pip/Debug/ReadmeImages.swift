@@ -25,13 +25,16 @@ enum ReadmeImages {
         try write(island("alert-multi", height: 330), "multiple")
         try write(island("manager", height: 670), "manager")
         try write(island("alert-permission", light: true, height: 320), "light")
+        try write(island("alert-usage", height: 300), "usage-alert")
 
         let tabs = PhaseMachine(scheduler: ManualScheduler(start: Date()))
         tabs.update(sessions: MockSessions.calm())
         tabs.history = MockSessions.history()
         tabs.usage = MockSessions.usage()
-        func manager(_ tab: ManagerView.Tab) -> some View {
-            ManagerView(machine: tabs, bar: 32, initialTab: tab)
+        tabs.setUsageAlertRules([UsageAlertRule(scope: .claude, threshold: 75)] + UsageAlertRule.defaults)
+        func manager(_ tab: ManagerTab) -> some View {
+            tabs.managerTab = tab
+            return ManagerView(machine: tabs, bar: 32)
                 .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
                 .background(Color.black)
                 .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))

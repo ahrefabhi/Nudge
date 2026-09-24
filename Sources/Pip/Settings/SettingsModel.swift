@@ -13,6 +13,7 @@ final class SettingsModel {
     private(set) var autoCollapse = Preferences.autoCollapse
     private(set) var popUpOnFinish = Preferences.popUpOnFinish
     private(set) var quietInView = Preferences.quietInView
+    private(set) var usageAlertRules = Preferences.usageAlertRules
     private(set) var soundsEnabled = Preferences.soundsEnabled
     private(set) var sounds = Dictionary(uniqueKeysWithValues: Chime.allCases.map { ($0, Preferences.sound(for: $0)) })
     private(set) var quietUntil: Date?
@@ -22,6 +23,8 @@ final class SettingsModel {
     /// Called after a notification preference changes, so the app can apply it.
     @ObservationIgnored var onPreferencesChanged: (() -> Void)?
     @ObservationIgnored var onQuietChanged: (() -> Void)?
+    /// Usage alerts are edited in the manager's Usage tab.
+    @ObservationIgnored var onEditUsageAlerts: (() -> Void)?
     @ObservationIgnored private var poll: Timer?
 
     init(setup: OnboardingModel, updater: Updater? = nil) {
@@ -45,6 +48,7 @@ final class SettingsModel {
 
     func refresh() {
         quietUntil = Preferences.quietUntil.flatMap { $0 > Date() ? $0 : nil }
+        usageAlertRules = Preferences.usageAlertRules
         loginItem = LoginItem.status
         checksForUpdates = updater?.checksAutomatically ?? false
         lastUpdateCheck = updater?.lastChecked

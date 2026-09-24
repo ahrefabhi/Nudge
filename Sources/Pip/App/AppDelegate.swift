@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let machine = PhaseMachine()
     private let observation = ObservationService()
     private let usage = UsageService()
+    private var usageAlerts = UsageAlerts(handled: Preferences.handledUsageAlerts)
     private let hookSetup = HookSetup()
     private lazy var demo = DemoController(machine: machine)
     private var demoMode = CommandLine.arguments.contains("--demo")
@@ -23,10 +24,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let notch = NotchWindowController(machine: machine, presence: presence)
-        machine.onOpen = { [weak self] session in self?.focus(session) }
+        machine.onOpen = { [weak self] session in
+            if session.kind == .usage { self?.openedUsageAlert(session) } else { self?.focus(session) }
+        }
         machine.onChime = { Sounds.play($0) }
         machine.isInView = { [weak self] session in
-            guard let self, !self.demoMode, Preferences.quietInView else { return false }
+            guard let self, !self.demoMode, Preferences.quietInView, session.kind != .usage else { return false }
             return ForegroundSession.isInView(session, observed: self.observation.observed(session.id))
         }
         applyPreferences()
@@ -35,7 +38,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         observation.onChange = { [weak self] _ in self?.deliverSessions() }
         observation.start()
-        usage.onChange = { [weak self] in self?.machine.usage = $0 }
+        machine.setUsageAlertRules(Preferences.usageAlertRules)
+        machine.onUsageAlertRulesChanged = { [weak self] rules in
+            Preferences.usageAlertRules = rules
+            self?.deliverUsageAlerts()
+        }
+        usage.onChange = { [weak self] in
+            self?.machine.usage = $0
+            self?.deliverUsageAlerts()
+        }
         usage.start()
         machine.onSetUpUsage = { [weak self] agent in
             guard agent == .claude else { return }
@@ -57,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             isDemo: { [weak self] in self?.demoMode ?? false },
             setDemo: { [weak self] in self?.setDemoMode($0) },
             simulate: { [weak self] in self?.demo.trigger($0) },
+            simulateUsage: { [weak self] in self?.demo.triggerUsage() },
             resetDemo: { [weak self] in self?.demo.reset() },
             toggleManager: { [weak self] in self?.toggleManager() },
             showCharacterSheet: { [weak self] in self?.showCharacterSheet() },
@@ -110,6 +122,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         machine.history = history.entries.filter { !disabled.contains($0.host) }
     }
 
+    /// Rate limits past the user's threshold join the queue after sessions that need you.
+    private func deliverUsageAlerts() {
+        guard !demoMode else { return }
+        let alerts = usageAlerts.update(usage.usage, rules: machine.usageAlertRules)
+        if usageAlerts.handled != Preferences.handledUsageAlerts { Preferences.handledUsageAlerts = usageAlerts.handled }
+        machine.update(usageAlerts: alerts)
+    }
+
+    /// The machine has already switched the manager to its Usage tab.
+    private func openedUsageAlert(_ alert: PipSession) {
+        if demoMode { return demo.didOpen(alert) }
+        usageAlerts.handle(alert.id)
+        deliverUsageAlerts()
+    }
+
     private func toggleEnvironment(_ host: HostApp) {
         var disabled = Preferences.disabledHosts
         if disabled.contains(host) { disabled.remove(host) } else { disabled.insert(host) }
@@ -136,7 +163,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setDemoMode(_ on: Bool) {
         demoMode = on
-        if on { demo.reset() } else { deliverSessions() }
+        if on {
+            demo.reset()
+        } else {
+            deliverSessions()
+            deliverUsageAlerts()
+        }
     }
 
     private func toggleManager() {
@@ -156,6 +188,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let model = SettingsModel(setup: setup, updater: updater)
         model.onPreferencesChanged = { [weak self] in self?.applyPreferences() }
         model.onQuietChanged = { [weak self] in self?.presence.refresh() }
+        model.onEditUsageAlerts = { [weak self] in
+            self?.machine.showUsage()
+            self?.notch?.focusIsland()
+        }
         let window = SettingsWindow(model: model)
         settings = window
         window.show()

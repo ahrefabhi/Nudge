@@ -78,9 +78,15 @@ struct SettingsView: View {
                 Text("Stay quiet for the session in front")
                 Text("No pop-up or sound when the session's tab or window is the one you're using. The count still updates.")
             }
+            LabeledContent {
+                Button("Edit in Usage Tab") { model.onEditUsageAlerts?() }
+            } label: {
+                Text("Usage alerts")
+                Text(usageAlertsDetail)
+            }
             Toggle(isOn: Binding(get: { model.soundsEnabled }, set: { model.setSoundsEnabled($0) })) {
                 Text("Play sounds")
-                Text("When a session starts waiting or finishes. Silent during Quiet.")
+                Text("When a session starts waiting or finishes, or usage is high. Silent during Quiet.")
             }
             if model.soundsEnabled {
                 ForEach(Chime.allCases, id: \.self) { chime in
@@ -238,6 +244,12 @@ struct SettingsView: View {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         guard let last = model.lastUpdateCheck else { return "Pip \(version). Updates come from GitHub releases." }
         return "Pip \(version). Last checked \(last.formatted(.relative(presentation: .named)))."
+    }
+
+    /// "Claude at 75% · Claude and Codex at 90%", or how to add one.
+    private var usageAlertsDetail: String {
+        guard !model.usageAlertRules.isEmpty else { return "None. Add one to hear when a Claude or Codex limit gets close." }
+        return model.usageAlertRules.map { "\($0.scope.title) at \($0.threshold)%" }.joined(separator: " · ")
     }
 
     private var hooksDetail: String {

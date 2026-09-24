@@ -5,17 +5,10 @@ import SwiftUI
 /// row is one quiet line that still opens its session when clicked.
 struct ManagerView: View {
     @Environment(\.palette) private var palette
-    enum Tab { case now, history, usage }
-
     let machine: PhaseMachine
     let bar: CGFloat
-    @State private var tab: Tab
-
-    init(machine: PhaseMachine, bar: CGFloat, initialTab: Tab = .now) {
-        self.machine = machine
-        self.bar = bar
-        _tab = State(initialValue: initialTab)
-    }
+    /// The machine owns the tab, so opening a usage alert can switch to Usage.
+    private var tab: ManagerTab { machine.managerTab }
 
     var body: some View {
         let need = machine.queue.filter(\.needsYou)
@@ -123,8 +116,8 @@ struct ManagerView: View {
         .background(RoundedRectangle(cornerRadius: 7).fill(palette.fill(0.07)))
     }
 
-    private func segment(_ title: String, _ value: Tab) -> some View {
-        Button(title) { tab = value }
+    private func segment(_ title: String, _ value: ManagerTab) -> some View {
+        Button(title) { machine.managerTab = value }
             .buttonStyle(.plain)
             .padding(.vertical, 2).padding(.horizontal, 8)
             .background(RoundedRectangle(cornerRadius: 5).fill(palette.fill(tab == value ? 0.14 : 0)))
@@ -173,7 +166,7 @@ private struct NeedsYouRow: View {
                             .foregroundStyle(palette.primary)
                         HStack(spacing: 4) {
                             AgentMark(agent: session.agent, size: 10)
-                            Text(session.host.displayName)
+                            Text(session.hostName)
                         }
                             .font(.pip(10.5))
                             .foregroundStyle(palette.label(0.65))
@@ -239,7 +232,7 @@ private struct QuietRow<Mark: View>: View {
             Spacer(minLength: 8)
             HStack(spacing: 5) {
                 AgentMark(agent: session.agent, size: 10)
-                LiveText { "\(session.host.displayName) · \(RelativeTime.short(since: session.since, now: $0))" }
+                LiveText { "\(session.hostName) · \(RelativeTime.short(since: session.since, now: $0))" }
             }
                 .font(.pip(11))
                 .foregroundStyle(palette.label(0.38))

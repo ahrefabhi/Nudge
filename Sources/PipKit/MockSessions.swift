@@ -102,6 +102,12 @@ public enum MockSessions {
                    quote: "Migrated 14 pages to MDX · build passes · 2m 41s", since: since)
     }
 
+    /// Claude past 90% of its 5-hour limit, for Demo Mode.
+    public static func usageAlert(now: Date = Date()) -> PipSession {
+        let window = UsageWindow(id: "five_hour", minutes: 300, usedPercent: 92, resetsAt: now.addingTimeInterval(42 * 60))
+        return UsageAlerts.alert(id: UsageAlerts.id(.claude, window), agent: .claude, window: window, threshold: 90, since: now, now: now)
+    }
+
     /// Readings for the Usage tab: Claude comfortable, Codex close to its 5-hour limit.
     public static func usage(now: Date = Date()) -> [AgentUsage] {
         func window(_ id: String, _ minutes: Int, _ used: Double, resetsIn: TimeInterval) -> UsageWindow {

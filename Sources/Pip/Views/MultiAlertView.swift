@@ -32,7 +32,8 @@ struct MultiAlertView: View {
             HStack(spacing: 12) {
                 if !palette.isLight { PipGroup(size: 42, count: queue.count) }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(Self.countWord(queue.count)) agents need you")
+                    // A usage alert isn't an agent.
+                    Text("\(Self.countWord(queue.count)) \(queue.contains { $0.kind == .usage } ? "things" : "agents") need you")
                         .font(.pip(15, .semibold))
                         .tracking(-0.15)
                         .foregroundStyle(palette.primary)
@@ -67,7 +68,7 @@ struct MultiAlertView: View {
                         .foregroundStyle(palette.accent(session.kind))
                     HStack(spacing: 5) {
                         AgentMark(agent: session.agent, size: 10)
-                        LiveText { now in "\(session.host.displayName) · \(RelativeTime.short(since: session.since, now: now))" }
+                        LiveText { now in "\(session.hostName) · \(RelativeTime.short(since: session.since, now: now))" }
                     }
                     .font(.pip(11))
                     .foregroundStyle(palette.label(0.38))
