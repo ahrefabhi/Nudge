@@ -29,7 +29,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     init(actions: Actions) {
         self.actions = actions
         super.init()
-        item.button?.image = NSImage(systemSymbolName: "eyes", accessibilityDescription: "Pip")
+        item.button?.image = MenuBarIcon.image()
         let menu = NSMenu()
         menu.delegate = self
         item.menu = menu

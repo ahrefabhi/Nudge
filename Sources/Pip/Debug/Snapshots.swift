@@ -45,6 +45,14 @@ enum Snapshots {
                               to: directory.appending(path: "settings-\(name).png"))
         }
 
+        // The menu bar icon, drawn large on a light and a dark bar to check the cut-out eyes.
+        for (name, bar, ink) in [("light", Color(hex: 0xe8e8ec), Color.black), ("dark", Color(hex: 0x2b2b30), Color.white)] {
+            let icon = Image(nsImage: MenuBarIcon.image()).renderingMode(.template).resizable()
+                .foregroundStyle(ink).frame(width: 72, height: 72)
+                .padding(24).background(bar)
+            try write(icon, to: directory.appending(path: "menubar-\(name).png"))
+        }
+
         let notch = NotchGeometry.fallback
 
         // Minimal mode: a full-screen app hides the menu bar, so a waiting session is only a glow.
