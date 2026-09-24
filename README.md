@@ -90,7 +90,7 @@ State lives in the eyes: sleepy, busy, curious, eager, worried and happy.
 
 Nudge isn't notarized by Apple yet, so the first launch shows this. It means macOS couldn't check the app with Apple, not that anything is wrong with it:
 
-<p align="center"><img src="docs/images/gatekeeper.png" width="258" alt="macOS dialog: “Nudge” Not Opened. Apple could not verify “Nudge” is free of malware that may harm your Mac or compromise your privacy. Buttons: Done and Move to Bin"></p>
+<p align="center"><img src="docs/images/gatekeeper.png" width="262" alt="macOS dialog: “Nudge” Not Opened. Apple could not verify “Nudge” is free of malware that may harm your Mac or compromise your privacy. Buttons: Done and Move to Bin"></p>
 
 Click **Done** (not Move to Bin), then either:
 
