@@ -74,6 +74,23 @@ struct SettingsView: View {
                 Text("Pop up when a session finishes")
                 Text("Otherwise Pip gives a 3-second wink in the notch.")
             }
+            Toggle(isOn: Binding(get: { model.soundsEnabled }, set: { model.setSoundsEnabled($0) })) {
+                Text("Play sounds")
+                Text("When a session starts waiting or finishes. Silent during Quiet.")
+            }
+            if model.soundsEnabled {
+                ForEach(Chime.allCases, id: \.self) { chime in
+                    Picker(chime.title, selection: Binding(
+                        get: { model.sounds[chime] ?? nil },
+                        set: { model.setSound($0, for: chime) }
+                    )) {
+                        Text("None").tag(String?.none)
+                        Divider()
+                        ForEach(Sounds.names, id: \.self) { Text($0).tag(String?.some($0)) }
+                    }
+                    .padding(.leading, 16)
+                }
+            }
             LabeledContent {
                 if model.quietUntil != nil {
                     Button("Resume") { model.setQuiet(for: nil) }

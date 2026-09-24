@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let notch = NotchWindowController(machine: machine, presence: presence)
         machine.onOpen = { [weak self] session in self?.focus(session) }
+        machine.onChime = { Sounds.play($0) }
         applyPreferences()
         presence.onChange = { [weak self] state in self?.machine.muted = state.muted }
         presence.start()

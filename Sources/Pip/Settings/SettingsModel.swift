@@ -12,6 +12,8 @@ final class SettingsModel {
     private(set) var lastUpdateCheck: Date?
     private(set) var autoCollapse = Preferences.autoCollapse
     private(set) var popUpOnFinish = Preferences.popUpOnFinish
+    private(set) var soundsEnabled = Preferences.soundsEnabled
+    private(set) var sounds = Dictionary(uniqueKeysWithValues: Chime.allCases.map { ($0, Preferences.sound(for: $0)) })
     private(set) var quietUntil: Date?
     private(set) var loginItem = LoginItem.status
     var loginError: String?
@@ -64,6 +66,18 @@ final class SettingsModel {
         popUpOnFinish = on
         Preferences.popUpOnFinish = on
         onPreferencesChanged?()
+    }
+
+    func setSoundsEnabled(_ on: Bool) {
+        soundsEnabled = on
+        Preferences.soundsEnabled = on
+    }
+
+    /// Choosing a sound plays it, so the picker doubles as a preview.
+    func setSound(_ name: String?, for chime: Chime) {
+        sounds[chime] = name
+        Preferences.setSound(name, for: chime)
+        if let name { Sounds.preview(name) }
     }
 
     func setQuiet(for duration: TimeInterval?) {
