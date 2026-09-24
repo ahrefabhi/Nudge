@@ -19,7 +19,7 @@ Any session can be opened, not just one that's waiting: in the session manager, 
 
 ## Status
 
-Done: the notch UI, the Pip character, the phase machine, real sessions from the registry and hooks, focusing sessions with the focus ring, onboarding, history, staying out of the way, settings, remembering state across restarts, and light mode. Next: shipping (icon, signing, updates).
+Done: the notch UI, the Pip character, the phase machine, real sessions from the registry and hooks, focusing sessions with the focus ring, onboarding, history, staying out of the way, settings, remembering state across restarts, and light mode, and updates through Sparkle. Next: an app icon, Developer ID signing and notarization, and an uninstall path.
 
 ## Run
 
@@ -54,6 +54,19 @@ swift run Pip --snapshot snapshots   # render the character sheet and every isla
 swift run Pip --dump-sessions        # print the sessions Pip sees right now, then exit
 PIP_HOME=/tmp/pip swift run Pip      # use a scratch data folder instead of ~/Library/Application Support/Pip
 ```
+
+## Updates and releases
+
+Pip updates itself with [Sparkle](https://sparkle-project.org). Each GitHub release carries `Pip-<version>.zip` and an `appcast.xml`; Pip reads `https://github.com/ahrefabhi/pip/releases/latest/download/appcast.xml` once a day (**Check for Updates…** in the menu, or Settings), and installs a download only if its EdDSA signature matches the public key in `Resources/Info.plist`.
+
+```sh
+scripts/release.sh 0.2.0            # dry run: builds, zips, signs, writes appcast.xml into build/release/v0.2.0
+scripts/release.sh 0.2.0 --publish  # also pushes, tags v0.2.0 and uploads both files to a GitHub release
+```
+
+The release script needs a clean working tree. The build number is the commit count, so it always grows. The private signing key lives in your login Keychain (created once with Sparkle's `generate_keys`); export a backup with `.build/artifacts/sparkle/Sparkle/bin/generate_keys -x sparkle-private-key` and keep it somewhere safe, since without it you can't ship updates to existing installs.
+
+Releases are ad-hoc signed for now, so the first launch needs right-click → **Open**, and macOS may ask for Accessibility and Automation again after an update. A Developer ID (Apple Developer Program) removes both.
 
 ## Layout
 
