@@ -19,7 +19,7 @@ Any session can be opened, not just one that's waiting: in the session manager, 
 
 ## Status
 
-Done: the notch UI, the Pip character, the phase machine, real sessions from the registry and hooks, focusing sessions with the focus ring, onboarding, history, staying out of the way, settings, remembering state across restarts, and light mode, and updates through Sparkle. Next: an app icon, Developer ID signing and notarization, and an uninstall path.
+Done: the notch UI, the Pip character, the phase machine, real sessions from the registry and hooks, focusing sessions with the focus ring, onboarding, history, staying out of the way, settings, remembering state across restarts, and light mode, updates through Sparkle, an app icon, and uninstalling. Next: Developer ID signing and notarization.
 
 ## Run
 
@@ -52,6 +52,7 @@ The 👀 menu bar item installs or removes hooks, chooses which apps to watch, o
 swift test
 swift run Pip --snapshot snapshots   # render the character sheet and every island phase to PNG
 swift run Pip --dump-sessions        # print the sessions Pip sees right now, then exit
+scripts/make-icon.sh                 # re-render Resources/AppIcon.icns from PipView
 PIP_HOME=/tmp/pip swift run Pip      # use a scratch data folder instead of ~/Library/Application Support/Pip
 ```
 
@@ -67,6 +68,12 @@ scripts/release.sh 0.2.0 --publish  # also pushes, tags v0.2.0 and uploads both 
 The release script needs a clean working tree. The build number is the commit count, so it always grows. The private signing key lives in your login Keychain (created once with Sparkle's `generate_keys`); export a backup with `.build/artifacts/sparkle/Sparkle/bin/generate_keys -x sparkle-private-key` and keep it somewhere safe, since without it you can't ship updates to existing installs.
 
 Releases are ad-hoc signed for now, so the first launch needs right-click → **Open**, and macOS may ask for Accessibility and Automation again after an update. A Developer ID (Apple Developer Program) removes both.
+
+## Uninstalling
+
+**Uninstall Pip…** (menu bar or Settings) removes Pip's hooks from `~/.claude/settings.json`, deletes `~/Library/Application Support/Pip` (collector, inbox, history, saved sessions), turns off opening at login, clears Pip's settings and caches, and moves the app to the Trash. Backups Pip made of your Claude settings stay in `~/.claude`.
+
+If Pip is just dragged to the Trash, its hooks keep running, but the collector stops writing once 10,000 events are waiting unread (about 5 MB), so it can't fill the disk. Remove the leftover entries by reinstalling and choosing Uninstall, or delete the handlers whose command is `…/Application Support/Pip/bin/pip-hook` from `~/.claude/settings.json`.
 
 ## Layout
 

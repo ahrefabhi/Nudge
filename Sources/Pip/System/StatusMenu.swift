@@ -117,6 +117,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
+        menu.addItem(entry("Uninstall Pip…") { _ in Uninstaller.confirmAndUninstall() })
         menu.addItem(NSMenuItem(title: "Quit Pip", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
     }
 

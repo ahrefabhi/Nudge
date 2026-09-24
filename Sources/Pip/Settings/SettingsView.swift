@@ -12,6 +12,7 @@ struct SettingsView: View {
             environments
             claudeCode
             shortcuts
+            uninstall
         }
         .formStyle(.grouped)
         .frame(width: 480, height: 640)
@@ -140,6 +141,17 @@ struct SettingsView: View {
             Text("Pip only reads session state. It never types into your terminal or approves anything on your behalf.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var uninstall: some View {
+        Section {
+            LabeledContent {
+                Button("Uninstall…", role: .destructive) { Uninstaller.confirmAndUninstall() }
+            } label: {
+                Text("Uninstall Pip")
+                Text("Removes its hooks, history, data and login item, then moves Pip to the Trash.")
+            }
         }
     }
 
