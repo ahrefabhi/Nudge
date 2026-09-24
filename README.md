@@ -5,7 +5,7 @@
 <h1 align="center">Pip</h1>
 
 <p align="center">
-  <strong>A tiny companion that lives in your MacBook's notch and tells you when a Claude Code session needs you.</strong>
+  <strong>A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.</strong>
 </p>
 
 <p align="center">
@@ -19,13 +19,13 @@
   <img src="docs/images/alert.png" width="760" alt="Pip's notch expanded into a notification: Claude needs your permission to run npm install stripe@17.2.0 in payments-api, with Open Session and Later buttons">
 </p>
 
-You start a few Claude Code sessions in iTerm, Terminal and VS Code, switch to something else, and one of them quietly stops to ask for permission. Ten minutes later you notice.
+You start a few Claude Code or Codex sessions in iTerm, Terminal and VS Code, switch to something else, and one of them quietly stops to ask for permission. Ten minutes later you notice.
 
 Pip fixes that. It sits invisibly inside the notch while your agents work. When one needs you, Pip drops out, the notch opens into a notification, and **Open Session** takes you straight to the exact terminal tab or editor window. Then Pip tucks itself away again.
 
 ## Features
 
-- **Knows why a session is waiting.** Permission requests show the exact command, questions show their choices, errors show the error, and finished runs show Claude's summary.
+- **Knows why a session is waiting.** Permission requests show the exact command, questions show their choices, errors show the error, and finished runs show the agent's last reply.
 - **Takes you to the right place.** Opens the precise iTerm tab, Terminal tab or VS Code window, and outlines it with a brief focus ring.
 - **One queue, most urgent first.** Several agents waiting become one list: permission, then questions, then errors, oldest first. Cycle through it with ⌥⌘↓.
 - **Every session at a glance.** Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.
@@ -72,7 +72,7 @@ State lives in the eyes: sleepy, busy, curious, eager, worried and happy.
 1. Download **Pip-x.y.z.zip** from the [latest release](https://github.com/ahrefabhi/pip/releases/latest) and unzip it.
 2. Move **Pip.app** to your Applications folder.
 3. Open Pip, and let macOS open it once (see below).
-4. Follow the short setup. It finds where your agents run, and connects to Claude Code.
+4. Follow the short setup. It finds where your agents run, and connects to Claude Code (and Codex, if you use it).
 
 ### The first time you open Pip
 
@@ -91,20 +91,21 @@ Click **Done** (not Move to Bin), then either:
 
 You only do this once. Later versions arrive through Pip's own updater and open without asking. On macOS 14 you can also right-click Pip.app and choose **Open**.
 
-<p align="center"><img src="docs/images/onboarding.png" width="760" alt="Setup in three steps: Hi, I'm Pip; where do your agents run, with iTerm, Terminal and VS Code found; and permissions for Claude Code hooks, Accessibility and Automation"></p>
+<p align="center"><img src="docs/images/onboarding.png" width="760" alt="Setup in three steps: Hi, I'm Pip; where do your agents run, with iTerm, Terminal and VS Code found; and permissions for Claude Code and Codex hooks, Accessibility and Automation"></p>
 
-**Requirements:** macOS 14 Sonoma or later, and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in a terminal (iTerm or Terminal), in VS Code, or in the Claude app. Pip is designed for Macs with a notch; on other displays it shows as a small black pill at the top of the screen.
+**Requirements:** macOS 14 Sonoma or later, and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in a terminal (iTerm or Terminal), in VS Code, or in the Claude app, and optionally the [Codex CLI](https://developers.openai.com/codex/cli). Pip is designed for Macs with a notch; on other displays it shows as a small black pill at the top of the screen.
 
 Want to look around first? Choose **Demo Mode** from the menu bar and use **Simulate** to trigger each kind of alert.
 
 ## How it works
 
-Pip combines two sources, both on your Mac:
+Pip combines these sources, all on your Mac:
 
 1. **Claude Code's session list** (`~/.claude/sessions`) says which sessions are running and whether they're busy, idle or waiting. Pip reads it with no setup.
 2. **Claude Code hooks** say *why* a session is waiting. Setup adds entries to `~/.claude/settings.json` that run Pip's small collector, `pip-hook`, for each event. The collector keeps only what Pip shows (the command, the question and its choices, the error, Claude's summary, and which app and tab the session is in) and drops the rest, including transcripts. Records go into `~/Library/Application Support/Pip/inbox` and are deleted as soon as Pip reads them.
+3. **Codex hooks**, if Codex is installed, work the same way through `~/.codex/hooks.json`. Codex has no session list, so the collector also notes the Codex process, and Pip drops the session when that process ends. Codex runs new hooks only after you trust them: after installing, type `/hooks` in Codex and trust Pip's entries. Pip never does this for you.
 
-The collector only records. It never answers, approves or blocks anything, prints nothing, and always exits immediately, so it can't slow Claude down or change what it does. Your other settings and hooks are left exactly as they were, and your settings file is backed up before any change.
+The collector only records. It never answers, approves or blocks anything, prints nothing, and always exits immediately, so it can't slow your agent down or change what it does. Your other settings and hooks are left exactly as they were, and your settings file is backed up before any change.
 
 Pip asks macOS for two permissions. **Automation** lets it select the right iTerm or Terminal tab; without it, Open Session can't switch tabs there and points you to the setting. **Accessibility** lets it find the exact window for the focus ring; without it, Pip outlines the app's front window instead.
 
@@ -132,15 +133,17 @@ Pip checks for updates once a day through [Sparkle](https://sparkle-project.org)
 
 ## Uninstall
 
-Choose **Uninstall Pip…** from the menu bar or Settings. After you confirm, Pip removes its hooks from `~/.claude/settings.json`, deletes its data in `~/Library/Application Support/Pip`, turns off opening at login, and moves itself to the Trash. Backups of your Claude settings (`settings.json.pip-backup-…`) are left in `~/.claude`.
+Choose **Uninstall Pip…** from the menu bar or Settings. After you confirm, Pip removes its hooks from `~/.claude/settings.json` (and `~/.codex/hooks.json`), deletes its data in `~/Library/Application Support/Pip`, turns off opening at login, and moves itself to the Trash. Backups Pip made of those files (`….pip-backup-…`) are left next to them.
 
-If you delete Pip.app directly instead, its hooks stay in your Claude settings. They're harmless (the collector stops writing once 10,000 unread events pile up, about 5 MB), but to remove them, reinstall Pip and choose Uninstall, or delete the entries whose command ends in `Application Support/Pip/bin/pip-hook`.
+If you delete Pip.app directly instead, its hooks stay in your Claude (and Codex) settings. They're harmless (the collector stops writing once 10,000 unread events pile up, about 5 MB), but to remove them, reinstall Pip and choose Uninstall, or delete the entries whose command ends in `Application Support/Pip/bin/pip-hook`.
 
 ## Troubleshooting
 
 **"Pip" Not Opened: Apple could not verify "Pip" is free of malware.** Expected on the first launch of a download, because Pip isn't notarized yet. Click **Done**, then use **Open Anyway** or the `xattr` command in [The first time you open Pip](#the-first-time-you-open-pip). If macOS instead says Pip "is damaged and can't be opened", download the zip again; if it still says so, the `xattr` command above clears it.
 
 **Pip lists a session but doesn't say why it's waiting.** The hooks aren't installed, or the session started before they were. Install them from the menu bar (or Settings → Claude Code); a session that was already running may need a restart before it reports to Pip.
+
+**Pip doesn't see Codex sessions.** Install Codex hooks from the menu bar or Settings, then type `/hooks` in Codex and trust Pip's entries; Codex skips untrusted hooks. Restart any Codex session that was already running.
 
 **Open Session brings the app forward but not the right tab.** Allow Pip under System Settings → Privacy & Security → Automation for iTerm or Terminal.
 
@@ -173,8 +176,8 @@ PIP_HOME=/tmp/pip swift run Pip               # use a scratch data folder
 
 | Path | What's there |
 |---|---|
-| `Sources/PipKit` | The model, attention queue and phase machine, observation of Claude Code (inbox, registry, reducer), the hook installer and history. No UI; unit-tested. |
-| `Sources/PipHook` | `pip-hook`, the collector Claude Code runs for each hook event. |
+| `Sources/PipKit` | The model, attention queue and phase machine, observation of Claude Code and Codex (inbox, registry, reducer), the hook installer and history. No UI; unit-tested. |
+| `Sources/PipHook` | `pip-hook`, the collector Claude Code and Codex run for each hook event. |
 | `Sources/PipHookSchema` | The inbox record format shared by the collector and the app. |
 | `Sources/Pip` | The app: the notch panel and island, Pip, the views, onboarding, settings and macOS integration. |
 | `Tests/PipKitTests` | Tests for everything in PipKit. |
@@ -193,7 +196,7 @@ The script needs a clean working tree and uses the commit count as the build num
 
 ## Acknowledgements
 
-Pip is built on [Sparkle](https://sparkle-project.org) for updates. It works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) but isn't affiliated with or endorsed by Anthropic.
+Pip is built on [Sparkle](https://sparkle-project.org) for updates. It works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Codex](https://developers.openai.com/codex) but isn't affiliated with or endorsed by Anthropic or OpenAI.
 
 ## License
 
