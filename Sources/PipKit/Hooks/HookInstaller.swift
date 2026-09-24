@@ -161,6 +161,72 @@ public struct HookInstaller: Sendable {
         return removed
     }
 
+    // MARK: Status line
+
+    // Claude Code passes subscription usage only to its status line command, so Pip can become
+    // that command. A status line the user already had keeps running: its command is carried,
+    // base64-encoded, after `--then`, and put back when Pip's is removed.
+
+    public func statusLineStatus(bundledCollector: URL?) -> Status {
+        guard target == .claude, let settings = try? readSettings().value,
+              let command = settings["statusLine"]?["command"]?.stringValue, isPipStatusLine(command) else { return .notInstalled }
+        return collectorIsCurrent(bundled: bundledCollector) ? .installed : .incomplete
+    }
+
+    /// Makes the collector Claude Code's status line. Returns false when it already was.
+    @discardableResult
+    public func installStatusLine(collectorSource: URL) throws -> Bool {
+        guard FileManager.default.isExecutableFile(atPath: collectorSource.path) else { throw InstallError.collectorMissing }
+        let original = try readSettings()
+        var settings = original.value
+        guard case .object = settings else { throw InstallError.settingsNotAnObject }
+
+        let existing = settings["statusLine"]
+        let previous = existing?["command"]?.stringValue
+        try installCollector(from: collectorSource)
+        if let previous, isPipStatusLine(previous) { return false }
+
+        // Keep the user's other status line keys, like padding.
+        var line: OrderedJSON = if case .object = existing { existing! } else { .object([.init("type", .string("command"))]) }
+        line.set("command", .string(statusLineCommand(forwardingTo: previous)))
+        settings.set("statusLine", line)
+        try write(settings, replacing: original)
+        return true
+    }
+
+    /// Puts back the status line the user had before, or removes the key. Returns false when Pip's wasn't there.
+    @discardableResult
+    public func uninstallStatusLine() throws -> Bool {
+        let original = try readSettings()
+        var settings = original.value
+        guard var line = settings["statusLine"], let command = line["command"]?.stringValue, isPipStatusLine(command) else { return false }
+        if let previous = Self.forwardedCommand(in: command) {
+            line.set("command", .string(previous))
+            settings.set("statusLine", line)
+        } else {
+            settings.set("statusLine", nil)
+        }
+        try write(settings, replacing: original)
+        return true
+    }
+
+    func statusLineCommand(forwardingTo previous: String?) -> String {
+        var parts = [Self.quoted(paths.collector.path), "statusline", "--usage", Self.quoted(paths.claudeUsage.path)]
+        if let previous, !previous.isEmpty { parts += ["--then", Data(previous.utf8).base64EncodedString()] }
+        return parts.joined(separator: " ")
+    }
+
+    func isPipStatusLine(_ command: String) -> Bool {
+        command.hasPrefix(Self.quoted(paths.collector.path) + " statusline")
+    }
+
+    static func forwardedCommand(in command: String) -> String? {
+        let parts = command.split(separator: " ")
+        guard let index = parts.firstIndex(of: "--then"), index + 1 < parts.count,
+              let data = Data(base64Encoded: String(parts[index + 1])) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
     // MARK: Handlers
 
     func handler(for event: String) -> OrderedJSON {

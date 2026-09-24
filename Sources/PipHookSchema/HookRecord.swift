@@ -105,4 +105,8 @@ public struct PipPaths: Sendable, Equatable {
 
     public var inbox: URL { root.appending(path: "inbox", directoryHint: .isDirectory) }
     public var collector: URL { root.appending(path: "bin/pip-hook") }
+    /// The last subscription usage Claude Code passed to its status line, as the collector saved it.
+    public var claudeUsage: URL { root.appending(path: "usage/claude.json") }
+    /// Touched whenever Claude Code runs Pip's status line, with or without usage in its input.
+    public var claudeStatusLineSeen: URL { root.appending(path: "usage/claude-statusline-seen") }
 }
