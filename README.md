@@ -71,8 +71,25 @@ State lives in the eyes: sleepy, busy, curious, eager, worried and happy.
 
 1. Download **Pip-x.y.z.zip** from the [latest release](https://github.com/ahrefabhi/pip/releases/latest) and unzip it.
 2. Move **Pip.app** to your Applications folder.
-3. Open Pip. Because it isn't notarized by Apple yet, macOS says it can't verify it the first time: open **System Settings → Privacy & Security**, scroll to **Security**, and click **Open Anyway** next to Pip. (On macOS 14 you can instead right-click Pip.app and choose **Open**.) You only do this once.
+3. Open Pip, and let macOS open it once (see below).
 4. Follow the short setup. It finds where your agents run, and connects to Claude Code.
+
+### The first time you open Pip
+
+Pip isn't notarized by Apple yet, so the first launch shows this. It means macOS couldn't check the app with Apple, not that anything is wrong with it:
+
+<p align="center"><img src="docs/images/gatekeeper.png" width="258" alt="macOS dialog: “Pip” Not Opened. Apple could not verify “Pip” is free of malware that may harm your Mac or compromise your privacy. Buttons: Done and Move to Bin"></p>
+
+Click **Done** (not Move to Bin), then either:
+
+- **In System Settings:** open **System Settings → Privacy & Security**, scroll to **Security**, and click **Open Anyway** next to *"Pip" was blocked*. Confirm with your password or Touch ID, open Pip again, and choose **Open**.
+- **In Terminal:** remove the "downloaded from the internet" flag, then open Pip normally:
+
+  ```sh
+  xattr -dr com.apple.quarantine /Applications/Pip.app
+  ```
+
+You only do this once. Later versions arrive through Pip's own updater and open without asking. On macOS 14 you can also right-click Pip.app and choose **Open**.
 
 <p align="center"><img src="docs/images/onboarding.png" width="760" alt="Setup in three steps: Hi, I'm Pip; where do your agents run, with iTerm, Terminal and VS Code found; and permissions for Claude Code hooks, Accessibility and Automation"></p>
 
@@ -120,6 +137,8 @@ Choose **Uninstall Pip…** from the menu bar or Settings. After you confirm, Pi
 If you delete Pip.app directly instead, its hooks stay in your Claude settings. They're harmless (the collector stops writing once 10,000 unread events pile up, about 5 MB), but to remove them, reinstall Pip and choose Uninstall, or delete the entries whose command ends in `Application Support/Pip/bin/pip-hook`.
 
 ## Troubleshooting
+
+**"Pip" Not Opened: Apple could not verify "Pip" is free of malware.** Expected on the first launch of a download, because Pip isn't notarized yet. Click **Done**, then use **Open Anyway** or the `xattr` command in [The first time you open Pip](#the-first-time-you-open-pip). If macOS instead says Pip "is damaged and can't be opened", download the zip again; if it still says so, the `xattr` command above clears it.
 
 **Pip lists a session but doesn't say why it's waiting.** The hooks aren't installed, or the session started before they were. Install them from the menu bar (or Settings → Claude Code); a session that was already running may need a restart before it reports to Pip.
 
