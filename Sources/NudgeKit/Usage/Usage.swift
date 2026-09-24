@@ -35,9 +35,9 @@ public struct UsageWindow: Sendable, Equatable, Identifiable {
 public struct UsageReport: Sendable, Equatable {
     public var agent: Agent
     public var windows: [UsageWindow]
-    /// Codex's plan, like "plus" or "free". Claude doesn't say.
+    /// The plan, like Codex's "plus" or Claude's "team", when the agent says.
     public var plan: String?
-    /// When the agent reported these numbers. They only change while a session runs.
+    /// When the agent reported these numbers.
     public var observedAt: Date
 
     public init(agent: Agent, windows: [UsageWindow], plan: String? = nil, observedAt: Date) {
@@ -59,6 +59,8 @@ public struct AgentUsage: Sendable, Equatable, Identifiable {
         case waitingForStatusLine
         /// Claude Code only: the status line runs, but Claude Code hasn't included usage in it.
         case notShared
+        /// Claude Code only: it says this account has no rate limits to report, e.g. an API key.
+        case unavailable
     }
 
     public var agent: Agent

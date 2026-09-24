@@ -44,7 +44,11 @@ public final class PhaseMachine {
     /// Rate limits past the user's threshold. They queue like sessions but aren't counted as agents.
     public private(set) var usageAlerts: [NudgeSession] = []
     /// The manager's selected tab.
-    public var managerTab: ManagerTab = .now
+    public var managerTab: ManagerTab = .now {
+        didSet { if managerTab == .usage { onShowUsageTab?() } }
+    }
+    /// The Usage tab was selected, so its numbers should be fresh.
+    public var onShowUsageTab: (() -> Void)?
     /// Attention episodes the user already opened; hidden until the session changes state.
     public private(set) var resolved: Set<String> = []
     /// Focused queue row, moved by ⌥⌘↓.

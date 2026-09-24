@@ -74,7 +74,7 @@ public enum SessionRegistry {
             guard SafeFile.isOwnedRegularFile(url, maximumBytes: 1024 * 1024),
                   let data = try? Data(contentsOf: url),
                   let entry = try? decoder.decode(RegistryEntry.self, from: data),
-                  isAlive(entry.pid) else { return nil }
+                  isAlive(entry.pid), !isOwnChild(entry.pid) else { return nil }
             return entry
         }
     }
@@ -82,6 +82,13 @@ public enum SessionRegistry {
     static func isAlive(_ pid: Int32) -> Bool {
         guard pid > 0 else { return false }
         return kill(pid, 0) == 0 || errno == EPERM
+    }
+
+    /// The `claude` Nudge runs to ask for usage lists itself while it runs; it isn't a session.
+    static func isOwnChild(_ pid: Int32) -> Bool {
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+        return proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size && pid_t(info.pbi_ppid) == getpid()
     }
 }
 
