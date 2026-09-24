@@ -1,0 +1,170 @@
+import AppKit
+import Carbon.HIToolbox
+import PipKit
+
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    private let machine = PhaseMachine()
+    private let observation = ObservationService()
+    private let hookSetup = HookSetup()
+    private lazy var demo = DemoController(machine: machine)
+    private var demoMode = CommandLine.arguments.contains("--demo")
+    private var notch: NotchWindowController?
+    private var statusMenu: StatusMenu?
+    private var hotKeys: HotKeys?
+    private var characterSheet: NSWindow?
+    private var onboarding: OnboardingWindow?
+    private var settings: SettingsWindow?
+    private let focusRing = FocusRing()
+    private let presence = PresenceMonitor()
+    private let historyStore = HistoryStore()
+    private lazy var history = HistoryRecorder(entries: historyStore.load())
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        let notch = NotchWindowController(machine: machine, presence: presence)
+        machine.onOpen = { [weak self] session in self?.focus(session) }
+        applyPreferences()
+        presence.onChange = { [weak self] state in self?.machine.muted = state.muted }
+        presence.start()
+
+        observation.onChange = { [weak self] _ in self?.deliverSessions() }
+        observation.start()
+        if demoMode { demo.reset() }
+
+        statusMenu = StatusMenu(actions: .init(
+            sessionCount: { [weak self] in self?.visibleSessions.count ?? 0 },
+            hookStatus: { [weak self] in self?.hookSetup.status ?? .notInstalled },
+            installHooks: { [weak self] in self?.hookSetup.confirmAndInstall() },
+            removeHooks: { [weak self] in self?.hookSetup.confirmAndRemove() },
+            isDemo: { [weak self] in self?.demoMode ?? false },
+            setDemo: { [weak self] in self?.setDemoMode($0) },
+            simulate: { [weak self] in self?.demo.trigger($0) },
+            resetDemo: { [weak self] in self?.demo.reset() },
+            toggleManager: { [weak self] in self?.toggleManager() },
+            showCharacterSheet: { [weak self] in self?.showCharacterSheet() },
+            showSetup: { [weak self] in self?.showOnboarding() },
+            showSettings: { [weak self] in self?.showSettings() },
+            quietUntil: { Preferences.quietUntil.flatMap { $0 > Date() ? $0 : nil } },
+            setQuiet: { [weak self] until in
+                Preferences.quietUntil = until
+                self?.presence.refresh()
+            },
+            toggleEnvironment: { [weak self] host in self?.toggleEnvironment(host) }
+        ))
+
+        let hotKeys = HotKeys()
+        // ⌥⌘. rather than ⌘⇧., which Finder and Open/Save dialogs use to show hidden files.
+        hotKeys.register(keyCode: kVK_ANSI_Period, modifiers: cmdKey | optionKey) { [weak self] in self?.toggleManager() }
+        hotKeys.register(keyCode: kVK_DownArrow, modifiers: cmdKey | optionKey) { [weak self] in
+            self?.machine.cycleNext()
+            self?.notch?.focusIsland()
+        }
+
+        notch.show()
+        self.notch = notch
+        self.hotKeys = hotKeys
+
+        if !Preferences.onboardingCompleted && !demoMode { showOnboarding() }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        observation.stop()
+    }
+
+    // MARK: Sessions
+
+    /// Real sessions, minus apps the user turned off.
+    private var visibleSessions: [PipSession] {
+        let disabled = Preferences.disabledHosts
+        return observation.sessions.filter { !disabled.contains($0.host) }
+    }
+
+    private func deliverSessions() {
+        // History sees every session, so hiding an app never reads as its sessions being answered.
+        // It keeps recording in Demo Mode; it just isn't shown.
+        if history.record(observation.sessions) { historyStore.save(history.entries) }
+        guard !demoMode else { return }
+        let disabled = Preferences.disabledHosts
+        machine.update(sessions: visibleSessions)
+        machine.history = history.entries.filter { !disabled.contains($0.host) }
+    }
+
+    private func toggleEnvironment(_ host: HostApp) {
+        var disabled = Preferences.disabledHosts
+        if disabled.contains(host) { disabled.remove(host) } else { disabled.insert(host) }
+        Preferences.disabledHosts = disabled
+        deliverSessions()
+    }
+
+    // MARK: Actions
+
+    private func focus(_ session: PipSession) {
+        if demoMode { return demo.didOpen(session) }
+        let observed = observation.observed(session.id)
+        switch SessionOpener.open(session, observed: observed) {
+        case .success:
+            // The hook's bundle id is the exact app (e.g. VS Code Insiders); the host type is the fallback.
+            if let bundleID = observed?.host.bundleID ?? session.host.bundleID {
+                focusRing.flash(appBundleID: bundleID, color: session.kind.accent)
+            }
+        case .failure(let failure):
+            NSLog("Pip couldn't open %@: %@", session.project, failure.description)
+            if case .automationDenied = failure { showAutomationHelp(failure) } else { NSSound.beep() }
+        }
+    }
+
+    private func setDemoMode(_ on: Bool) {
+        demoMode = on
+        if on { demo.reset() } else { deliverSessions() }
+    }
+
+    private func toggleManager() {
+        machine.toggleManager()
+        if machine.phase == .manager { notch?.focusIsland() }
+    }
+
+    private func applyPreferences() {
+        machine.autoCollapse = Preferences.autoCollapse
+        machine.expandFinished = Preferences.popUpOnFinish
+    }
+
+    private func showSettings() {
+        if let settings { return settings.show() }
+        let setup = OnboardingModel(sessions: { [weak self] in self?.observation.sessions ?? [] }, hookSetup: hookSetup)
+        setup.onEnvironmentsChanged = { [weak self] in self?.deliverSessions() }
+        let model = SettingsModel(setup: setup)
+        model.onPreferencesChanged = { [weak self] in self?.applyPreferences() }
+        model.onQuietChanged = { [weak self] in self?.presence.refresh() }
+        let window = SettingsWindow(model: model)
+        settings = window
+        window.show()
+    }
+
+    private func showOnboarding() {
+        if let onboarding { return onboarding.show() }
+        let model = OnboardingModel(sessions: { [weak self] in self?.observation.sessions ?? [] }, hookSetup: hookSetup)
+        model.onEnvironmentsChanged = { [weak self] in self?.deliverSessions() }
+        let window = OnboardingWindow(model: model) { [weak self] in
+            Preferences.onboardingCompleted = true
+            self?.onboarding = nil
+        }
+        onboarding = window
+        window.show()
+    }
+
+    private func showCharacterSheet() {
+        let window = characterSheet ?? CharacterSheet.makeWindow()
+        characterSheet = window
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    private func showAutomationHelp(_ failure: SessionOpener.Failure) {
+        let alert = NSAlert()
+        alert.messageText = "Pip needs permission to switch tabs"
+        alert.informativeText = failure.description
+        alert.addButton(withTitle: "Open System Settings")
+        alert.addButton(withTitle: "Not Now")
+        NSApp.activate()
+        if alert.runModal() == .alertFirstButtonReturn { Permissions.open(.automation) }
+    }
+}
