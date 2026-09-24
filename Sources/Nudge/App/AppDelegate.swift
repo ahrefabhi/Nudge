@@ -9,7 +9,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var usageAlerts = UsageAlerts(handled: Preferences.handledUsageAlerts)
     private let hookSetup = HookSetup()
     private lazy var demo = DemoController(machine: machine)
-    private var demoMode = CommandLine.arguments.contains("--demo")
+    private lazy var demoScript = DemoScript(machine: machine, demo: demo)
+    private let scripted = CommandLine.arguments.contains("--demo-script")
+    private lazy var demoMode = scripted || CommandLine.arguments.contains("--demo")
     private var notch: NotchWindowController?
     private var statusMenu: StatusMenu?
     private var hotKeys: HotKeys?
@@ -34,7 +36,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return ForegroundSession.isInView(session, observed: self.observation.observed(session.id))
         }
         applyPreferences()
-        presence.onChange = { [weak self] state in self?.machine.muted = state.muted }
+        // A scripted take plays through, even with the menu bar hidden or Quiet on.
+        presence.onChange = { [weak self] state in self?.machine.muted = state.muted && self?.scripted == false }
         presence.start()
 
         observation.onChange = { [weak self] _ in self?.deliverSessions() }
@@ -45,7 +48,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.deliverUsageAlerts()
         }
         usage.onChange = { [weak self] in
-            self?.machine.usage = $0
+            // A scripted take shows the sample readings, not yours.
+            if self?.scripted == false { self?.machine.usage = $0 }
             self?.deliverUsageAlerts()
         }
         usage.start()
@@ -98,6 +102,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.hotKeys = hotKeys
 
         if !Preferences.onboardingCompleted && !demoMode { showOnboarding() }
+        if scripted { demoScript.run() }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
