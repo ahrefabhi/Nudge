@@ -27,6 +27,8 @@ final class OnboardingModel {
     var hooks: HookInstaller.Status = .notInstalled
     /// `nil` when Codex isn't installed, so its row doesn't show.
     var codexHooks: HookInstaller.Status?
+    /// Whether Pip is Claude Code's status line, which is how it reads Claude usage.
+    var claudeUsage: HookInstaller.Status = .notInstalled
     var accessibility = false
     var automation: AutomationState = .asksOnFirstUse
 
@@ -77,6 +79,7 @@ final class OnboardingModel {
         if let hookSetup {
             hooks = hookSetup.status(.claude)
             codexHooks = HookSetup.availableTargets.contains(.codex) ? hookSetup.status(.codex) : nil
+            claudeUsage = hookSetup.statusLineStatus()
         }
         accessibility = Permissions.accessibilityTrusted
         refreshAutomation(ask: false)
@@ -122,6 +125,16 @@ final class OnboardingModel {
 
     func removeHooks(_ target: HookInstaller.Target) {
         hookSetup?.confirmAndRemove(target)
+        refresh()
+    }
+
+    func setUpClaudeUsage() {
+        hookSetup?.confirmAndInstallStatusLine()
+        refresh()
+    }
+
+    func removeClaudeUsage() {
+        hookSetup?.confirmAndRemoveStatusLine()
         refresh()
     }
 

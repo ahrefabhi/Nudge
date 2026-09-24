@@ -55,9 +55,12 @@ struct IslandMetrics: Equatable {
             return IslandMetrics(width: 420, height: alertHeight(machine.focused) + extra, radius: 30, shoulder: shoulder)
         case .manager:
             // With nothing running and no history there's only the empty state to show.
-            return IslandMetrics(width: 460, height: (managerIsEmpty(machine) ? 350 : 580) + extra, radius: 30, shoulder: shoulder)
+            return IslandMetrics(width: 460, height: (managerIsEmpty(machine) ? 350 : 580) + managerTabRow + extra, radius: 30, shoulder: shoulder)
         }
     }
+
+    /// The manager's Now · History · Usage row, under the camera row.
+    static let managerTabRow: CGFloat = 30
 
     static func managerIsEmpty(_ machine: PhaseMachine) -> Bool {
         machine.sessions.isEmpty && machine.history.isEmpty

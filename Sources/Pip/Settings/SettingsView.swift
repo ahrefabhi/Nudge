@@ -137,6 +137,18 @@ struct SettingsView: View {
                 }
             }
             LabeledContent {
+                switch model.setup.claudeUsage {
+                case .installed: Button("Remove…") { model.setup.removeClaudeUsage() }
+                case .incomplete: Button("Update") { model.setup.setUpClaudeUsage() }
+                case .notInstalled: Button("Set Up…") { model.setup.setUpClaudeUsage() }
+                }
+            } label: {
+                Label { Text("Claude usage") } icon: { AgentMark(agent: .claude, size: 13) }
+                Text(model.setup.claudeUsage == .notInstalled
+                     ? "Shows your 5-hour and weekly limits in the Usage tab. Reads them through Claude Code's status line."
+                     : "Read through Claude Code's status line. Your own status line, if you had one, still runs.")
+            }
+            LabeledContent {
                 if model.setup.accessibility {
                     Label("Allowed", systemImage: "checkmark").foregroundStyle(.secondary)
                 } else {

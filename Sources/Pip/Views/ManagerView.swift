@@ -5,7 +5,7 @@ import SwiftUI
 /// row is one quiet line that still opens its session when clicked.
 struct ManagerView: View {
     @Environment(\.palette) private var palette
-    enum Tab { case now, history }
+    enum Tab { case now, history, usage }
 
     let machine: PhaseMachine
     let bar: CGFloat
@@ -33,16 +33,19 @@ struct ManagerView: View {
                         .lineLimit(1)
                 }
                 Spacer()
-                segmented
             }
             .padding(.horizontal, 18)
             .frame(height: bar)
 
-            if tab == .history {
-                HistoryView(machine: machine)
-                    .frame(maxHeight: .infinity, alignment: .top)
-            } else {
-                nowList(need)
+            // Its own row, below the camera: three tabs are wider than the space beside the notch.
+            segmented
+                .frame(maxWidth: .infinity)
+                .frame(height: IslandMetrics.managerTabRow)
+
+            switch tab {
+            case .now: nowList(need)
+            case .history: HistoryView(machine: machine).frame(maxHeight: .infinity, alignment: .top)
+            case .usage: UsageView(machine: machine).frame(maxHeight: .infinity, alignment: .top)
             }
 
             footer
@@ -113,6 +116,7 @@ struct ManagerView: View {
         HStack(spacing: 0) {
             segment("Now", .now)
             segment("History", .history)
+            segment("Usage", .usage)
         }
         .font(.pip(11))
         .padding(2)
