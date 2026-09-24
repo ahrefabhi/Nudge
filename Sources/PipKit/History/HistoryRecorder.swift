@@ -39,7 +39,7 @@ public struct HistoryRecorder: Sendable {
             if session.kind == .working, before?.kind != .working { workingSince[session.id] = session.since }
 
             if session.needsYou, let kind = HistoryEntry.Kind(session.kind) {
-                changed = insert(HistoryEntry(id: session.attentionKey, sessionID: session.id, project: session.project,
+                changed = insert(HistoryEntry(id: session.attentionKey, sessionID: session.id, agent: session.agent, project: session.project,
                                               host: session.host, kind: kind, at: session.since,
                                               detail: session.quote ?? session.task)) || changed
             }
@@ -49,14 +49,14 @@ public struct HistoryRecorder: Sendable {
 
             if session.kind == .finished, before?.kind != .finished {
                 let duration = workingSince[session.id].map { session.since.timeIntervalSince($0) }
-                changed = insert(HistoryEntry(id: session.attentionKey, sessionID: session.id, project: session.project,
+                changed = insert(HistoryEntry(id: session.attentionKey, sessionID: session.id, agent: session.agent, project: session.project,
                                               host: session.host, kind: .finished, at: session.since,
                                               detail: session.quote ?? session.task, duration: duration)) || changed
             }
 
             if session.kind == .working, before == nil || before?.kind == .idle {
                 changed = insert(HistoryEntry(id: "started|\(session.id)|\(session.since.timeIntervalSinceReferenceDate)",
-                                              sessionID: session.id, project: session.project, host: session.host,
+                                              sessionID: session.id, agent: session.agent, project: session.project, host: session.host,
                                               kind: .started, at: session.since, detail: session.task)) || changed
             }
         }

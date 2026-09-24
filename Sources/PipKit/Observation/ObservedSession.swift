@@ -1,7 +1,8 @@
 import Foundation
 import PipHookSchema
 
-/// What Pip knows about one Claude Code session, from hook events and the session registry.
+/// What Pip knows about one Claude Code or Codex session, from hook events (and, for Claude
+/// Code, its session registry).
 public struct ObservedSession: Sendable, Equatable, Codable {
     public enum Phase: Sendable, Equatable, Codable {
         case idle
@@ -60,6 +61,10 @@ public struct ObservedSession: Sendable, Equatable, Codable {
     public var host = HookRecord.HostHint()
     /// Whether this session is listed in Claude's session registry.
     public var registered = false
+    /// `nil` means Claude Code: sessions saved before Codex support have no agent.
+    public var agent: Agent?
+
+    public var resolvedAgent: Agent { agent ?? .claude }
 
     public init(id: String, cwd: String, since: Date) {
         self.id = id

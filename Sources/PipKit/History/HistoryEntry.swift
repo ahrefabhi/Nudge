@@ -23,6 +23,8 @@ public struct HistoryEntry: Codable, Identifiable, Sendable, Equatable {
 
     public var id: String
     public var sessionID: String
+    /// `nil` in entries saved before Codex support, meaning Claude Code.
+    public var agent: Agent?
     public var project: String
     public var host: HostApp
     public var kind: Kind
@@ -35,10 +37,11 @@ public struct HistoryEntry: Codable, Identifiable, Sendable, Equatable {
     /// How long a finished run took, from when it started working.
     public var duration: TimeInterval?
 
-    public init(id: String, sessionID: String, project: String, host: HostApp, kind: Kind, at: Date,
+    public init(id: String, sessionID: String, agent: Agent? = nil, project: String, host: HostApp, kind: Kind, at: Date,
                 detail: String? = nil, endedAt: Date? = nil, ended: Bool = false, duration: TimeInterval? = nil) {
         self.id = id
         self.sessionID = sessionID
+        self.agent = agent
         self.project = project
         self.host = host
         self.kind = kind

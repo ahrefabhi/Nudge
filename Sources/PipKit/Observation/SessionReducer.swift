@@ -11,6 +11,12 @@ public struct SessionReducer: Sendable {
 
     /// A session that sent events but is not in the registry yet (it may still be starting).
     static let unregisteredGrace: TimeInterval = 30
+    /// Codex has no registry. A Codex session whose process Pip couldn't find is kept this long
+    /// after its last event (Codex ends idle sessions after 30 minutes anyway).
+    static let codexWithoutProcessLimit: TimeInterval = 2 * 60 * 60
+
+    /// Whether a process is still running. Replaceable for tests.
+    var processIsAlive: @Sendable (Int32) -> Bool = { SessionRegistry.isAlive($0) }
 
     public init() {}
 
@@ -28,6 +34,9 @@ public struct SessionReducer: Sendable {
         if let cwd = record.cwd { session.cwd = cwd }
         session.lastEventAt = max(session.lastEventAt, at)
         if let host = record.host { session.host.merge(host) }
+        if let agent = record.agent.flatMap(Agent.init(rawValue:)) { session.agent = agent }
+        // Codex has no registry, so its process comes from the collector.
+        if let pid = record.agentPID, pid > 0 { session.pid = pid }
         let toolKey = record.toolUseID.map { "\(record.sessionID)|\($0)" }
 
         switch record.event {
@@ -82,6 +91,11 @@ public struct SessionReducer: Sendable {
 
         case "StopFailure":
             session.set(.failed(record.error ?? "Claude's response failed"), at: at)
+
+        case "Interrupt":
+            // Codex: the user stopped the turn, so it's waiting for the next prompt.
+            session.set(.idle, at: at)
+            session.activity = nil
 
         case "PreCompact":
             if !session.phase.needsUser {
@@ -144,8 +158,15 @@ public struct SessionReducer: Sendable {
         }
 
         sessions = sessions.filter { id, session in
-            live.contains(id) || (!session.registered && now.timeIntervalSince(session.lastEventAt) < Self.unregisteredGrace)
+            if session.resolvedAgent == .codex { return codexIsRunning(session, now: now) }
+            return live.contains(id) || (!session.registered && now.timeIntervalSince(session.lastEventAt) < Self.unregisteredGrace)
         }
+    }
+
+    /// Codex sessions aren't in Claude's registry: they stay while their process runs.
+    private func codexIsRunning(_ session: ObservedSession, now: Date) -> Bool {
+        if let pid = session.pid { return processIsAlive(pid) }
+        return now.timeIntervalSince(session.lastEventAt) < Self.codexWithoutProcessLimit
     }
 
     // MARK: Interpreting tool input
