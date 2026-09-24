@@ -232,4 +232,27 @@ import Testing
         trigger(.permission)
         #expect(chimes.isEmpty)
     }
+
+    // MARK: In view
+
+    @Test func aSessionInViewOnlyUpdatesThePill() {
+        var chimes: [Chime] = []
+        machine.onChime = { chimes.append($0) }
+        machine.isInView = { $0.id == "payments" }
+        trigger(.permission)
+        #expect(machine.phase == .pill, "no peek for the tab you're looking at")
+        #expect(machine.queue.map(\.id) == ["payments"], "it still counts")
+        #expect(chimes.isEmpty)
+        clock.advance(by: 10)
+        #expect(machine.phase == .pill)
+    }
+
+    @Test func anotherSessionStillAnnouncesWhileOneIsInView() {
+        var chimes: [Chime] = []
+        machine.onChime = { chimes.append($0) }
+        machine.isInView = { $0.id == "payments" }
+        trigger(.multiple)
+        #expect(machine.phase == .peek)
+        #expect(chimes == [.question], "the sound is for the most urgent session not in view")
+    }
 }

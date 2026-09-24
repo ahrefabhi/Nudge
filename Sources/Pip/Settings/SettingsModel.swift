@@ -12,6 +12,7 @@ final class SettingsModel {
     private(set) var lastUpdateCheck: Date?
     private(set) var autoCollapse = Preferences.autoCollapse
     private(set) var popUpOnFinish = Preferences.popUpOnFinish
+    private(set) var quietInView = Preferences.quietInView
     private(set) var soundsEnabled = Preferences.soundsEnabled
     private(set) var sounds = Dictionary(uniqueKeysWithValues: Chime.allCases.map { ($0, Preferences.sound(for: $0)) })
     private(set) var quietUntil: Date?
@@ -66,6 +67,11 @@ final class SettingsModel {
         popUpOnFinish = on
         Preferences.popUpOnFinish = on
         onPreferencesChanged?()
+    }
+
+    func setQuietInView(_ on: Bool) {
+        quietInView = on
+        Preferences.quietInView = on
     }
 
     func setSoundsEnabled(_ on: Bool) {

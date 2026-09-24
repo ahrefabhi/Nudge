@@ -34,6 +34,12 @@ enum Preferences {
         set { defaults.set(newValue, forKey: "popUpOnFinish") }
     }
 
+    /// Stay quiet for a session whose tab or window is already in front. On by default.
+    static var quietInView: Bool {
+        get { defaults.object(forKey: "quietInView") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "quietInView") }
+    }
+
     /// Play a sound when a session starts waiting or finishes. On by default; Quiet silences it.
     static var soundsEnabled: Bool {
         get { defaults.object(forKey: "soundsEnabled") as? Bool ?? true }

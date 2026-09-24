@@ -133,9 +133,11 @@ Pip asks macOS for two permissions. **Automation** lets it select the right iTer
 
 **Staying out of the way.** When an app is full screen (or the menu bar is set to hide), Pip shrinks to a 4px glow along the top edge, only while something is waiting; click it to see what. While Zoom is sharing your screen, or when you turn on **Quiet** from the menu bar, new alerts only update the count, no sound plays and the notch doesn't open by itself. macOS doesn't let apps read Focus modes, so use Quiet for those.
 
-<p align="center"><img src="docs/images/settings.png" width="360" alt="Pip's settings: appearance, open at login, update checks, notification options, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
+**Already looking at it.** If the session that starts waiting is the one in front of you (its iTerm or Terminal tab is selected, its VS Code window is focused, or the Claude app is in front) and you've used your Mac in the last minute, Pip stays quiet for it, just as in Quiet: the count updates, but there's no pop-up and no sound. Other sessions still announce themselves. Turn this off in Settings with **Stay quiet for the session in front**.
 
-**Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, sounds for each state, Quiet, which apps to watch, hooks, Claude usage and permissions.
+<p align="center"><img src="docs/images/settings.png" width="360" alt="Pip's settings: appearance, open at login, update checks, notification options, staying quiet for the session in front, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
+
+**Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, staying quiet for the session in front, sounds for each state, Quiet, which apps to watch, hooks, Claude usage and permissions.
 
 ## Updates
 

@@ -74,6 +74,10 @@ struct SettingsView: View {
                 Text("Pop up when a session finishes")
                 Text("Otherwise Pip gives a 3-second wink in the notch.")
             }
+            Toggle(isOn: Binding(get: { model.quietInView }, set: { model.setQuietInView($0) })) {
+                Text("Stay quiet for the session in front")
+                Text("No pop-up or sound when the session's tab or window is the one you're using. The count still updates.")
+            }
             Toggle(isOn: Binding(get: { model.soundsEnabled }, set: { model.setSoundsEnabled($0) })) {
                 Text("Play sounds")
                 Text("When a session starts waiting or finishes. Silent during Quiet.")
