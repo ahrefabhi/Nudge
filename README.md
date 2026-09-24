@@ -12,6 +12,7 @@
   <a href="https://github.com/ahrefabhi/pip/releases/latest"><img src="https://img.shields.io/github/v/release/ahrefabhi/pip?label=download&color=black" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-black" alt="Requires macOS 14 or later">
   <img src="https://img.shields.io/badge/Swift-6.2-orange" alt="Built with Swift 6.2">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 </p>
 
 <p align="center">
@@ -172,3 +173,7 @@ The script needs a clean working tree and uses the commit count as the build num
 ## Acknowledgements
 
 Pip is built on [Sparkle](https://sparkle-project.org) for updates. It works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) but isn't affiliated with or endorsed by Anthropic.
+
+## License
+
+Pip is available under the [MIT license](LICENSE).
