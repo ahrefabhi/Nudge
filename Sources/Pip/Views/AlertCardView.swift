@@ -45,10 +45,13 @@ struct AlertCardView: View {
                     .foregroundStyle(accent)
             }
             Spacer(minLength: 12)
-            Text(session.hostLabel)
-                .font(.pip(11))
-                .foregroundStyle(palette.label(0.5))
-                .lineLimit(1)
+            HStack(spacing: 5) {
+                AgentMark(agent: session.agent, size: 11)
+                Text(session.hostLabel)
+            }
+            .font(.pip(11))
+            .foregroundStyle(palette.label(0.5))
+            .lineLimit(1)
         }
     }
 

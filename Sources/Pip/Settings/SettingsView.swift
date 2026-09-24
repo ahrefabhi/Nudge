@@ -119,7 +119,7 @@ struct SettingsView: View {
                 case .notInstalled: Button("Install") { model.setup.installHooks() }
                 }
             } label: {
-                Text("Claude Code hooks")
+                Label { Text("Claude Code hooks") } icon: { AgentMark(agent: .claude, size: 13) }
                 Text(hooksDetail)
             }
             if let codex = model.setup.codexHooks {
@@ -130,7 +130,7 @@ struct SettingsView: View {
                     case .notInstalled: Button("Install") { model.setup.installHooks(.codex) }
                     }
                 } label: {
-                    Text("Codex hooks")
+                    Label { Text("Codex hooks") } icon: { AgentMark(agent: .codex, size: 13) }
                     Text(codex == .installed
                          ? "Installed in \(model.setup.settingsPath(.codex)). In Codex, trust them once with /hooks."
                          : codex == .incomplete ? "Some hooks are missing or out of date." : "Lets Pip see Codex sessions and why they wait.")

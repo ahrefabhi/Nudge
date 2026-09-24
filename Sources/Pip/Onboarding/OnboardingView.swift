@@ -134,6 +134,7 @@ private struct PermissionsStep: View {
             }
             OnboardingList(rows: rows) { row in
                 HStack(spacing: 12) {
+                    if let agent = row.agent { AgentMark(agent: agent, size: 16) }
                     RowText(title: row.title, detail: row.detail)
                     switch row.status {
                     case .done(let label):
@@ -179,6 +180,7 @@ private struct PermissionsStep: View {
         let title: String
         let detail: String
         let status: Status
+        var agent: Agent? = nil
         var id: String { title }
     }
 
@@ -194,7 +196,7 @@ private struct PermissionsStep: View {
         case .denied: .action("Open Settings…", model.allowAutomation)
         case .asksOnFirstUse: .note("Asks on first use")
         }
-        var rows = [Row(title: "Claude Code hooks", detail: "Adds \(HookInstaller.events.count) hooks to \(model.settingsPath)", status: hooks)]
+        var rows = [Row(title: "Claude Code hooks", detail: "Adds \(HookInstaller.events.count) hooks to \(model.settingsPath)", status: hooks, agent: .claude)]
         if let codex = model.codexHooks {
             let status: Row.Status = switch codex {
             case .installed: .done("Installed")
@@ -203,7 +205,7 @@ private struct PermissionsStep: View {
             }
             // Codex also needs the user to trust new hooks, so say so right in the row.
             rows.append(Row(title: "Codex hooks", detail: codex == .installed ? "Trust them in Codex with /hooks" : "Adds hooks to \(model.settingsPath(.codex))",
-                            status: status))
+                            status: status, agent: .codex))
         }
         return rows + [
             Row(title: "Accessibility", detail: "Needed to raise the exact window",

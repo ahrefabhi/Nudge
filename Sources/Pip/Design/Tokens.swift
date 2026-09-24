@@ -120,8 +120,3 @@ extension Font {
         .system(size: size, weight: weight, design: .monospaced)
     }
 }
-
-extension PipSession {
-    /// Where the session runs, with "· Codex" for Codex so the two agents are easy to tell apart.
-    var sourceName: String { agent == .codex ? "\(host.displayName) · Codex" : host.displayName }
-}

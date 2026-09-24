@@ -65,9 +65,12 @@ struct MultiAlertView: View {
                     Text(session.kind.tag)
                         .font(.pip(12))
                         .foregroundStyle(palette.accent(session.kind))
-                    LiveText { now in "\(session.sourceName) · \(RelativeTime.short(since: session.since, now: now))" }
-                        .font(.pip(11))
-                        .foregroundStyle(palette.label(0.38))
+                    HStack(spacing: 5) {
+                        AgentMark(agent: session.agent, size: 10)
+                        LiveText { now in "\(session.host.displayName) · \(RelativeTime.short(since: session.since, now: now))" }
+                    }
+                    .font(.pip(11))
+                    .foregroundStyle(palette.label(0.38))
                 }
                 .lineLimit(1)
                 Spacer(minLength: 8)
