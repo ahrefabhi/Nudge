@@ -30,6 +30,7 @@ Pip fixes that. It sits invisibly inside the notch while your agents work. When 
 - **One queue, most urgent first.** Several agents waiting become one list: permission, then questions, then errors, oldest first. Cycle through it with ⌥⌘↓.
 - **Every session at a glance.** Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.
 - **Knows how much you have left.** The Usage tab shows how much of your Claude and Codex rate limits you've used (5-hour and weekly) and when each one resets.
+- **Sounds you can tell apart.** A different chime for permission, questions, errors and finished runs, each one changeable or silenced in Settings.
 - **Stays out of the way.** Unanswered alerts fold into a small pill. In full screen Pip shrinks to a thin glow, and it goes quiet while Zoom shares your screen or when you ask it to.
 - **Read-only by design.** Pip never types into your terminal and never approves anything. Answers always happen in the real session.
 - **Private.** Everything stays on your Mac. The only network request Pip makes is its update check to GitHub.
@@ -130,11 +131,11 @@ Pip asks macOS for two permissions. **Automation** lets it select the right iTer
 
 ↵, Esc and ⌘1–9 work once the notch has focus: click it, or use ⌥⌘. or ⌥⌘↓. Pip never takes the keyboard from your editor on its own.
 
-**Staying out of the way.** When an app is full screen (or the menu bar is set to hide), Pip shrinks to a 4px glow along the top edge, only while something is waiting; click it to see what. While Zoom is sharing your screen, or when you turn on **Quiet** from the menu bar, new alerts only update the count and the notch doesn't open by itself. macOS doesn't let apps read Focus modes, so use Quiet for those.
+**Staying out of the way.** When an app is full screen (or the menu bar is set to hide), Pip shrinks to a 4px glow along the top edge, only while something is waiting; click it to see what. While Zoom is sharing your screen, or when you turn on **Quiet** from the menu bar, new alerts only update the count, no sound plays and the notch doesn't open by itself. macOS doesn't let apps read Focus modes, so use Quiet for those.
 
-<p align="center"><img src="docs/images/settings.png" width="360" alt="Pip's settings: appearance, open at login, update checks, notification options, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
+<p align="center"><img src="docs/images/settings.png" width="360" alt="Pip's settings: appearance, open at login, update checks, notification options, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
 
-**Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, Quiet, which apps to watch, hooks, Claude usage and permissions.
+**Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, sounds for each state, Quiet, which apps to watch, hooks, Claude usage and permissions.
 
 ## Updates
 
