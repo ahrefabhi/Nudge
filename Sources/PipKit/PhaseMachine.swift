@@ -30,6 +30,7 @@ public final class PhaseMachine {
         public var nextPeekDelay: TimeInterval = 1.5
         public var peekHold: TimeInterval = 0.72
         public var celebrate: TimeInterval = 3
+        public var chimeGap: TimeInterval = 1.5
         public init() {}
     }
 
@@ -69,6 +70,8 @@ public final class PhaseMachine {
     @ObservationIgnored public var onOpen: ((PipSession) -> Void)?
     /// Called when the Usage tab's "Set Up…" is clicked for an agent Pip can't read yet.
     @ObservationIgnored public var onSetUpUsage: ((Agent) -> Void)?
+    /// Called once per update that starts a new episode, with the most urgent one. Never while muted.
+    @ObservationIgnored public var onChime: ((Chime) -> Void)?
 
     public let timing: Timing
 
@@ -78,6 +81,7 @@ public final class PhaseMachine {
     @ObservationIgnored private var timers: [Slot: (timer: PhaseTimer, token: Int)] = [:]
     @ObservationIgnored private var tokenCounter = 0
     @ObservationIgnored private var lastAnnounce: Date?
+    @ObservationIgnored private var lastChime: Date?
     @ObservationIgnored private var receivedFirstUpdate = false
 
     public init(scheduler: any PhaseScheduler = MainScheduler(), timing: Timing = Timing()) {
@@ -127,12 +131,13 @@ public final class PhaseMachine {
         clampCursor()
 
         // Sessions that were already finished when Pip started are not news.
-        if !isFirst, !expandFinished,
-           let done = new.first(where: { $0.kind == .finished && !finishedBefore.contains($0.attentionKey) }) {
-            celebrate(done)
-        }
+        let justFinished = new.first(where: { $0.kind == .finished && !finishedBefore.contains($0.attentionKey) })
+        if !isFirst, !expandFinished, let done = justFinished { celebrate(done) }
 
-        if queue.contains(where: { !queuedBefore.contains($0.attentionKey) }) {
+        let arrived = queue.first(where: { !queuedBefore.contains($0.attentionKey) })
+        if !isFirst, let kind = arrived?.kind ?? justFinished?.kind { chime(kind) }
+
+        if arrived != nil {
             announce()
         } else {
             settleIfQuiet()
@@ -308,6 +313,15 @@ public final class PhaseMachine {
     private func celebrate(_ session: PipSession) {
         celebrating = session
         schedule(.celebrate, after: timing.celebrate) { [weak self] in self?.celebrating = nil }
+    }
+
+    /// Bursts, like several sessions finishing together, play one sound.
+    private func chime(_ kind: SessionKind) {
+        guard !muted, let chime = Chime(kind) else { return }
+        let now = scheduler.now
+        if let last = lastChime, now.timeIntervalSince(last) < timing.chimeGap { return }
+        lastChime = now
+        onChime?(chime)
     }
 
     private func setPhase(_ next: Phase) {

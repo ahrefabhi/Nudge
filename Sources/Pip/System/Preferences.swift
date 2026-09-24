@@ -34,6 +34,22 @@ enum Preferences {
         set { defaults.set(newValue, forKey: "popUpOnFinish") }
     }
 
+    /// Play a sound when a session starts waiting or finishes. On by default; Quiet silences it.
+    static var soundsEnabled: Bool {
+        get { defaults.object(forKey: "soundsEnabled") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "soundsEnabled") }
+    }
+
+    /// The system sound for each chime, or nil for none.
+    static func sound(for chime: Chime) -> String? {
+        guard let name = defaults.string(forKey: "sound.\(chime.rawValue)") else { return chime.defaultSound }
+        return name.isEmpty ? nil : name
+    }
+
+    static func setSound(_ name: String?, for chime: Chime) {
+        defaults.set(name ?? "", forKey: "sound.\(chime.rawValue)")
+    }
+
     /// The apps shown in onboarding and the Environments menu.
     static let environments: [HostApp] = [.iTerm, .terminal, .vsCode, .claude]
 }

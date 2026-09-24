@@ -196,4 +196,40 @@ import Testing
         trigger(.permission)
         #expect(machine.phase == .peek)
     }
+
+    // MARK: Chimes
+
+    @Test func eachNewEpisodeChimesWithItsKind() {
+        var chimes: [Chime] = []
+        machine.onChime = { chimes.append($0) }
+        trigger(.permission)
+        clock.advance(by: 2)
+        trigger(.error)
+        clock.advance(by: 2)
+        trigger(.success)
+        #expect(chimes == [.permission, .error, .finished])
+    }
+
+    @Test func aBurstChimesOnceWithTheMostUrgent() {
+        var chimes: [Chime] = []
+        machine.onChime = { chimes.append($0) }
+        trigger(.multiple)
+        #expect(chimes == [.permission])
+        clock.advance(by: 0.5)
+        trigger(.success)
+        #expect(chimes == [.permission], "a second event right after stays silent")
+    }
+
+    @Test func noChimeWhileMutedOrAtLaunch() {
+        var chimes: [Chime] = []
+        let fresh = PhaseMachine(scheduler: clock)
+        fresh.onChime = { chimes.append($0) }
+        fresh.update(sessions: MockSessions.apply(.permission, to: MockSessions.calm(now: clock.now), now: clock.now))
+        #expect(chimes.isEmpty, "sessions already waiting at launch are not news")
+
+        machine.onChime = { chimes.append($0) }
+        machine.muted = true
+        trigger(.permission)
+        #expect(chimes.isEmpty)
+    }
 }
