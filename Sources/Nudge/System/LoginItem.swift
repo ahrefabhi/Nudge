@@ -11,12 +11,13 @@ enum LoginItem {
     }
 
     static var status: Status {
+        guard Bundle.main.bundleURL.pathExtension == "app" else { return .unavailable }
         switch SMAppService.mainApp.status {
-        case .enabled: .on
-        case .requiresApproval: .needsApproval
-        case .notRegistered: .off
-        case .notFound: .unavailable
-        @unknown default: .unavailable
+        case .enabled: return .on
+        case .requiresApproval: return .needsApproval
+        // A real app that has never registered also reports `.notFound`, so it can still be turned on.
+        case .notRegistered, .notFound: return .off
+        @unknown default: return .off
         }
     }
 
