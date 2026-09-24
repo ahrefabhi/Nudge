@@ -2,20 +2,21 @@ import AppKit
 import PipHookSchema
 import PipKit
 
-/// Removes everything Pip added to the Mac, after the user confirms: its Claude Code hooks,
+/// Removes everything Pip added to the Mac, after the user confirms: its Claude Code and Codex hooks,
 /// its data folder (collector, inbox, history, saved sessions), its login item, settings and
 /// caches, and finally the app itself, which goes to the Trash.
 enum Uninstaller {
     static func confirmAndUninstall() {
-        let installer = HookInstaller()
-        let settings = installer.settingsURL.path.replacing(FileManager.default.homeDirectoryForCurrentUser.path, with: "~", maxReplacements: 1)
+        let installers = HookSetup.availableTargets.map { HookInstaller(target: $0) }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let files = installers.map { $0.settingsURL.path.replacing(home, with: "~", maxReplacements: 1) }.joined(separator: " and ")
         let alert = NSAlert()
         alert.messageText = "Uninstall Pip?"
         alert.informativeText = """
-        Pip will remove its hooks from \(settings) (your other settings and hooks stay), delete its history and \
+        Pip will remove its hooks from \(files) (your other settings and hooks stay), delete its history and \
         saved data, stop opening at login, and move itself to the Trash.
 
-        Backups Pip made of your Claude settings (settings.json.pip-backup-…) are left where they are.
+        Backups Pip made of those files (….pip-backup-…) are left where they are.
         """
         alert.alertStyle = .warning
         alert.addButton(withTitle: "Uninstall")
@@ -25,7 +26,7 @@ enum Uninstaller {
 
         // Hooks first: if they can't be removed, stop before deleting the collector they point at.
         do {
-            try installer.uninstall()
+            for installer in installers { try installer.uninstall() }
         } catch {
             NSApp.activate()
             NSAlert(error: error).runModal()

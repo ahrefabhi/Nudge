@@ -54,7 +54,7 @@ struct AlertCardView: View {
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(session.kind.alertTitle)
+            Text(session.kind.alertTitle(for: session.agent))
                 .font(.pip(15, .semibold))
                 .tracking(-0.15)
                 .foregroundStyle(palette.primary)

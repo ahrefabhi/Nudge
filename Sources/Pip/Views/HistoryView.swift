@@ -116,7 +116,7 @@ private struct HistoryRow: View {
                 }
             }
             Spacer(minLength: 8)
-            Text(entry.host.displayName)
+            Text(entry.agent == .codex ? "\(entry.host.displayName) · Codex" : entry.host.displayName)
                 .font(.pip(11))
                 .foregroundStyle(palette.label(0.38))
                 .fixedSize()

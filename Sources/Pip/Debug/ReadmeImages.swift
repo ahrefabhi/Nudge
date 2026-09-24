@@ -73,6 +73,7 @@ enum ReadmeImages {
         model.refresh()
         model.step = step
         model.hooks = .installed
+        model.codexHooks = .installed
         model.accessibility = false
         model.automation = .needsAsk
         // The picture shouldn't depend on which apps this Mac happens to have installed.

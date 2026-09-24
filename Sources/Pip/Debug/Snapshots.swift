@@ -14,6 +14,7 @@ enum Snapshots {
             model.refresh()
             model.step = step
             model.hooks = .installed
+            model.codexHooks = .installed
             model.accessibility = false
             model.automation = .needsAsk
             try write(OnboardingView(model: model), to: directory.appending(path: "onboarding-\(step.rawValue).png"))
@@ -39,6 +40,7 @@ enum Snapshots {
         let settings = SettingsModel(setup: OnboardingModel(sessions: { MockSessions.sample() }, hookSetup: nil))
         settings.setup.refresh()
         settings.setup.hooks = .installed
+        settings.setup.codexHooks = .installed
         settings.setup.accessibility = true
         for (name, appearance) in [("dark", NSAppearance.Name.darkAqua), ("light", .aqua)] {
             try writeWindowed(SettingsView(model: settings), size: CGSize(width: 480, height: 640), appearance: appearance,

@@ -167,7 +167,7 @@ private struct NeedsYouRow: View {
                         Text(session.project)
                             .font(.pip(13, .semibold))
                             .foregroundStyle(palette.primary)
-                        Text(session.host.displayName)
+                        Text(session.sourceName)
                             .font(.pip(10.5))
                             .foregroundStyle(palette.label(0.65))
                             .padding(.vertical, 1).padding(.horizontal, 6)
@@ -230,7 +230,7 @@ private struct QuietRow<Mark: View>: View {
             }
             .lineLimit(1)
             Spacer(minLength: 8)
-            LiveText { "\(session.host.displayName) · \(RelativeTime.short(since: session.since, now: $0))" }
+            LiveText { "\(session.sourceName) · \(RelativeTime.short(since: session.since, now: $0))" }
                 .font(.pip(11))
                 .foregroundStyle(palette.label(0.38))
                 .lineLimit(1)
@@ -282,7 +282,9 @@ private struct EmptyNow: View {
                     .font(.pip(15, .semibold))
                     .tracking(-0.15)
                     .foregroundStyle(palette.primary)
-                Text("Start Claude Code in iTerm, Terminal, VS Code or the Claude app, and I'll let you know when it needs you.")
+                Text(CodexPaths.isInstalled
+                     ? "Start Claude Code or Codex, and I'll let you know when one needs you."
+                     : "Start Claude Code in iTerm, Terminal, VS Code or the Claude app, and I'll let you know when it needs you.")
                     .font(.pip(12))
                     .lineSpacing(3)
                     .foregroundStyle(palette.label(0.55))
