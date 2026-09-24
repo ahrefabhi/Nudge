@@ -2,7 +2,7 @@ import NudgeKit
 import SwiftUI
 
 /// Island size per phase, from the handoff's table. Widths that hug the notch are measured
-/// from the real notch; heights grow when the notch is taller than the design's 32pt.
+/// from the real notch; heights follow the bar when it's taller or shorter than the design's 32pt.
 struct IslandMetrics: Equatable {
     var width: CGFloat
     var height: CGFloat
@@ -31,7 +31,8 @@ struct IslandMetrics: Equatable {
             return IslandMetrics(width: notch.width + 40, height: glowHitHeight, radius: 2, shoulder: 0, glow: true)
         }
         let bar = notch.barHeight
-        let extra = max(0, bar - 32)
+        // A plain menu bar (about 24pt) is shorter than the design's camera row, so this can be negative.
+        let extra = bar - 32
         let base = notch.width
         let shoulder = IslandShape.slot
 
@@ -39,7 +40,9 @@ struct IslandMetrics: Equatable {
         case .idle, .opening:
             if machine.celebrating != nil { return IslandMetrics(width: base + 62, height: bar, radius: 12, shoulder: shoulder) }
             // On a notch, idle is the hardware notch itself, so no flare shows on the menu bar.
-            return IslandMetrics(width: base, height: bar, radius: 10, shoulder: notch.hasNotch ? 0 : shoulder)
+            // Without one, a black pill would cover app menus, so the island tucks away entirely.
+            guard notch.hasNotch else { return IslandMetrics(width: base, height: 0, radius: 0, shoulder: 0) }
+            return IslandMetrics(width: base, height: bar, radius: 10, shoulder: 0)
         case .working:
             return IslandMetrics(width: base + 62, height: bar, radius: 12, shoulder: shoulder)
         case .peek:

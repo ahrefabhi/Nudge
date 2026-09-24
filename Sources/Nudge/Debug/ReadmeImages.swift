@@ -47,6 +47,7 @@ enum ReadmeImages {
         try write(manager(.usage), "usage")
 
         try write(NotchStates().background(Desktop()), "notch")
+        try write(MenuBarStates().background(Desktop()), "menu-bar")
         try write(SocialPreview(), "social-preview")
         try write(CharacterSheet(), "states")
 
@@ -114,8 +115,9 @@ private struct LightDesktop: View {
 /// A plain menu bar behind the notch, so the island reads as sitting at the top of a screen.
 private struct MenuBarStrip: View {
     var light = false
+    var height: CGFloat = 32
     var body: some View {
-        Rectangle().fill(light ? Color.white.opacity(0.45) : Color.black.opacity(0.3)).frame(height: 32)
+        Rectangle().fill(light ? Color.white.opacity(0.45) : Color.black.opacity(0.3)).frame(height: height)
     }
 }
 
@@ -156,6 +158,63 @@ private struct NotchStates: View {
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.white.opacity(0.08)))
         }
+    }
+}
+
+/// On a display without a notch: hidden while idle, a pill the height of the menu bar otherwise.
+private struct MenuBarStates: View {
+    private static let notch = NotchGeometry(hasNotch: false, width: 190, barHeight: 24)
+
+    var body: some View {
+        VStack(spacing: 18) {
+            row("Idle", "Hidden, so the menu bar stays clear") { machine, _ in machine.update(sessions: []) }
+            row("Working", "A pill the height of the menu bar") { _, _ in }
+            row("Needs you", "Nudge drops out of the menu bar") { machine, clock in
+                Snapshots.trigger(.permission, machine, clock)
+            }
+            row("Folded", "Three waiting, out of the way") { machine, clock in
+                Snapshots.trigger(.multiple, machine, clock)
+                clock.advance(by: 1)
+                machine.later()
+            }
+        }
+        .padding(.vertical, 28)
+        .frame(width: 760)
+    }
+
+    private func row(_ title: String, _ detail: String, drive: Snapshots.Drive) -> some View {
+        let clock = ManualScheduler(start: Date())
+        let machine = PhaseMachine(scheduler: clock)
+        machine.update(sessions: MockSessions.calm(now: clock.now))
+        drive(machine, clock)
+        return HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.nudge(13, .semibold)).foregroundStyle(Tokens.textPrimary)
+                Text(detail).font(.nudge(12)).foregroundStyle(Color.label(0.55))
+            }
+            .frame(width: 200, alignment: .leading)
+            ZStack(alignment: .top) {
+                MenuBarStrip(height: Self.notch.barHeight)
+                menus
+                IslandView(machine: machine, notch: Self.notch, forceLight: false)
+            }
+            .frame(width: 440, height: 76, alignment: .top)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.white.opacity(0.08)))
+        }
+    }
+
+    /// The Apple menu and the clock, so the strip reads as a menu bar without a notch.
+    private var menus: some View {
+        HStack {
+            Image(systemName: "apple.logo")
+            Spacer()
+            Text("9:41")
+        }
+        .font(.nudge(12))
+        .foregroundStyle(Color.label(0.85))
+        .padding(.horizontal, 14)
+        .frame(height: Self.notch.barHeight)
     }
 }
 
