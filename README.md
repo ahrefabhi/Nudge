@@ -23,7 +23,7 @@ You start a few Claude Code or Codex sessions in iTerm, Terminal and VS Code, sw
 
 Nudge fixes that. It sits invisibly inside the notch while your agents work. When one needs you, Nudge drops out, the notch opens into a notification, and **Open Session** takes you straight to the exact terminal tab or editor window. Then Nudge tucks itself away again.
 
-https://github.com/user-attachments/assets/f4eff252-c91d-4fd4-8bd9-4aa0445a28f0
+https://github.com/user-attachments/assets/2986e464-c3f6-4134-8ae4-edb229d1eea9
 
 ## Features
 
