@@ -29,7 +29,7 @@ Pip fixes that. It sits invisibly inside the notch while your agents work. When 
 - **Takes you to the right place.** Opens the precise iTerm tab, Terminal tab or VS Code window, and outlines it with a brief focus ring.
 - **One queue, most urgent first.** Several agents waiting become one list: permission, then questions, then errors, oldest first. Cycle through it with ⌥⌘↓.
 - **Every session at a glance.** Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.
-- **Knows how much you have left.** The Usage tab shows how much of your Claude and Codex rate limits you've used (5-hour and weekly) and when each one resets.
+- **Knows how much you have left.** The Usage tab shows how much of your Claude and Codex rate limits you've used (5-hour and weekly) and when each one resets, and alerts you when one reaches a threshold you set, for Claude, Codex or both.
 - **Sounds you can tell apart.** A different chime for permission, questions, errors and finished runs, each one changeable or silenced in Settings.
 - **Stays out of the way.** Unanswered alerts fold into a small pill. In full screen Pip shrinks to a thin glow, and it goes quiet while Zoom shares your screen or when you ask it to.
 - **Read-only by design.** Pip never types into your terminal and never approves anything. Answers always happen in the real session.
@@ -60,6 +60,8 @@ Pip never stacks notifications. One creature, one queue, most urgent first.
 ### How much you have left
 
 Codex usage shows up with no setup. For Claude, choose **Set Up…** in the Usage tab or Settings (see [How it works](#how-it-works)). Numbers update while a session runs, so each agent says how old its reading is, and a window that has since reset says so rather than showing a stale percentage.
+
+**Usage alerts.** Under the limits, **Alerts** lists when Pip should tell you a limit is getting close. Choose **Add Alert**, pick Claude, Codex or both, and a threshold: 50%, 75%, 90% or 95%, or type any percentage from 1 to 100 under **Custom**. There's one to start with: Claude and Codex at 90%. When a limit reaches an alert, Pip tells you the way it tells you about a waiting session: it drops out with the limit, how much is used and when it resets, and **Show Usage** opens this tab. It queues after any sessions that need you, follows Quiet like other alerts, and has its own sound. Each limit alerts once per threshold (so alerts at 75% and 90% each fire once), then stays quiet until it resets. The limits are the ones Claude Code and Codex report, which cover your whole account rather than each model.
 
 <p align="center"><img src="docs/images/usage.png" width="49%" alt="The Usage tab: Claude Code at 64% of its 5-hour limit, resetting in 2h 13m, and 38% of its weekly limit; Codex on the Plus plan at 91% of its 5-hour limit in red, resetting in 37m, and 22% of its weekly limit"></p>
 
@@ -137,7 +139,7 @@ Pip asks macOS for two permissions. **Automation** lets it select the right iTer
 
 <p align="center"><img src="docs/images/settings.png" width="360" alt="Pip's settings: appearance, open at login, update checks, notification options, staying quiet for the session in front, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
 
-**Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, staying quiet for the session in front, sounds for each state, Quiet, which apps to watch, hooks, Claude usage and permissions.
+**Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, staying quiet for the session in front, usage alerts, sounds for each state, Quiet, which apps to watch, hooks, Claude usage and permissions.
 
 ## Updates
 
