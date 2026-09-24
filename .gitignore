@@ -1,0 +1,18 @@
+# SwiftPM
+.build/
+.swiftpm/
+
+# Bundled app from scripts/bundle.sh
+build/
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+
+# `Pip --snapshot` output
+snapshots/
+
+# macOS
+.DS_Store

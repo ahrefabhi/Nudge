@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:pip}",
+            "name": "Debug Pip",
+            "target": "Pip",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug Pip"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:pip}",
+            "name": "Release Pip",
+            "target": "Pip",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release Pip"
+        }
+    ]
+}
