@@ -132,6 +132,21 @@ import Testing
         #expect(session?.phase == .working)
     }
 
+    @Test mutating func registryIdleAfterAQuestionMeansItWasDismissed() {
+        send("PreToolUse") {
+            $0.toolName = "AskUserQuestion"
+            $0.toolUseID = "q1"
+            $0.toolInput = HookRecord.ToolInput()
+            $0.toolInput?.questions = [HookRecord.Question(question: "What next?", options: ["A", "B"])]
+        }
+        // An idle status from before the question doesn't clear it.
+        reducer.reconcile([RegistryEntry(pid: 1, sessionId: "s1", cwd: "/x", status: .idle, statusUpdatedAt: clock - 5000)])
+        guard case .question? = session?.phase else { Issue.record("expected the question to stay"); return }
+        // Esc sends no hook event; the registry going idle is the only sign.
+        reducer.reconcile([RegistryEntry(pid: 1, sessionId: "s1", cwd: "/x", status: .idle, statusUpdatedAt: clock + 5000)])
+        #expect(session?.phase == .idle)
+    }
+
     @Test mutating func sessionsLeaveWhenTheRegistryDropsThem() {
         send("SessionStart")
         reducer.reconcile([RegistryEntry(pid: 1, sessionId: "s1", cwd: "/x", status: .idle)], now: Date(timeIntervalSince1970: 1_790_000_010))

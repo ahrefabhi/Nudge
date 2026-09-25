@@ -16,6 +16,8 @@ public final class ObservationService {
     private let registryDirectory: URL
     private let io = DispatchQueue(label: "app.nudge.observation", qos: .utility)
     private var watchers: [DirectoryWatcher] = []
+    /// Claude rewrites `<pid>.json` in place, which the directory watcher doesn't see, so each file is watched too.
+    private var registryFileWatchers: [Int32: DirectoryWatcher] = [:]
     private var sweep: Timer?
     private var publishScheduled = false
 
@@ -50,6 +52,7 @@ public final class ObservationService {
 
     public func stop() {
         watchers.removeAll()
+        registryFileWatchers.removeAll()
         sweep?.invalidate()
         sweep = nil
         store.save(Array(reducer.sessions.values))
@@ -84,8 +87,20 @@ public final class ObservationService {
 
     private func reconcile(_ entries: [RegistryEntry]) {
         registryEntries = entries
+        watchRegistryFiles(entries)
         reducer.reconcile(entries)
         schedulePublish()
+    }
+
+    private func watchRegistryFiles(_ entries: [RegistryEntry]) {
+        let live = Set(entries.map(\.pid))
+        registryFileWatchers = registryFileWatchers.filter { live.contains($0.key) }
+        for pid in live where registryFileWatchers[pid] == nil {
+            let file = registryDirectory.appending(path: "\(pid).json")
+            registryFileWatchers[pid] = DirectoryWatcher(directory: file, queue: io) { [weak self] in
+                Task { @MainActor in self?.refreshRegistry() }
+            }
+        }
     }
 
     // MARK: Output
