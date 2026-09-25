@@ -21,7 +21,7 @@
 
 When a session stops to ask for permission, a question or help with an error, Peeku drops out of the notch and tells you why. **Open Session** takes you to the exact terminal tab or editor window.
 
-https://github.com/user-attachments/assets/975ed425-4376-4fab-8937-5d9e5c9f5df5
+https://github.com/user-attachments/assets/eefa5891-946c-46a3-9c4b-7ca000052e3b
 
 ## Features
 

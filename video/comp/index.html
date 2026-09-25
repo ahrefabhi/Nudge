@@ -34,7 +34,7 @@
   #notch .isl-alert { opacity: 0; }
   #notch .isl-code { white-space: normal; }
 
-  #toast { position: absolute; left: 960px; top: 62px; transform: translateX(-50%); white-space: nowrap; font-size: 19px; padding: 10px 20px; animation: none; }
+  #toast, #toast2 { position: absolute; left: 960px; top: 62px; transform: translateX(-50%); white-space: nowrap; font-size: 19px; padding: 10px 20px; animation: none; }
 
   /* captions */
   .cap { position: absolute; left: 0; right: 0; text-align: center; font: 600 64px/1.15 var(--sans); letter-spacing: -.02em; color: var(--text); }
@@ -73,6 +73,7 @@
     </div>
     <div id="notch"><div class="island"><div class="island-inner"></div></div></div>
     <div class="toast" id="toast">Switched to iTerm · Tab 1 · payments-api</div>
+    <div class="toast" id="toast2">Storefront · running on localhost:3001</div>
   </div>
 
   <div id="scrim"></div>
@@ -80,12 +81,15 @@
   <div class="cap" id="cap1" style="top:430px"><span id="c1a">One agent stopped to ask.</span><br><span id="c1b" class="dim">Ten minutes later, you notice.</span></div>
   <div class="cap" id="cap2" style="top:800px"><span>Meet Peeku.</span> <span class="dim">It lives in your notch.</span></div>
   <div class="cap" id="cap3" style="top:800px"><span class="dim"><b style="color:var(--text);font-weight:600">Open Session</b> jumps to the exact tab.</span></div>
+  <div class="cap" id="capC1" style="top:800px">Your dev servers <span class="dim">live there too.</span></div>
+  <div class="cap" id="capC2" style="top:800px"><span class="dim">Answer their prompts</span> in one click.</div>
   <div class="cap" id="cap4" style="top:800px"><span id="c4a" style="color:var(--blue)">Questions.</span> <span id="c4b" style="color:var(--red)">Errors.</span> <span id="c4c" style="color:var(--green)">Finished runs.</span></div>
 
   <div class="layer" id="panels">
-    <div class="cap" id="cap5" style="top:70px;font-size:56px">Every session, <span class="dim">and your Claude and Codex limits.</span></div>
-    <div class="panel" id="pNow" style="left:357px;top:200px"><img src="../../docs/images/manager.png" alt=""></div>
-    <div class="panel" id="pUse" style="left:988px;top:200px"><img src="../../docs/images/usage.png" alt=""></div>
+    <div class="cap" id="cap5" style="top:70px;font-size:56px">Every session, <span class="dim">your limits and your commands.</span></div>
+    <div class="panel" id="pNow" style="left:115.5px;top:190px"><img src="../../docs/images/manager.png" alt=""></div>
+    <div class="panel" id="pUse" style="left:672.5px;top:190px"><img src="../../docs/images/usage.png" alt=""></div>
+    <div class="panel" id="pCmd" style="left:1229.5px;top:190px"><img src="../../docs/images/commands.png" alt=""></div>
   </div>
 
   <div class="layer" id="outro">
@@ -168,6 +172,9 @@ const EV = {
   question:{ state:'question', tag:'Question', env:'VS Code · Window 1', title:'Claude has a question', meta:'dashboard-v2 · main · 2m ago', code:'Reuse <Popover> for chart tooltips, or build a new <ChartTooltip>?', cta:'Open Session' },
   error:{ state:'error', tag:'Blocked', env:'iTerm · Tab 2', title:'Claude hit an error', meta:'infra-terraform · chore/tf-1.9 · 6m ago', code:'Error acquiring the state lock', cta:'Open Session' },
   success:{ state:'success', tag:'Finished', env:'iTerm · Tab 3', title:'Claude finished', meta:'docs-site · main · 2m 41s', code:'Migrated 14 pages to MDX · build passes', cta:'Open Session' },
+  // Quick commands, as the app shows them (MockSessions.commandAlert / commandPrompt).
+  cmdFail:{ state:'error', tag:'Failed', env:'npm run dev · ~/code/dashboard', title:'Dashboard exited with code 1', meta:'just now', code:'Error: listen EADDRINUSE: address already in use :::5173', cta:'Show Output', acts:['Restart'], link:'Later' },
+  cmdInput:{ state:'question', tag:'Input', env:'npm start · ~/code/storefront', title:'Storefront is waiting for input', meta:'just now', code:'? Something is already running on port 3000. Run on another port? (Y/n)', cta:'Show Output', acts:['Yes', 'No'], link:'Later' },
 };
 
 // ---------------------------------------------------------------------------
@@ -210,7 +217,9 @@ for (const key of Object.keys(EV)) {
     `<div class="isl-head"><span class="isl-tag"><i></i>${esc(e.tag)}</span><span class="isl-env">${esc(e.env)}</span></div>` +
     '<div class="isl-body"><div class="isl-pip"></div><div class="isl-text">' +
     `<div class="isl-title">${esc(e.title)}</div><div class="isl-meta">${esc(e.meta)}</div><div class="isl-code">${esc(e.code)}</div>` +
-    `<div class="isl-actions"><button type="button" class="isl-open">${esc(e.cta)}<span>↵</span></button><button type="button" class="isl-later">Later</button></div>` +
+    `<div class="isl-actions"><button type="button" class="isl-open">${esc(e.cta)}<span>↵</span></button>` +
+    (e.acts || ['Later']).map((a) => `<button type="button" class="isl-later">${esc(a)}</button>`).join('') +
+    (e.link ? `<span style="margin-left:auto;font-size:11.5px;color:rgba(235,235,245,.45)">${esc(e.link)}</span>` : '') + '</div>' +
     '</div></div>';
   box.querySelector('.isl-pip').append(pip(e.state, 50));
   inner.append(d, box);
@@ -262,18 +271,20 @@ function capIn(node, t, a, b) {
 const T = {
   pushIn: 3.2, drop1: 4.5, alert1: 5.15,
   cursor: 7.3, click: 8.45, close1: 8.55, pullOut: 8.6, pushIn2: 10.35,
-  q: 10.75, qAlert: 11.35, err: 12.35, fin: 13.3, dip1: 14.75,
-  panels: 15.05, dip2: 18.15, outro: 18.45, end: 21.7,
+  q: 10.75, qAlert: 11.35, err: 12.35, fin: 13.3,
+  cmdFail: 14.55, cmdInput: 16.25, cursor2: 16.5, click2: 17.45, close2: 17.55, dip1: 19.35,
+  panels: 19.65, dip2: 23.15, outro: 23.45, end: 26.7,
 };
 // Island phases: [start, phase, event]
 const PHASES = [
   [0, 'working'], [T.drop1, 'peek', 'permission'], [T.alert1, 'alert', 'permission'],
   [T.close1, 'working'], [T.q, 'peek', 'question'], [T.qAlert, 'alert', 'question'],
-  [T.err, 'alert', 'error'], [T.fin, 'alert', 'success'], [T.dip1 + .2, 'working'],
+  [T.err, 'alert', 'error'], [T.fin, 'alert', 'success'],
+  [T.cmdFail, 'alert', 'cmdFail'], [T.cmdInput, 'alert', 'cmdInput'], [T.close2, 'working'],
   [T.outro + .5, 'peekOutro'],
 ];
 const SIZE = { working:[252, 32, 12], peek:[206, 60, 28], peekOutro:[206, 60, 28], alert:[420, 212, 30] };
-const ALERT_H = { question: 232 };
+const ALERT_H = { question: 232, cmdFail: 232, cmdInput: 232 };
 function sizeOf(ph) {
   const [w, h, r] = SIZE[ph[1]];
   return [w, ph[1] === 'alert' && ALERT_H[ph[2]] ? ALERT_H[ph[2]] : h, r];
@@ -373,11 +384,15 @@ function seek(t) {
   }
   if (ph[1] === 'peekOutro') dropAt(outroDrop, local); else outroDrop.style.opacity = 0;
 
-  // Open Session press
+  // Open Session press, then Yes on the command's prompt
   const btn = alerts.permission.querySelector('.isl-open');
   const press = t >= T.click - .02 && t < T.click + .14;
   btn.style.transform = press ? 'scale(.96)' : 'none';
   btn.style.background = press ? '#fff' : '';
+  const yes = alerts.cmdInput.querySelectorAll('.isl-later')[0];
+  const press2 = t >= T.click2 - .02 && t < T.click2 + .14;
+  yes.style.transform = press2 ? 'scale(.96)' : 'none';
+  yes.style.background = press2 ? 'rgba(255,255,255,.2)' : '';
 
   // 5) Toast after opening
   const tp = window01(t, T.close1 + .25, T.pushIn2, .3, .35);
@@ -387,19 +402,25 @@ function seek(t) {
   toast.style.transformOrigin = 'center';
   // keep the toast readable at any camera scale
   toast.style.scale = `${1 / s * 1.18}`;
+  const tp2 = window01(t, T.close2 + .25, T.dip1 - .05, .3, .3);
+  const toast2 = $('toast2');
+  toast2.style.opacity = tp2;
+  toast2.style.transform = `translateX(-50%) translateY(${(1 - tp2) * -8}px)`;
+  toast2.style.scale = `${1 / s * 1.18}`;
 
-  // 6) Cursor: glides to Open Session, clicks, leaves
-  const cp = prog(t, T.cursor, 1.0, inOut);
-  if (t >= T.cursor - .01 && t < T.close1 + .7) {
-    const r = btn.getBoundingClientRect();
+  // 6) Cursor: glides to Open Session, clicks, leaves; later the same for Yes
+  const glideTo = (target, t0, glide, closeT, pressed) => {
+    const cp = prog(t, t0, glide, inOut);
+    const r = target.getBoundingClientRect();
     const tx = r.left + r.width * .42, ty = r.top + r.height * .55;
     const sx = 1560, sy = 1000;
     const arc = Math.sin(cp * Math.PI) * -60;
-    const leave = prog(t, T.close1 + .2, .5);
-    cursor.style.opacity = 1 - leave;
-    const clickScale = press ? .88 : 1;
-    cursor.style.transform = `translate(${lerp(sx, tx, cp) + arc * .3}px, ${lerp(sy, ty, cp) + arc}px) scale(${clickScale})`;
-  } else cursor.style.opacity = 0;
+    cursor.style.opacity = 1 - prog(t, closeT + .2, .5);
+    cursor.style.transform = `translate(${lerp(sx, tx, cp) + arc * .3}px, ${lerp(sy, ty, cp) + arc}px) scale(${pressed ? .88 : 1})`;
+  };
+  if (t >= T.cursor - .01 && t < T.close1 + .7) glideTo(btn, T.cursor, 1.0, T.close1, press);
+  else if (t >= T.cursor2 - .01 && t < T.close2 + .7) glideTo(yes, T.cursor2, .9, T.close2, press2);
+  else cursor.style.opacity = 0;
 
   // 7) Captions
   capIn($('c1a'), t, .35, T.pushIn);
@@ -408,21 +429,25 @@ function seek(t) {
   capIn($('cap2'), t, T.alert1 + .1, T.cursor + .15);
   capIn($('cap3'), t, T.cursor + .45, T.pushIn2 + .15);
   $('cap4').style.opacity = 1;
-  capIn($('c4a'), t, T.qAlert, T.dip1);
-  capIn($('c4b'), t, T.err + .05, T.dip1);
-  capIn($('c4c'), t, T.fin, T.dip1);
+  capIn($('c4a'), t, T.qAlert, T.cmdFail + .1);
+  capIn($('c4b'), t, T.err + .05, T.cmdFail + .1);
+  capIn($('c4c'), t, T.fin, T.cmdFail + .1);
+  capIn($('capC1'), t, T.cmdFail + .3, T.click2 - .15);
+  capIn($('capC2'), t, T.click2 + .1, T.dip1);
   $('scrim').style.opacity = clamp(prog(t, T.pushIn, .8) * (1 - prog(t, T.dip1, .3)));
 
   // 8) Real app panels
   const pv = window01(t, T.panels, T.dip2 + .3, .5, .3);
   $('panels').style.opacity = t >= T.panels - .01 && t < T.dip2 + .31 ? 1 : 0;
   capIn($('cap5'), t, T.panels + .25, T.dip2 + .3);
-  [['pNow', 0], ['pUse', .18]].forEach(([id, dl]) => {
+  // Three panels at 90%, so they fit side by side
+  [['pNow', 0], ['pUse', .18], ['pCmd', .36]].forEach(([id, dl]) => {
     const p = prog(t, T.panels + dl, .8, out) * (1 - prog(t, T.dip2, .3));
     const drift = (t - T.panels) * 6;
     const n = $(id);
     n.style.opacity = p;
-    n.style.transform = `translateY(${(1 - p) * 70 - drift}px) scale(${lerp(.96, 1, p)})`;
+    n.style.transformOrigin = '50% 0';
+    n.style.transform = `translateY(${(1 - p) * 70 - drift}px) scale(${lerp(.96, 1, p) * .9})`;
   });
 
   // 9) Outro

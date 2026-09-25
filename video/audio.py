@@ -8,7 +8,7 @@ import wave
 import numpy as np
 
 SR = 48000
-DUR = 21.7
+DUR = 26.7
 N = int(SR * DUR)
 BEAT = 0.6
 BAR = 4 * BEAT
@@ -16,7 +16,8 @@ rng = np.random.default_rng(7)
 
 # Timeline: keep in step with `const T` in comp/index.html
 T = dict(pushIn=3.2, drop1=4.5, alert1=5.15, click=8.45, close1=8.55, q=10.75, qAlert=11.35,
-         err=12.35, fin=13.3, dip1=14.75, panels=15.05, dip2=18.15, outro=18.45, peekOutro=18.95)
+         err=12.35, fin=13.3, cmdFail=14.55, cmdInput=16.25, click2=17.45, close2=17.55,
+         dip1=19.35, panels=19.65, dip2=23.15, outro=23.45, peekOutro=23.95)
 
 
 def hz(midi):
@@ -244,6 +245,20 @@ put(sfx, T['fin'] + 0.14, bell(hz(88), 1.4, 0.5), 0.06)               # ... E6, 
 for k in ('qAlert', 'err', 'fin'):
     put(send, T[k] + 0.02, bell(hz(81 if k == 'qAlert' else 74 if k == 'err' else 84), 1.2, 0.5), 0.05)
 
+# Commands: a failed dev server (low, like the error), then a prompt (like the question)
+put(sfx, T['cmdFail'] + 0.02, bell(hz(74), 1.0, 0.8), 0.07)          # D5
+put(sfx, T['cmdFail'] + 0.02, bell(hz(70), 1.0, 0.8), 0.045)         # + Bb4
+put(send, T['cmdFail'] + 0.02, bell(hz(74), 1.0, 0.5), 0.05)
+put(sfx, T['cmdInput'] - 0.2, whoosh(0.6, 0.25), 0.03)
+put(sfx, T['cmdInput'] + 0.05, bell(hz(81), 1.2, 0.6), 0.075)        # A5
+put(send, T['cmdInput'] + 0.05, bell(hz(81), 1.2, 0.5), 0.05)
+# Yes: the same muted click, the notch tucks away, and the server comes up on a bright C6 + F6
+put(sfx, T['click2'], click, 0.26)
+boop(T['close2'] + 0.05, up=False, gain=0.11)
+put(sfx, T['close2'] + 0.25, bell(hz(84), 1.3, 0.5), 0.065)
+put(sfx, T['close2'] + 0.37, bell(hz(89), 1.3, 0.5), 0.05)
+put(send, T['close2'] + 0.25, bell(hz(84), 1.3, 0.5), 0.05)
+
 # Dips: airy swells through the background
 for k in ('dip1', 'dip2'):
     w = whoosh(1.0, 0.35)
@@ -252,6 +267,7 @@ for k in ('dip1', 'dip2'):
 # Panels rise: two soft plucks, one per panel
 put(sfx, T['panels'] + 0.05, pluck(hz(77), 0.7, 2600), 0.08)
 put(sfx, T['panels'] + 0.23, pluck(hz(81), 0.7, 2600), 0.08)
+put(sfx, T['panels'] + 0.41, pluck(hz(84), 0.7, 2600), 0.08)
 
 # Outro: the logo lands on an F major bell chord; Peeku peeks out with a happy boop
 for j, m in enumerate((77, 81, 84, 89)):
@@ -267,7 +283,7 @@ put(music, T['outro'], v, 0.1)
 # ---------------------------------------------------------------------------
 # Mix: effects duck the music a touch, everything shares one room
 duck = np.ones(N)
-for k in ('drop1', 'alert1', 'click', 'q', 'qAlert', 'err', 'fin'):
+for k in ('drop1', 'alert1', 'click', 'q', 'qAlert', 'err', 'fin', 'cmdFail', 'cmdInput', 'click2'):
     i = int(T[k] * SR)
     m = int(0.5 * SR)
     j = min(N, i + m)

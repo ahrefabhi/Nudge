@@ -1,6 +1,6 @@
 # Peeku — launch video plan
 
-**Format:** 1920×1080, 30 fps, 21.7 s. **Tone:** default — playful and clean, tipping to polished (it's a real tool, the creature carries the charm).
+**Format:** 1920×1080, 30 fps, 26.7 s (a little past the usual 25 s, to fit Commands). **Tone:** default — playful and clean, tipping to polished (it's a real tool, the creature carries the charm).
 
 ## Answers
 - **What is it?** A tiny creature that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.
@@ -8,7 +8,7 @@
 - **What sets it apart?** It lives *in the notch*: invisible while agents work, drops out when one needs you, says why (the exact command/question/error), and Open Session jumps to the exact tab.
 - **Best claim:** "One of them quietly stops to ask for permission. Ten minutes later you notice." (the product's own problem line)
 - **Visual hook:** the notch — two glowing eyes peeking out of the camera cutout.
-- **Real UI shown:** the site's working notch island + character (the project's own HTML/CSS/JS), the ghost terminal windows from the site, and the real SwiftUI renders from `docs/images` (manager, usage).
+- **Real UI shown:** the site's working notch island + character (the project's own HTML/CSS/JS), the ghost terminal windows from the site, and the real SwiftUI renders from `docs/images` (manager, usage, commands).
 - **Share caption:** Peeku lives in your MacBook's notch and drops out when a Claude Code or Codex session needs you.
 
 ## Angle
@@ -26,10 +26,11 @@ Times are the first plan; the exact timeline is `const T` in comp/index.html (sc
 | 2 | 3.2–7.4 | **Reveal.** Push in to the notch. Working: eyes glance, spinner "5". Peeku drops out with amber eyes; the notch springs open into the permission alert (`npm install stripe@17.2.0`). | "Meet Peeku. It lives in your notch." |
 | 3 | 7.4–10.6 | **Open Session.** Cursor glides to Open Session, click; notch tucks away; toast "Switched to iTerm · Tab 1 · payments-api"; the iTerm window lights up. | "Open Session jumps to the exact tab." |
 | 4 | 10.6–14.2 | **It tells you why.** Quick cuts in the notch: question (blue), error (red), finished (green). Glow color follows. | "Questions. Errors. Finished runs." |
-| 5 | 14.2–17.6 | **Real app.** Manager (Now) and Usage panels rise side by side. | "Every session, and your Claude and Codex limits." |
-| 6 | 17.6–21.0 | **Outro.** App icon, "Peeku", tagline, meta. | "A tiny companion in your notch." / "For Claude Code and Codex · macOS 14+ · Open source" / "peeku.ahrefabhi.com" |
+| 5 | 14.55–19.35 | **Commands.** Still in the notch: a red FAILED alert ("Dashboard exited with code 1", `EADDRINUSE`, Show Output · Restart), then a blue INPUT alert ("Storefront is waiting for input", the port question, Yes · No). The cursor clicks Yes; the notch tucks away; toast "Storefront · running on localhost:3001". | "Your dev servers live there too." → "Answer their prompts in one click." |
+| 6 | 19.65–23.15 | **Real app.** Now, Usage and Commands panels rise side by side. | "Every session, your limits and your commands." |
+| 7 | 23.45–26.7 | **Outro.** App icon, "Peeku", tagline, meta. | "A tiny companion in your notch." / "For Claude Code and Codex · macOS 14+ · Open source" / "peeku.ahrefabhi.com" |
 
-Transitions: dip through background between 1→2 and 4→5 (no muddy crossfades); 2→3→4 stay in the same notch shot.
+Transitions: dip through background between 1→2 and 5→6 (no muddy crossfades); 2→5 stay in the same notch shot.
 
 ## Sound
-Warm synth-pop bed, 100 BPM, F major (F–Dm–B♭–C), soft kick from scene 2, pluck arpeggio. SFX tuned to the key: soft "boop" when Peeku drops (C5→F5), a muted click on Open Session, airy filtered-noise swells on the dips, a small chime per mood in scene 4 (chord tones), a gentle resolve on the logo. Effects sit under the music.
+Warm synth-pop bed, 100 BPM, F major (F–Dm–B♭–C), soft kick from scene 2, pluck arpeggio. SFX tuned to the key: soft "boop" when Peeku drops (C5→F5), a muted click on Open Session, airy filtered-noise swells on the dips, a small chime per mood in scene 4 (chord tones), the same for the command alerts in scene 5 with a click on Yes, a pluck per panel, a gentle resolve on the logo. Effects sit under the music.
