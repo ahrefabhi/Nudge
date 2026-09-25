@@ -158,6 +158,7 @@ swift test                                    # unit tests
 swift run Peeku --snapshot snapshots          # render every state to PNG
 swift run Peeku --dump-sessions               # print the sessions Peeku sees
 swift run Peeku --readme-images docs/images   # re-render README images
+pngquant --quality=70-95 --strip --skip-if-larger --force --ext .png docs/images/*.png   # then shrink them (brew install pngquant)
 PEEKU_HOME=/tmp/peeku swift run Peeku         # use a scratch data folder
 ```
 
