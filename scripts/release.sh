@@ -37,9 +37,20 @@ mkdir -p "$out"
 zip="$out/Peeku-$version.zip"
 ditto -c -k --keepParent build/Peeku.app "$zip"
 
+# Sparkle only installs an app named like the one it's replacing, and the feed only lists the
+# latest release, so every update archive also carries the app under Peeku's old names. An app
+# updated from Nudge or Pip renames itself to Peeku.app on first launch (BundleRename).
+# The bundle's name isn't part of its signature, so the copies stay validly signed.
+update_zip="$out/Peeku-$version-update.zip"
+staging="$out/update"
+mkdir -p "$staging"
+for name in Peeku Nudge Pip; do ditto build/Peeku.app "$staging/$name.app"; done
+ditto -c -k "$staging" "$update_zip"
+rm -rf "$staging"
+
 sign_update=".build/artifacts/sparkle/Sparkle/bin/sign_update"
 # Prints: sparkle:edSignature="…" length="…"
-enclosure="$("$sign_update" "$zip")"
+enclosure="$("$sign_update" "$update_zip")"
 [[ "$enclosure" == *edSignature* ]] || die "signing failed: $enclosure"
 
 minimum="$(plutil -extract LSMinimumSystemVersion raw Resources/Info.plist)"
@@ -56,13 +67,13 @@ cat > "$out/appcast.xml" <<XML
       <sparkle:shortVersionString>$version</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>$minimum</sparkle:minimumSystemVersion>
       <sparkle:releaseNotesLink>https://github.com/$repo/releases/tag/$tag</sparkle:releaseNotesLink>
-      <enclosure url="https://github.com/$repo/releases/download/$tag/Peeku-$version.zip" type="application/octet-stream" $enclosure />
+      <enclosure url="https://github.com/$repo/releases/download/$tag/Peeku-$version-update.zip" type="application/octet-stream" $enclosure />
     </item>
   </channel>
 </rss>
 XML
 
-echo "built $zip (build $build) and $out/appcast.xml"
+echo "built $zip, $update_zip (build $build) and $out/appcast.xml"
 
 if [[ "$publish" != "--publish" ]]; then
     echo "dry run: nothing uploaded. To publish: scripts/release.sh $version --publish"
@@ -70,6 +81,6 @@ if [[ "$publish" != "--publish" ]]; then
 fi
 
 git push origin HEAD
-gh release create "$tag" "$zip" "$out/appcast.xml" --repo "$repo" --target "$(git rev-parse HEAD)" \
+gh release create "$tag" "$zip" "$update_zip" "$out/appcast.xml" --repo "$repo" --target "$(git rev-parse HEAD)" \
     --title "Peeku $version" --generate-notes
 echo "published https://github.com/$repo/releases/tag/$tag"

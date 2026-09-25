@@ -35,6 +35,7 @@ enum PeekuApp {
             return
         }
         if arguments.contains("--dump-sessions") { return dumpSessions() }
+        if BundleRename.run() { return }
 
         let app = NSApplication.shared
         let delegate = AppDelegate()

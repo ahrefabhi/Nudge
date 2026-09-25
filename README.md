@@ -77,7 +77,7 @@ Peeku asks Claude Code and Codex for your limits every few minutes, with no setu
 
 ## Install
 
-1. Download **Peeku-x.y.z.zip** from the [latest release](https://github.com/ahrefabhi/peeku/releases/latest), unzip it, and move **Peeku.app** to Applications.
+1. Download **Peeku-x.y.z.zip** (not the `-update` one, which is for in-app updates) from the [latest release](https://github.com/ahrefabhi/peeku/releases/latest), unzip it, and move **Peeku.app** to Applications.
 2. Open it (see below for the first launch).
 3. Follow the setup, which connects Claude Code and, if you use it, Codex.
 
