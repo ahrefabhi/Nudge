@@ -11,7 +11,7 @@ build/
 xcuserdata/
 DerivedData/
 
-# `Nudge --snapshot` output
+# `Peeku --snapshot` output
 snapshots/
 
 # macOS

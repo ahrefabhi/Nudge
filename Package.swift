@@ -2,11 +2,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "Nudge",
+    name: "Peeku",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "Nudge", targets: ["Nudge"]),
-        .executable(name: "nudge-hook", targets: ["NudgeHook"]),
+        .executable(name: "Peeku", targets: ["Peeku"]),
+        .executable(name: "peeku-hook", targets: ["PeekuHook"]),
     ],
     dependencies: [
         // Updates, delivered through GitHub releases and verified with EdDSA.
@@ -14,17 +14,17 @@ let package = Package(
     ],
     targets: [
         /// The inbox record format, shared by the collector and the app.
-        .target(name: "NudgeHookSchema"),
-        .target(name: "NudgeKit", dependencies: ["NudgeHookSchema"]),
+        .target(name: "PeekuHookSchema"),
+        .target(name: "PeekuKit", dependencies: ["PeekuHookSchema"]),
         /// Tiny command Claude Code runs for each hook event. Observation only.
-        .executableTarget(name: "NudgeHook", dependencies: ["NudgeHookSchema"]),
+        .executableTarget(name: "PeekuHook", dependencies: ["PeekuHookSchema"]),
         .executableTarget(
-            name: "Nudge",
-            dependencies: ["NudgeKit", .product(name: "Sparkle", package: "Sparkle")],
+            name: "Peeku",
+            dependencies: ["PeekuKit", .product(name: "Sparkle", package: "Sparkle")],
             swiftSettings: [.defaultIsolation(MainActor.self)],
-            // Nudge.app ships Sparkle.framework in Contents/Frameworks.
+            // Peeku.app ships Sparkle.framework in Contents/Frameworks.
             linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),
-        .testTarget(name: "NudgeKitTests", dependencies: ["NudgeKit", "NudgeHookSchema"]),
+        .testTarget(name: "PeekuKitTests", dependencies: ["PeekuKit", "PeekuHookSchema"]),
     ]
 )
