@@ -21,13 +21,20 @@ public enum SessionKind: Sendable, Hashable {
     case working, permission, question, waiting, error, finished
     /// Not a session: one of the agent's rate limits has passed the user's alert threshold.
     case usage
+    /// Not a session: one of the user's quick commands exited with an error.
+    case command
+    /// Not a session: a quick command printed a question and is waiting for the answer.
+    case commandInput
 
     public var needsYou: Bool {
         switch self {
-        case .permission, .question, .waiting, .error, .usage: true
+        case .permission, .question, .waiting, .error, .usage, .command, .commandInput: true
         case .idle, .working, .finished: false
         }
     }
+
+    /// About one of the user's quick commands, not an agent session.
+    public var isCommand: Bool { self == .command || self == .commandInput }
 }
 
 /// The coding agent a session belongs to.
@@ -88,9 +95,10 @@ public struct PeekuSession: Identifiable, Hashable, Sendable {
     public var attentionKey: String { "\(id)|\(kind)|\(since.timeIntervalSinceReferenceDate)" }
 
     /// Where it's running, e.g. "iTerm" or "Warp". A usage alert belongs to the agent, not an app,
-    /// and so does a session in an app Peeku couldn't identify.
+    /// and so does a session in an app Peeku couldn't identify. A failed command shows the command.
     public var hostName: String {
         if kind == .usage { return agent.productName }
+        if kind.isCommand { return hostAppName ?? "Command" }
         if host == .other { return hostAppName ?? agent.productName }
         return host.displayName
     }

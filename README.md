@@ -117,6 +117,7 @@ Your settings files are backed up before any change.
 | Shortcut | Action |
 |---|---|
 | ⌥⌘. | Show or hide the session manager |
+| ⌥⌘. then 1–4 | Open the manager on Now, History, Usage or Commands (keep ⌥⌘ held) |
 | ⌥⌘↓ | Next waiting agent |
 | ↵ | Open the highlighted session |
 | Esc | Fold the alert into the pill |

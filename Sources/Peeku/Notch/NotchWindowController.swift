@@ -11,6 +11,7 @@ final class NotchWindowController {
     let panel: NotchPanel
     private let machine: PhaseMachine
     private let presence: PresenceMonitor?
+    private let commands: CommandRunner?
     private let hitArea = IslandHitArea()
     private let hosting: FirstClickHostingView<IslandView>
     private var notch = NotchGeometry.fallback
@@ -18,11 +19,12 @@ final class NotchWindowController {
     private var monitors: [Any] = []
     private var screenObserver: NSObjectProtocol?
 
-    init(machine: PhaseMachine, presence: PresenceMonitor? = nil) {
+    init(machine: PhaseMachine, presence: PresenceMonitor? = nil, commands: CommandRunner? = nil) {
         self.machine = machine
         self.presence = presence
+        self.commands = commands
         panel = NotchPanel(contentRect: NSRect(origin: .zero, size: Self.canvas))
-        hosting = FirstClickHostingView(rootView: IslandView(machine: machine, notch: .fallback, presence: presence, hitArea: hitArea))
+        hosting = FirstClickHostingView(rootView: IslandView(machine: machine, notch: .fallback, presence: presence, commands: commands, hitArea: hitArea))
         hosting.sizingOptions = []
         panel.contentView = hosting
 
@@ -51,7 +53,7 @@ final class NotchWindowController {
         guard let screen = NotchGeometry.preferredScreen() else { return }
         self.screen = screen
         notch = NotchGeometry(screen: screen)
-        hosting.rootView = IslandView(machine: machine, notch: notch, presence: presence, hitArea: hitArea)
+        hosting.rootView = IslandView(machine: machine, notch: notch, presence: presence, commands: commands, hitArea: hitArea)
         let frame = screen.frame
         panel.setFrame(NSRect(x: frame.midX - Self.canvas.width / 2, y: frame.maxY - Self.canvas.height,
                               width: Self.canvas.width, height: Self.canvas.height), display: true)
@@ -98,6 +100,8 @@ final class NotchWindowController {
             updatePassThrough()
             return event
         case .keyDown:
+            // Keys typed in Peeku's own windows (Settings, the command editor) are theirs.
+            guard event.window === panel else { return event }
             return handleKey(event) ? nil : event
         default:
             return event
@@ -114,6 +118,8 @@ final class NotchWindowController {
             machine.escape()
         default:
             guard command, let digit = event.charactersIgnoringModifiers.flatMap(Int.init), (1...9).contains(digit) else { return false }
+            // ⌥⌘. then ⌥⌘1–4, with ⌥⌘ still held, picks a manager tab; ⌘ alone opens a row.
+            if event.modifierFlags.contains(.option) { return machine.showTab(digit) }
             machine.openRow(digit)
         }
         return true

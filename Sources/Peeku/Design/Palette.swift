@@ -36,8 +36,8 @@ struct Palette: Sendable {
         guard isLight else { return kind.accent }
         switch kind {
         case .permission, .usage: return Color(oklch: 0.56, 0.13, 65)
-        case .question, .waiting: return Color(oklch: 0.52, 0.14, 250)
-        case .error: return Color(oklch: 0.55, 0.17, 25)
+        case .question, .waiting, .commandInput: return Color(oklch: 0.52, 0.14, 250)
+        case .error, .command: return Color(oklch: 0.55, 0.17, 25)
         case .finished, .working: return Color(oklch: 0.52, 0.13, 152)
         case .idle: return label(0.38)
         }

@@ -1,13 +1,13 @@
 import Foundation
 
 public enum AttentionQueue {
-    /// permission > question > waiting > error > usage > finished. Working sessions never queue.
+    /// permission > question, command prompt > waiting > error, failed command > usage > finished. Working sessions never queue.
     public static func rank(_ kind: SessionKind) -> Int? {
         switch kind {
         case .permission: 0
-        case .question: 1
+        case .question, .commandInput: 1
         case .waiting: 2
-        case .error: 3
+        case .error, .command: 3
         case .usage: 4
         case .finished: 5
         case .idle, .working: nil

@@ -32,8 +32,8 @@ struct MultiAlertView: View {
             HStack(spacing: 12) {
                 if !palette.isLight { PeekuGroup(size: 42, count: queue.count) }
                 VStack(alignment: .leading, spacing: 2) {
-                    // A usage alert isn't an agent.
-                    Text("\(Self.countWord(queue.count)) \(queue.contains { $0.kind == .usage } ? "things" : "agents") need you")
+                    // Usage and command alerts aren't agents.
+                    Text("\(Self.countWord(queue.count)) \(queue.contains { $0.kind == .usage || $0.kind.isCommand } ? "things" : "agents") need you")
                         .font(.peeku(15, .semibold))
                         .tracking(-0.15)
                         .foregroundStyle(palette.primary)
@@ -67,7 +67,7 @@ struct MultiAlertView: View {
                         .font(.peeku(12))
                         .foregroundStyle(palette.accent(session.kind))
                     HStack(spacing: 5) {
-                        AgentMark(agent: session.agent, size: 10)
+                        SourceMark(session: session, size: 10)
                         LiveText { now in "\(session.hostName) · \(RelativeTime.short(since: session.since, now: now))" }
                     }
                     .font(.peeku(11))

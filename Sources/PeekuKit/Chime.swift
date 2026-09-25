@@ -7,8 +7,9 @@ public enum Chime: String, Sendable, Hashable, CaseIterable {
     public init?(_ kind: SessionKind) {
         switch kind {
         case .permission: self = .permission
-        case .question, .waiting: self = .question
-        case .error: self = .error
+        case .question, .waiting, .commandInput: self = .question
+        // A failed command sounds like a blocked agent, so it needs no setting of its own.
+        case .error, .command: self = .error
         case .finished: self = .finished
         case .usage: self = .usage
         case .idle, .working: return nil

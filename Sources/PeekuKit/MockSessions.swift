@@ -183,3 +183,48 @@ public enum MockSessions {
                 report(.codex, days: codex, hours: codexHours, sessions: codexSessions)]
     }
 }
+
+extension MockSessions {
+    /// A dev server that crashed, for Demo Mode's Simulate menu.
+    public static func commandAlert(now: Date = Date()) -> PeekuSession {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let command = QuickCommand(name: "Dashboard", directory: "\(home)/code/dashboard", command: "npm run dev")
+        return CommandRunner.alert(for: command, code: 1, lastLine: "Error: listen EADDRINUSE: address already in use :::5173", at: now)
+    }
+
+    /// Create React App asking to move off a taken port, for Demo Mode's Simulate menu.
+    public static func commandPrompt(now: Date = Date()) -> PeekuSession {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let command = QuickCommand(name: "Storefront", directory: "\(home)/code/storefront", command: "npm start")
+        return CommandRunner.inputAlert(for: command, prompt: "? Something is already running on port 3000. Would you like to run the app on another port instead? › (Y/n)", since: now)
+    }
+
+    /// Saved commands for snapshots: a dev server running, a worker that crashed, docs asking a question.
+    /// Nothing is actually run; the store lives in `root`.
+    @MainActor
+    public static func commands(root: URL) -> CommandRunner {
+        let runner = CommandRunner(store: CommandStore(root: root))
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let web = QuickCommand(name: "Dashboard", directory: "\(home)/code/dashboard", command: "npm run dev")
+        let api = QuickCommand(directory: "\(home)/code/payments-api", command: "go run ./cmd/worker")
+        let docs = QuickCommand(name: "Docs", directory: "\(home)/code/docs", command: "pnpm build && pnpm preview")
+        for command in [web, api, docs] { runner.save(command) }
+        let now = Date()
+        if let run = runner.run(for: web.id) {
+            run.status = .running(since: now.addingTimeInterval(-754))
+            run.append(["> dashboard@2.4.0 dev", "> vite", "", "  VITE v7.1.3  ready in 412 ms", "",
+                        "  ➜  Local:   http://localhost:5173/", "  ➜  Network: use --host to expose",
+                        "12:04:18 [vite] hmr update /src/routes/usage.tsx"])
+        }
+        if let run = runner.run(for: api.id) {
+            run.status = .exited(code: 1, at: now.addingTimeInterval(-95))
+            run.append(["worker: connecting to redis://localhost:6379", "worker: dial tcp [::1]:6379: connect: connection refused", "exit status 1"])
+        }
+        if let run = runner.run(for: docs.id) {
+            run.status = .running(since: now.addingTimeInterval(-40))
+            run.append(["> docs@1.0.0 preview", "> vite preview", ""], partial: "? Port 4173 is in use. Use 4174 instead? (Y/n) ")
+            run.waitingForInput = true
+        }
+        return runner
+    }
+}

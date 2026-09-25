@@ -17,9 +17,9 @@ public enum Phase: String, Sendable, Hashable, CaseIterable {
     }
 }
 
-/// The session manager's tabs.
-public enum ManagerTab: Sendable, Hashable {
-    case now, history, usage
+/// The session manager's tabs, in the order they show and ⌥⌘1–4 picks them.
+public enum ManagerTab: Sendable, Hashable, CaseIterable {
+    case now, history, usage, commands
 }
 
 /// Owns what the notch shows and when. Views read it; inputs come from sessions, clicks and keys.
@@ -43,6 +43,8 @@ public final class PhaseMachine {
     public private(set) var sessions: [PeekuSession] = []
     /// Rate limits past the user's threshold. They queue like sessions but aren't counted as agents.
     public private(set) var usageAlerts: [PeekuSession] = []
+    /// Quick commands that exited with an error. They queue like sessions too.
+    public private(set) var commandAlerts: [PeekuSession] = []
     /// The manager's selected tab.
     public var managerTab: ManagerTab = .now {
         didSet { if managerTab == .usage { onShowUsageTab?() } }
@@ -83,8 +85,12 @@ public final class PhaseMachine {
             }
         }
     }
-    /// Called at the moment the target session should be focused, or when a usage alert is opened.
+    /// Called at the moment the target session should be focused, or when a usage or command alert is opened.
     @ObservationIgnored public var onOpen: ((PeekuSession) -> Void)?
+    /// A failed command's alert asked to run it again.
+    @ObservationIgnored public var onRestartCommand: ((PeekuSession) -> Void)?
+    /// A waiting command's alert answered its prompt, e.g. with "y".
+    @ObservationIgnored public var onAnswerCommand: ((PeekuSession, String) -> Void)?
     /// Called after the Usage tab adds or removes an alert, so the app can save it.
     @ObservationIgnored public var onUsageAlertRulesChanged: (([UsageAlertRule]) -> Void)?
     /// Called when the Usage tab's "Set Up…" is clicked for an agent Peeku can't read yet.
@@ -114,7 +120,7 @@ public final class PhaseMachine {
     // MARK: Derived lists
 
     public var queue: [PeekuSession] {
-        AttentionQueue.ordered(sessions + usageAlerts, resolved: resolved, includeFinished: expandFinished)
+        AttentionQueue.ordered(sessions + usageAlerts + commandAlerts, resolved: resolved, includeFinished: expandFinished)
     }
 
     /// Running sessions, plus opened ones the user is now answering.
@@ -167,8 +173,15 @@ public final class PhaseMachine {
         react(queuedBefore: queuedBefore, chimes: true, finished: nil)
     }
 
+    public func update(commandAlerts new: [PeekuSession]) {
+        let queuedBefore = Set(queue.map(\.attentionKey))
+        commandAlerts = new
+        pruneResolved()
+        react(queuedBefore: queuedBefore, chimes: true, finished: nil)
+    }
+
     private func pruneResolved() {
-        resolved.formIntersection((sessions + usageAlerts).map(\.attentionKey))
+        resolved.formIntersection((sessions + usageAlerts + commandAlerts).map(\.attentionKey))
         clampCursor()
     }
 
@@ -268,8 +281,40 @@ public final class PhaseMachine {
         open(items[number - 1].id)
     }
 
-    /// Jumps to any session, waiting or not. A usage alert opens the manager's Usage tab instead.
+    /// Switches the open manager to tab `number` (1-based), for ⌥⌘1–4. Returns whether it did.
+    @discardableResult
+    public func showTab(_ number: Int) -> Bool {
+        let tabs = ManagerTab.allCases
+        guard phase == .manager, number >= 1, number <= tabs.count else { return false }
+        managerTab = tabs[number - 1]
+        return true
+    }
+
+    /// Restarts a failed command from its alert, which is then done with.
+    public func restartCommand(_ alertID: String) {
+        guard let alert = commandAlerts.first(where: { $0.id == alertID }) else { return }
+        resolved.insert(alert.attentionKey)
+        fold()
+        onRestartCommand?(alert)
+    }
+
+    /// Answers a waiting command's prompt from its alert, which is then done with.
+    public func answerCommand(_ alertID: String, _ answer: String) {
+        guard let alert = commandAlerts.first(where: { $0.id == alertID }) else { return }
+        resolved.insert(alert.attentionKey)
+        fold()
+        onAnswerCommand?(alert, answer)
+    }
+
+    /// Jumps to any session, waiting or not. A usage alert opens the manager's Usage tab instead,
+    /// and a failed command folds the notch for its output window.
     public func open(_ sessionID: String) {
+        if let alert = commandAlerts.first(where: { $0.id == sessionID }) {
+            resolved.insert(alert.attentionKey)
+            fold()
+            onOpen?(alert)
+            return
+        }
         if let alert = usageAlerts.first(where: { $0.id == sessionID }) {
             resolved.insert(alert.attentionKey)
             clampCursor()

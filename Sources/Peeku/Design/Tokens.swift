@@ -78,8 +78,8 @@ extension SessionKind {
     var accent: Color {
         switch self {
         case .permission, .usage: Tokens.Accent.permission
-        case .question, .waiting: Tokens.Accent.question
-        case .error: Tokens.Accent.error
+        case .question, .waiting, .commandInput: Tokens.Accent.question
+        case .error, .command: Tokens.Accent.error
         case .finished, .working: Tokens.Accent.success
         case .idle: Color.label(0.38)
         }
@@ -95,6 +95,8 @@ extension SessionKind {
         case .working: "Working"
         case .idle: "Idle"
         case .usage: "Usage"
+        case .command: "Failed"
+        case .commandInput: "Input"
         }
     }
 
@@ -109,6 +111,8 @@ extension SessionKind {
         case .working: "\(name) is working"
         case .idle: "\(name) is ready"
         case .usage: "\(name) reached your usage alert"
+        case .command: "A command failed"
+        case .commandInput: "A command is waiting for input"
         }
     }
 }

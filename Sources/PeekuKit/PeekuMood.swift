@@ -9,8 +9,8 @@ extension SessionKind {
         case .idle: .idle
         case .working: .working
         case .permission, .usage: .permission
-        case .question, .waiting: .question
-        case .error: .error
+        case .question, .waiting, .commandInput: .question
+        case .error, .command: .error
         case .finished: .success
         }
     }

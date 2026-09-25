@@ -7,6 +7,8 @@ struct IslandView: View {
     let machine: PhaseMachine
     let notch: NotchGeometry
     var presence: PresenceMonitor?
+    /// For the manager's Commands tab.
+    var commands: CommandRunner?
     /// Where the light panel measured itself, for the pointer hit area.
     var hitArea: IslandHitArea?
     /// Snapshots pin the appearance; the app follows the setting.
@@ -120,10 +122,13 @@ struct IslandView: View {
                     AlertCardView(session: session, bar: bar,
                                   onOpen: { machine.open(session.id) },
                                   onLater: { machine.later() },
-                                  onAllAgents: { machine.toggleManager() })
+                                  onAllAgents: { machine.toggleManager() },
+                                  onRestart: session.kind == .command ? { machine.restartCommand(session.id) } : nil,
+                                  onAnswer: session.kind == .commandInput && LogLineSplitter.asksYesOrNo(session.quote ?? "")
+                                      ? { machine.answerCommand(session.id, $0) } : nil)
                 }
             case .manager:
-                ManagerView(machine: machine, bar: bar)
+                ManagerView(machine: machine, bar: bar, commands: commands)
             case .opening:
                 EmptyView()
             }

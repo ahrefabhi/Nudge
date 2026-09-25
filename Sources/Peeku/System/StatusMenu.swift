@@ -13,6 +13,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         var setDemo: (Bool) -> Void
         var simulate: (MockSessions.Event) -> Void
         var simulateUsage: () -> Void
+        var simulateCommandFailure: () -> Void
+        var simulateCommandPrompt: () -> Void
         var resetDemo: () -> Void
         var toggleManager: () -> Void
         var showCharacterSheet: () -> Void
@@ -96,6 +98,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
             ]
             for (title, event) in events { simulate.addItem(entry(title) { $0.actions.simulate(event) }) }
             simulate.addItem(entry("Usage Limit") { $0.actions.simulateUsage() })
+            simulate.addItem(entry("Command Failure") { $0.actions.simulateCommandFailure() })
+            simulate.addItem(entry("Command Waiting for Input") { $0.actions.simulateCommandPrompt() })
             simulate.addItem(.separator())
             simulate.addItem(entry("Reset") { $0.actions.resetDemo() })
             menu.addItem(submenu("Simulate", simulate))
