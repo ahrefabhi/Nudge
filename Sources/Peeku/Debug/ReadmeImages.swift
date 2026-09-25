@@ -31,6 +31,7 @@ enum ReadmeImages {
         tabs.update(sessions: MockSessions.calm())
         tabs.history = MockSessions.history()
         tabs.usage = MockSessions.usage()
+        tabs.spend = MockSessions.spend()
         tabs.setUsageAlertRules([UsageAlertRule(scope: .claude, threshold: 75)] + UsageAlertRule.defaults)
         func manager(_ tab: ManagerTab) -> some View {
             tabs.managerTab = tab

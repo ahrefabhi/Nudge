@@ -56,7 +56,7 @@ On an external display or older MacBook, Peeku hides while idle and slides down 
 ### Every session, and what happened today
 
 <p align="center">
-  <img src="docs/images/manager.png" width="49%" alt="The session manager: three sessions that need you with their commands and questions, two working, one finished">
+  <img src="docs/images/manager.png" width="49%" alt="The session manager: three sessions that need you with their commands and questions, two working, one finished; under each, its branch, model, cost so far and how full its context is, auth-service at 93% in red">
   <img src="docs/images/history.png" width="49%" alt="History: today's permission requests with how long they took to answer, a finished run, a cleared error and a new task">
 </p>
 
@@ -64,7 +64,7 @@ On an external display or older MacBook, Peeku hides while idle and slides down 
 
 Peeku asks Claude Code and Codex for your limits every few minutes, with no setup. Above each agent's limits, it adds up their session logs for **Today**, **7 days** or **30 days**: the cost at API prices, tokens (cache reads included), replies, the top model, and a bar per hour (today) or day, split by model. Hover a bar for its numbers. On a subscription, the dollars are what the same tokens would cost on the API, not what you pay. Add alerts (50–95% or a custom value) for Claude, Codex or both; each fires once per threshold until the limit resets.
 
-<p align="center"><img src="docs/images/usage.png" width="49%" alt="The Usage tab: Claude Code at 64% of its 5-hour limit, resetting in 2h 13m, and 38% of its weekly limit; Codex on the Plus plan at 91% of its 5-hour limit in red, resetting in 37m, and 22% of its weekly limit; below them, two alerts: Claude at 75%, and Claude and Codex at 90%"></p>
+<p align="center"><img src="docs/images/usage.png" width="49%" alt="The Usage tab set to 30 days: Claude Code cost $970.43, 911M tokens, 11,625 replies, top model Opus 5, with a bar per day split into Opus 5, Fable 5.1 and other models; then its 5-hour limit at 64% and weekly limit at 38%; below, Codex on the Plus plan with 75M tokens, 959 replies and GPT-6 Luna as top model"></p>
 
 <p align="center"><img src="docs/images/usage-alert.png" width="760" alt="A usage alert in the notch: Claude reached your usage alert, 5-hour limit, 92% used, alert at 90%, and when it resets, with Show Usage and Later buttons"></p>
 
@@ -128,7 +128,7 @@ Your settings files are backed up before any change.
 
 **Settings** covers appearance, login, updates, sounds per state, usage alerts, showing costs, which apps to watch, hooks and permissions.
 
-<p align="center"><img src="docs/images/settings.png" width="360" alt="Peeku's settings: appearance, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
+<p align="center"><img src="docs/images/settings.png" width="360" alt="Peeku's settings: appearance, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, showing costs, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
 
 ## Updates and uninstall
 
