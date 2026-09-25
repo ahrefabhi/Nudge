@@ -99,15 +99,20 @@ struct IslandView: View {
 
         ZStack(alignment: .top) {
             switch machine.phase {
+            // These have nothing to click, and their animations (Nudge's eyes, the spinner) redraw
+            // every frame, which can swallow a click. Leave taps to the island.
             case .working, .idle:
                 if machine.phase == .working || machine.celebrating != nil {
                     WorkingWings(count: machine.working.count, celebrating: machine.celebrating != nil, wing: wing, bar: bar)
+                        .allowsHitTesting(false)
                 }
             case .peek:
                 PeekView(mood: machine.focused?.kind.mood ?? .permission)
+                    .allowsHitTesting(false)
             case .pill:
                 PillView(mood: pillMood, count: machine.queue.count,
                          accent: machine.focused?.kind.accent ?? Tokens.Accent.permission, wing: wing, bar: bar)
+                    .allowsHitTesting(false)
             case .alert:
                 if machine.queue.count > 1 {
                     MultiAlertView(queue: machine.queue, cursor: machine.cursorMoved ? machine.cursor : nil, bar: bar) { machine.open($0.id) }

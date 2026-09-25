@@ -31,15 +31,15 @@ public struct InboxReader: Sendable {
     }
 }
 
-/// Calls `onChange` on `queue` whenever entries in `directory` change. File events are only a
-/// wake-up hint; readers always rescan.
+/// Calls `onChange` on `queue` whenever entries in `directory` change, or, given a file, whenever
+/// the file is written. File events are only a wake-up hint; readers always rescan.
 final class DirectoryWatcher: @unchecked Sendable {
     private let source: DispatchSourceFileSystemObject?
 
     init?(directory: URL, queue: DispatchQueue, onChange: @escaping @Sendable () -> Void) {
         let descriptor = open(directory.path, O_EVTONLY)
         guard descriptor >= 0 else { return nil }
-        let source = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: [.write, .rename, .delete], queue: queue)
+        let source = DispatchSource.makeFileSystemObjectSource(fileDescriptor: descriptor, eventMask: [.write, .extend, .rename, .delete], queue: queue)
         source.setEventHandler(handler: onChange)
         source.setCancelHandler { close(descriptor) }
         source.resume()

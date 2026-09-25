@@ -19,42 +19,36 @@
   <img src="docs/images/alert.png" width="760" alt="Nudge's notch expanded into a notification: Claude needs your permission to run npm install stripe@17.2.0 in payments-api, with Open Session and Later buttons">
 </p>
 
-You start a few Claude Code or Codex sessions in iTerm, Terminal and VS Code, switch to something else, and one of them quietly stops to ask for permission. Ten minutes later you notice.
-
-Nudge fixes that. It sits invisibly inside the notch while your agents work. When one needs you, Nudge drops out, the notch opens into a notification, and **Open Session** takes you straight to the exact terminal tab or editor window. Then Nudge tucks itself away again.
+When a session stops to ask for permission, a question or help with an error, Nudge drops out of the notch and tells you why. **Open Session** takes you to the exact terminal tab or editor window.
 
 https://github.com/user-attachments/assets/2986e464-c3f6-4134-8ae4-edb229d1eea9
 
 ## Features
 
-- **Knows why a session is waiting.** Permission requests show the exact command, questions show their choices, errors show the error, and finished runs show the agent's last reply.
-- **Takes you to the right place.** Opens the precise iTerm tab, Terminal tab or VS Code window, and outlines it with a brief focus ring. Any other terminal or editor, like Warp, Ghostty, Zed or Cursor, comes to the front too, at the session's window when Nudge can tell which one it is.
-- **One queue, most urgent first.** Several agents waiting become one list: permission, then questions, then errors, oldest first. Cycle through it with ⌥⌘↓.
-- **Every session at a glance.** Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.
-- **Knows how much you have left.** The Usage tab shows how much of your Claude and Codex rate limits you've used (5-hour and weekly) and when each one resets, and alerts you when one reaches a threshold you set, for Claude, Codex or both.
-- **Sounds you can tell apart.** A different chime for permission, questions, errors and finished runs, each one changeable or silenced in Settings.
-- **Stays out of the way.** Unanswered alerts fold into a small pill. In full screen Nudge shrinks to a thin glow, and it goes quiet while Zoom shares your screen or when you ask it to.
-- **Read-only by design.** Nudge never types into your terminal and never approves anything. Answers always happen in the real session.
-- **Private.** Everything stays on your Mac. The only network request Nudge makes is its update check to GitHub. (For usage, it asks your own Claude Code and Codex, which check with Anthropic and OpenAI using their own sign-ins.)
-- **Native.** Swift and SwiftUI, light and dark mode, Reduce Motion, about 6 MB.
+- **Shows why a session is waiting:** the command, the question and its choices, the error, or the agent's last reply.
+- **Opens the right place:** the exact iTerm or Terminal tab, or VS Code window. Other apps (Warp, Ghostty, Zed, Cursor…) come to the front too.
+- **One queue, most urgent first:** permissions, then questions, then errors. Cycle with ⌥⌘↓.
+- **Every session at a glance:** click the notch for what's waiting, working and finished, plus a week of history.
+- **Rate limits:** your Claude and Codex 5-hour and weekly usage, with alerts at thresholds you set.
+- **Stays out of the way:** alerts fold into a pill, full screen shrinks Nudge to a glow, and it goes quiet while your screen is shared.
+- **Read-only and private:** Nudge never types or approves anything, and everything stays on your Mac.
+- **Native:** Swift and SwiftUI, light and dark mode, Reduce Motion, about 6 MB.
 
 ## A closer look
 
 ### In the notch
 
-Idle, Nudge is invisible: the notch is just the notch. While agents work, two eyes glance around beside the camera. When something needs you, Nudge drops out.
+Idle, the notch is just the notch. While agents work, two eyes glance around. When something needs you, Nudge drops out.
 
 <p align="center"><img src="docs/images/notch.png" width="760" alt="Three notch states: working with a spinner and a count of 5, Nudge dropping out of the notch with amber eyes, and a folded pill with a badge showing 3 waiting"></p>
 
 ### On a Mac without a notch
 
-On an external display or an older MacBook, there's no notch to hide in, so Nudge stays out of the menu bar entirely while idle, leaving the app menus clear. When agents start working it slides down as a black pill the height of the menu bar, and everything else works the same. While it's hidden, open the session manager from the menu bar icon or with ⌥⌘.
+On an external display or older MacBook, Nudge hides while idle and slides down as a black pill when agents work. Open the manager from the menu bar icon or ⌥⌘.
 
 <p align="center"><img src="docs/images/menu-bar.png" width="760" alt="Four menu bar states on a display without a notch: idle with nothing showing, working as a black pill with a spinner and a count of 5, Nudge dropping out of the menu bar with amber eyes, and a folded pill with a badge showing 3 waiting"></p>
 
 ### When several agents need you
-
-Nudge never stacks notifications. One creature, one queue, most urgent first.
 
 <p align="center"><img src="docs/images/multiple.png" width="760" alt="Three agents need you: payments-api needs permission, dashboard-v2 has a question, infra-terraform is blocked, each with an Open button"></p>
 
@@ -65,171 +59,122 @@ Nudge never stacks notifications. One creature, one queue, most urgent first.
   <img src="docs/images/history.png" width="49%" alt="History: today's permission requests with how long they took to answer, a finished run, a cleared error and a new task">
 </p>
 
-### How much you have left
+### Usage
 
-Usage shows up with no setup and stays current even when no session is running: Nudge asks Claude Code and Codex for it every few minutes, and again when you open the Usage tab. Each agent says how old its reading is, and a window that has since reset says so rather than showing a stale percentage. If Claude Code can't be asked (for example, an older version), choose **Set Up…** in the Usage tab or Settings to read Claude's numbers from its status line instead (see [How it works](#how-it-works)).
+Nudge asks Claude Code and Codex for your limits every few minutes, with no setup. Add alerts (50–95% or a custom value) for Claude, Codex or both; each fires once per threshold until the limit resets.
 
 <p align="center"><img src="docs/images/usage.png" width="49%" alt="The Usage tab: Claude Code at 64% of its 5-hour limit, resetting in 2h 13m, and 38% of its weekly limit; Codex on the Plus plan at 91% of its 5-hour limit in red, resetting in 37m, and 22% of its weekly limit; below them, two alerts: Claude at 75%, and Claude and Codex at 90%"></p>
-
-**Usage alerts.** Under the limits, **Alerts** lists when Nudge should tell you a limit is getting close. Choose **Add Alert**, pick Claude, Codex or both, and a threshold: 50%, 75%, 90% or 95%, or type any percentage from 1 to 100 under **Custom**. There's one to start with: Claude and Codex at 90%. When a limit reaches an alert, Nudge tells you the way it tells you about a waiting session: it drops out with the limit, how much is used and when it resets, and **Show Usage** opens this tab. It queues after any sessions that need you, follows Quiet like other alerts, and has its own sound. Each limit alerts once per threshold (so alerts at 75% and 90% each fire once), then stays quiet until it resets. The limits are the ones Claude Code and Codex report, which cover your whole account rather than each model.
 
 <p align="center"><img src="docs/images/usage-alert.png" width="760" alt="A usage alert in the notch: Claude reached your usage alert, 5-hour limit, 92% used, alert at 90%, and when it resets, with Show Usage and Later buttons"></p>
 
 ### Light mode
 
-The notch stays black, so Nudge hangs from it and holds a light panel instead.
-
 <p align="center"><img src="docs/images/light.png" width="760" alt="Light mode: Nudge hangs below the black notch above a frosted light notification panel"></p>
 
 ### Nudge's moods
-
-State lives in the eyes: sleepy, busy, curious, eager, worried and happy.
 
 <p align="center"><img src="docs/images/states.png" width="760" alt="Nudge's seven states: idle, working, question, permission, error, success and multiple waiting"></p>
 
 ## Install
 
-1. Download **Nudge-x.y.z.zip** from the [latest release](https://github.com/ahrefabhi/nudge/releases/latest) and unzip it.
-2. Move **Nudge.app** to your Applications folder.
-3. Open Nudge, and let macOS open it once (see below).
-4. Follow the short setup. It finds where your agents run, and connects to Claude Code (and Codex, if you use it).
+1. Download **Nudge-x.y.z.zip** from the [latest release](https://github.com/ahrefabhi/nudge/releases/latest), unzip it, and move **Nudge.app** to Applications.
+2. Open it (see below for the first launch).
+3. Follow the setup, which connects Claude Code and, if you use it, Codex.
+
+**Requires** macOS 14+ and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (any terminal, editor or the Claude app). [Codex CLI](https://developers.openai.com/codex/cli) is optional. Try it first with **Demo Mode** in the menu bar.
 
 ### The first time you open Nudge
 
-Nudge isn't notarized by Apple yet, so the first launch shows this. It means macOS couldn't check the app with Apple, not that anything is wrong with it:
+Nudge isn't notarized yet, so macOS blocks the first launch:
 
 <p align="center"><img src="docs/images/gatekeeper.png" width="262" alt="macOS dialog: “Nudge” Not Opened. Apple could not verify “Nudge” is free of malware that may harm your Mac or compromise your privacy. Buttons: Done and Move to Bin"></p>
 
-Click **Done** (not Move to Bin), then either:
+Click **Done**, then either go to **System Settings → Privacy & Security** and click **Open Anyway**, or run:
 
-- **In System Settings:** open **System Settings → Privacy & Security**, scroll to **Security**, and click **Open Anyway** next to *"Nudge" was blocked*. Confirm with your password or Touch ID, open Nudge again, and choose **Open**.
-- **In Terminal:** remove the "downloaded from the internet" flag, then open Nudge normally:
+```sh
+xattr -dr com.apple.quarantine /Applications/Nudge.app
+```
 
-  ```sh
-  xattr -dr com.apple.quarantine /Applications/Nudge.app
-  ```
-
-You only do this once. Later versions arrive through Nudge's own updater and open without asking. On macOS 14 you can also right-click Nudge.app and choose **Open**.
+You only do this once; updates open normally.
 
 <p align="center"><img src="docs/images/onboarding.png" width="760" alt="Setup in three steps: Hi, I'm Nudge; where do your agents run, with iTerm, Terminal and VS Code found; and permissions for Claude Code and Codex hooks, Accessibility and Automation"></p>
 
-**Requirements:** macOS 14 Sonoma or later, and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in any terminal or editor, or in the Claude app, and optionally the [Codex CLI](https://developers.openai.com/codex/cli). Nudge is designed for Macs with a notch, and works on other displays too (see [On a Mac without a notch](#on-a-mac-without-a-notch)).
-
-Want to look around first? Choose **Demo Mode** from the menu bar and use **Simulate** to trigger each kind of alert.
-
 ## How it works
 
-Nudge combines these sources, all on your Mac:
+Everything runs on your Mac. The only network request Nudge makes itself is the update check.
 
-1. **Claude Code's session list** (`~/.claude/sessions`) says which sessions are running and whether they're busy, idle or waiting. Nudge reads it with no setup.
-2. **Claude Code hooks** say *why* a session is waiting. Setup adds entries to `~/.claude/settings.json` that run Nudge's small collector, `nudge-hook`, for each event. The collector keeps only what Nudge shows (the command, the question and its choices, the error, Claude's summary, the git branch, and which app and tab the session is in) and drops the rest, including transcripts. Because the collector reads the branch from inside your session, Nudge itself never opens your project folders, so it never asks for access to Documents, Desktop or iCloud Drive. Records go into `~/Library/Application Support/Nudge/inbox` and are deleted as soon as Nudge reads them.
-3. **Codex hooks**, if Codex is installed, work the same way through `~/.codex/hooks.json`. Codex has no session list, so the collector also notes the Codex process, and Nudge drops the session when that process ends. Codex runs new hooks only after you trust them: after installing, type `/hooks` in Codex and trust Nudge's entries. Nudge never does this for you.
+- **Session list:** Claude Code's `~/.claude/sessions` says which sessions run and whether they're busy, idle or waiting.
+- **Hooks:** setup adds hooks to `~/.claude/settings.json` (and `~/.codex/hooks.json`) that run `nudge-hook`. It records only what Nudge shows (command, question, error, summary, branch, app and tab), never transcripts, into `~/Library/Application Support/Nudge/inbox`, which Nudge deletes after reading. It never answers or blocks anything and exits immediately. For Codex, type `/hooks` and trust Nudge's entries.
+- **Usage:** Nudge asks `claude -p` and `codex app-server` for rate limits using their own sign-ins; it never reads credentials. If that fails, **Set Up…** reads Claude's numbers from its status line instead, keeping any status line you have.
+- **Permissions:** *Automation* selects the right iTerm or Terminal tab. *Accessibility* finds the exact window and detects screen sharing.
 
-4. **Usage.** Nudge asks each agent for your rate limits every 5 minutes and when you open the Usage tab, and each fetches them with its own sign-in; Nudge never reads either one's credentials. For Claude, it runs `claude -p` in the Agent SDK's stream-json mode and sends the same `get_usage` request Claude Code's VS Code extension uses. It loads none of your settings, so no hooks, status line or MCP servers run, it saves no session and makes no model call. For Codex, it runs `codex app-server` and asks for `account/rateLimits/read`. Both requests are marked experimental, so Nudge also reads what the agents write down: Codex's session logs (`~/.codex/sessions`), updated after every turn, and optionally Claude Code's status line. Claude Code shares limits with its status line, so choosing **Set Up…** makes Nudge that status line: it sets `statusLine` in `~/.claude/settings.json` to run the collector, which saves the numbers to `~/Library/Application Support/Nudge/usage` and prints nothing. If you already have a status line, the collector runs it with the same input, so what you see doesn't change, and Nudge puts it back when you remove this. Only Claude Code in a terminal runs a status line (not the VS Code extension or the Claude app), and with one set, Claude Code hides some footer hints, like "esc to interrupt". Whichever reading is newest is shown.
-
-The collector only records. It never answers, approves or blocks anything, prints nothing, and always exits immediately, so it can't slow your agent down or change what it does. Your other settings and hooks are left exactly as they were, and your settings file is backed up before any change.
-
-Nudge asks macOS for two permissions. **Automation** lets it select the right iTerm or Terminal tab; without it, Open Session can't switch tabs there and points you to the setting. **Accessibility** lets it find the exact window for the focus ring, and in apps other than iTerm and Terminal, pick the session's window by its title (which usually shows the project folder); without it, Nudge brings the app forward and outlines its front window instead.
+Your settings files are backed up before any change.
 
 ## Using Nudge
 
 | Shortcut | Action |
 |---|---|
 | ⌥⌘. | Show or hide the session manager |
-| ⌥⌘↓ | Move to the next waiting agent |
+| ⌥⌘↓ | Next waiting agent |
 | ↵ | Open the highlighted session |
 | Esc | Fold the alert into the pill |
 | ⌘1–9 | Open a row by number |
 
-↵, Esc and ⌘1–9 work once the notch has focus: click it, or use ⌥⌘. or ⌥⌘↓. Nudge never takes the keyboard from your editor on its own.
+↵, Esc and ⌘1–9 work once the notch has focus. Nudge never takes the keyboard on its own.
 
-**Staying out of the way.** When an app is full screen (or the menu bar is set to hide), Nudge shrinks to a 4px glow along the top edge, only while something is waiting; click it to see what. While Zoom is sharing your screen, or when you turn on **Quiet** from the menu bar, new alerts only update the count, no sound plays and the notch doesn't open by itself. macOS doesn't let apps read Focus modes, so use Quiet for those.
+**Goes quiet** (count only, no pop-up or sound) while your screen is shared or recorded, when **Quiet** is on, or for the session you're already looking at. In full screen it shrinks to a glow along the top edge.
 
-**Already looking at it.** If the session that starts waiting is the one in front of you (its iTerm or Terminal tab is selected, its window is focused in VS Code or any other app, or the Claude app is in front) and you've used your Mac in the last minute, Nudge stays quiet for it, just as in Quiet: the count updates, but there's no pop-up and no sound. Other sessions still announce themselves. Turn this off in Settings with **Stay quiet for the session in front**.
+**Settings** covers appearance, login, updates, sounds per state, usage alerts, which apps to watch, hooks and permissions.
 
 <p align="center"><img src="docs/images/settings.png" width="360" alt="Nudge's settings: appearance, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
 
-**Which apps to watch.** Under **Watch Sessions In** in the menu bar (or in Settings), turn off an app to hide its sessions. iTerm, Terminal, VS Code and the Claude app are always listed, and any other app appears once a session runs in it. Sessions whose app Nudge can't tell, such as some under tmux, share one **Other Apps** switch.
+## Updates and uninstall
 
-**Settings** (menu bar → Settings…) covers appearance, opening at login, update checks, whether alerts fold after 8 seconds, whether finished sessions pop up, staying quiet for the session in front, usage alerts, sounds for each state, Quiet, which apps to watch, hooks, Claude usage and permissions.
+Nudge updates itself through [Sparkle](https://sparkle-project.org), verifying each update's signature. Coming from Pip, the old name? Your data moves over automatically; allow the permissions once more.
 
-## Updates
-
-Nudge checks for updates once a day through [Sparkle](https://sparkle-project.org), using the releases on this page, and you can check any time from the menu bar. Every update is verified against a signing key built into Nudge before it's installed.
-
-**Coming from Pip?** Nudge used to be called Pip. The first time Nudge opens, it moves Pip's hooks, status line, history and settings over, and removes `~/Library/Application Support/Pip`. macOS ties Accessibility and Automation to the app, so allow those once more in Settings.
-
-## Uninstall
-
-Choose **Uninstall Nudge…** from the menu bar or Settings. After you confirm, Nudge removes its hooks from `~/.claude/settings.json` (and `~/.codex/hooks.json`), puts back the status line you had before if Nudge was showing Claude usage, deletes its data in `~/Library/Application Support/Nudge`, turns off opening at login, and moves itself to the Trash. Backups Nudge made of those files (`….nudge-backup-…`) are left next to them.
-
-If you delete Nudge.app directly instead, its hooks stay in your Claude (and Codex) settings. They're harmless (the collector stops writing once 10,000 unread events pile up, about 5 MB), but to remove them, reinstall Nudge and choose Uninstall, or delete the entries whose command ends in `Application Support/Nudge/bin/nudge-hook`.
+To remove it, choose **Uninstall Nudge…** from the menu bar. It removes its hooks, restores your status line, deletes its data and moves itself to the Trash.
 
 ## Troubleshooting
 
-**"Nudge" Not Opened: Apple could not verify "Nudge" is free of malware.** Expected on the first launch of a download, because Nudge isn't notarized yet. Click **Done**, then use **Open Anyway** or the `xattr` command in [The first time you open Nudge](#the-first-time-you-open-nudge). If macOS instead says Nudge "is damaged and can't be opened", download the zip again; if it still says so, the `xattr` command above clears it.
-
-**Nudge lists a session but doesn't say why it's waiting.** The hooks aren't installed, or the session started before they were. Install them from the menu bar (or Settings → Claude Code); a session that was already running may need a restart before it reports to Nudge.
-
-**Nudge doesn't see Codex sessions.** Install Codex hooks from the menu bar or Settings, then type `/hooks` in Codex and trust Nudge's entries; Codex skips untrusted hooks. Restart any Codex session that was already running.
-
-**The Usage tab doesn't show Claude's numbers.** It says why. *Couldn't ask Claude Code* means `claude` wasn't found or didn't answer; update Claude Code, or choose **Set Up…** to use the status line. *Waiting for Claude Code to run its status line* means no terminal session has run it yet: start or restart Claude Code in iTerm or Terminal (the VS Code extension and the Claude app don't run status lines). *Hasn't included usage* means the status line runs but Claude Code leaves usage out, as it does in a new session until Claude's first reply. *No rate limits to report* comes from Claude Code itself, for accounts without limits, like an API key.
-
-**Open Session brings the app forward but not the right tab.** Allow Nudge under System Settings → Privacy & Security → Automation for iTerm or Terminal. In other apps, Nudge picks the window whose title shows the session's project folder, so it needs Accessibility, and it can't pick a tab inside a window (Warp, for example, keeps every tab in one window).
-
-**Nudge asks for Accessibility, but it's already switched on in System Settings.** macOS ties Accessibility and Automation to the app's signature, and that switch belongs to an older build of Nudge. In Nudge's Settings (or the last setup step), choose **Reset…**: it removes Nudge's entries and asks again. You can also select Nudge in System Settings → Privacy & Security → Accessibility, click **−**, and allow it again. Builds signed with the same certificate keep their permissions across updates, so this should only happen once.
-
-**⌥⌘. does nothing.** Another app already uses that shortcut. The manager is also one click on the notch, or in the menu bar.
+- **"Nudge" Not Opened:** expected on first launch. See [The first time you open Nudge](#the-first-time-you-open-nudge).
+- **A session shows but not why it's waiting:** install hooks from the menu bar, then restart that session.
+- **No Codex sessions:** install Codex hooks, trust them with `/hooks`, and restart Codex.
+- **No Claude usage:** the Usage tab says why. Update Claude Code, or choose **Set Up…** and run Claude Code in a terminal.
+- **Opens the app but not the tab:** allow Nudge under Privacy & Security → Automation (iTerm, Terminal) or Accessibility (other apps).
+- **Accessibility is on but Nudge asks again:** the permission belongs to an older build. Choose **Reset…** in Settings.
+- **⌥⌘. does nothing:** another app uses it. Click the notch instead.
 
 ## Building from source
 
-Requires macOS 14 or later and Xcode 26 (Swift 6.2).
+Requires Xcode 26 (Swift 6.2).
 
 ```sh
-git clone https://github.com/ahrefabhi/nudge.git
-cd nudge
-swift run Nudge            # run from the terminal (Demo Mode: swift run Nudge --demo)
-scripts/bundle.sh        # build build/Nudge.app with the collector and Sparkle inside
-open build/Nudge.app
+git clone https://github.com/ahrefabhi/nudge.git && cd nudge
+swift run Nudge                               # run (add --demo for Demo Mode)
+scripts/bundle.sh && open build/Nudge.app     # build the app bundle
+swift test                                    # unit tests
+swift run Nudge --snapshot snapshots          # render every state to PNG
+swift run Nudge --dump-sessions               # print the sessions Nudge sees
+swift run Nudge --readme-images docs/images   # re-render README images
+NUDGE_HOME=/tmp/nudge swift run Nudge         # use a scratch data folder
 ```
-
-```sh
-swift test                                    # unit tests: queue, phases, hooks, installer, history, usage
-swift run Nudge --snapshot snapshots            # render every state to PNG for checking against the design
-swift run Nudge --dump-sessions                 # print the sessions Nudge sees right now
-swift run Nudge --readme-images docs/images     # re-render the images in this README (then pngquant them)
-scripts/make-icon.sh                          # re-render Resources/AppIcon.icns
-NUDGE_HOME=/tmp/nudge swift run Nudge               # use a scratch data folder
-```
-
-### Project layout
 
 | Path | What's there |
 |---|---|
-| `Sources/NudgeKit` | The model, attention queue and phase machine, observation of Claude Code and Codex (inbox, registry, reducer), the hook and status line installer, history and usage readers. No UI; unit-tested. |
-| `Sources/NudgeHook` | `nudge-hook`, the collector Claude Code and Codex run for each hook event, and Claude Code's status line when Nudge shows Claude usage. |
-| `Sources/NudgeHookSchema` | The inbox record format shared by the collector and the app. |
-| `Sources/Nudge` | The app: the notch panel and island, Nudge, the views, onboarding, settings and macOS integration. |
-| `Tests/NudgeKitTests` | Tests for everything in NudgeKit. |
-| `scripts` | Bundling, releasing and icon rendering. |
+| `Sources/NudgeKit` | Model, queue, phase machine, session observation, hook installer, history, usage. Unit-tested. |
+| `Sources/NudgeHook` | `nudge-hook`, the collector hooks run. |
+| `Sources/NudgeHookSchema` | The inbox record format. |
+| `Sources/Nudge` | The app: notch, views, onboarding, settings, macOS integration. |
+| `scripts` | Bundling, releasing, icon rendering. |
 
-### Releasing
-
-```sh
-scripts/release.sh 0.2.0            # dry run: build, zip, sign, and write appcast.xml into build/release/v0.2.0
-scripts/release.sh 0.2.0 --publish  # also push, tag v0.2.0 and upload both files to a GitHub release
-```
-
-The script needs a clean working tree and uses the commit count as the build number, so it always grows.
-
-**Code signing.** `bundle.sh` signs with the `NUDGE_SIGN_IDENTITY` certificate if set, else a certificate named **Nudge Code Signing** if your Keychain has one, else ad-hoc. Use a certificate for releases: macOS keys Accessibility and Automation to the signature, and an ad-hoc signature changes with every build, so permissions would go stale after each update. A self-signed code-signing certificate is enough for that (a Developer ID is still needed for notarization). Export it from Keychain Access (**My Certificates → Nudge Code Signing → Export**) and keep the backup safe; a new certificate makes everyone allow Nudge's permissions once more. Updates are signed with a Sparkle EdDSA key kept in the maintainer's login Keychain (created once with `.build/artifacts/sparkle/Sparkle/bin/generate_keys`). Back it up with `generate_keys -x <file>`: without it, existing installs can't be updated.
+**Releasing:** `scripts/release.sh 0.2.0` does a dry run; add `--publish` to tag and upload. Sign with a stable certificate (`NUDGE_SIGN_IDENTITY` or one named **Nudge Code Signing**) so macOS permissions survive updates, and back up the Sparkle key (`generate_keys -x <file>`).
 
 ## Acknowledgements
 
 Nudge started from a great idea: [Orbit](https://github.com/syedmazharaliraza/orbit), by [Syed Mazhar Ali Raza](https://github.com/syedmazharaliraza). Nudge wouldn't exist without it. Huge thanks to Syed for the inspiration and for building something so thoughtful. Go give Orbit a star.
 
-Nudge is built on [Sparkle](https://sparkle-project.org) for updates. It works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Codex](https://developers.openai.com/codex) but isn't affiliated with or endorsed by Anthropic or OpenAI.
+Nudge works with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Codex](https://developers.openai.com/codex) but isn't affiliated with Anthropic or OpenAI.
 
 ## License
 
-Nudge is available under the [MIT license](LICENSE).
+[MIT](LICENSE)

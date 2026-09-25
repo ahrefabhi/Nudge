@@ -12,7 +12,7 @@ final class NotchWindowController {
     private let machine: PhaseMachine
     private let presence: PresenceMonitor?
     private let hitArea = IslandHitArea()
-    private let hosting: NSHostingView<IslandView>
+    private let hosting: FirstClickHostingView<IslandView>
     private var notch = NotchGeometry.fallback
     private var screen: NSScreen?
     private var monitors: [Any] = []
@@ -22,7 +22,7 @@ final class NotchWindowController {
         self.machine = machine
         self.presence = presence
         panel = NotchPanel(contentRect: NSRect(origin: .zero, size: Self.canvas))
-        hosting = NSHostingView(rootView: IslandView(machine: machine, notch: .fallback, presence: presence, hitArea: hitArea))
+        hosting = FirstClickHostingView(rootView: IslandView(machine: machine, notch: .fallback, presence: presence, hitArea: hitArea))
         hosting.sizingOptions = []
         panel.contentView = hosting
 
@@ -153,4 +153,10 @@ final class NotchWindowController {
         default: panel.resignKey()
         }
     }
+}
+
+/// The panel is never key before the user clicks it, and by default that first click only makes
+/// it key. Deliver it, so one click opens the island.
+final class FirstClickHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }

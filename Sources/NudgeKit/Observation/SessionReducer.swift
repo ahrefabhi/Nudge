@@ -155,6 +155,8 @@ public struct SessionReducer: Sendable {
             case .idle:
                 if session.phase == .working, changedAt > session.lastEventAt { session.set(.idle, at: changedAt) }
                 if case .waiting = session.phase, changedAt > session.since { session.set(.idle, at: changedAt) }
+                // Idle since the prompt began: the user dismissed it with Esc, which sends no hook event.
+                if session.phase.isPrompt, changedAt > session.since { session.set(.idle, at: changedAt) }
             case nil:
                 break
             }

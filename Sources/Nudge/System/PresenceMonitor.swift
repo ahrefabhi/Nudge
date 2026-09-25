@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import Darwin
 import Observation
 
@@ -23,9 +24,12 @@ final class PresenceMonitor {
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var lastRefresh = Date.distantPast
+    /// Read off the main thread, since asking Control Center takes tens of milliseconds.
+    @ObservationIgnored private var screenRecording = false
+    @ObservationIgnored private let io = DispatchQueue(label: "app.nudge.presence", qos: .utility)
 
-    /// Helper processes that run only while an app shares the screen. Zoom's `CptHost` is the
-    /// reliable one; macOS has no public "screen is being shared" signal.
+    /// Helper processes that run only while an app shares the screen. Zoom's `CptHost` works
+    /// without Accessibility, which the Control Center check needs.
     static let sharingProcesses: Set<String> = ["CptHost"]
 
     func start() {
@@ -36,8 +40,12 @@ final class PresenceMonitor {
             })
         }
         timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refresh() }
+            MainActor.assumeIsolated {
+                self?.refresh()
+                self?.checkScreenRecording()
+            }
         }
+        checkScreenRecording()
         refresh()
     }
 
@@ -59,14 +67,52 @@ final class PresenceMonitor {
         lastRefresh = Date()
         var next = State()
         next.menuBarHidden = NotchGeometry.preferredScreen().map { !Self.menuBarVisible(on: $0) } ?? false
-        next.screenSharing = Self.anyProcessRunning(Self.sharingProcesses)
+        next.screenSharing = screenRecording || Self.anyProcessRunning(Self.sharingProcesses)
         next.quiet = Preferences.quietUntil.map { $0 > Date() } ?? false
         guard next != state else { return }
         state = next
         onChange?(next)
     }
 
+    private func checkScreenRecording() {
+        io.async { [weak self] in
+            let recording = Self.screenRecordingInUse()
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self, recording != self.screenRecording else { return }
+                    self.screenRecording = recording
+                    self.refresh()
+                }
+            }
+        }
+    }
+
     // MARK: Signals
+
+    /// macOS's own "Screen Recording" label, in the user's language.
+    nonisolated static let screenRecordingLabel = Bundle(path: "/System/Library/CoreServices/ControlCenter.app")?
+        .localizedString(forKey: "Screen Recording", value: nil, table: "SensorIndicators") ?? "Screen Recording"
+
+    /// Whether any app is capturing the screen (a Meet, Slack, Teams or Zoom share, or a recording).
+    /// While one is, macOS's Control Center menu bar item reads e.g. "Control Center, Screen
+    /// Recording is in use". Reading it needs Accessibility, which Nudge already asks for.
+    nonisolated static func screenRecordingInUse() -> Bool {
+        guard AXIsProcessTrusted(),
+              let controlCenter = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.controlcenter").first else { return false }
+        let app = AXUIElementCreateApplication(controlCenter.processIdentifier)
+        AXUIElementSetMessagingTimeout(app, 0.5)
+        guard let bar = attribute(app, kAXExtrasMenuBarAttribute).map({ $0 as! AXUIElement }),
+              let items = attribute(bar, kAXChildrenAttribute) as? [AXUIElement],
+              let item = items.first(where: { attribute($0, kAXIdentifierAttribute) as? String == "com.apple.menuextra.controlcenter" }),
+              let description = attribute(item, kAXDescriptionAttribute) as? String else { return false }
+        return description.contains(screenRecordingLabel)
+    }
+
+    private nonisolated static func attribute(_ element: AXUIElement, _ name: String) -> AnyObject? {
+        var value: AnyObject?
+        guard AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success else { return nil }
+        return value
+    }
 
     /// The menu bar is a window-server window at the main-menu level along the top of the screen.
     /// Window bounds and owners need no permission.
