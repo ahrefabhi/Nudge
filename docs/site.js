@@ -1,4 +1,4 @@
-// Nudge website: the character, the notch island and the hero background.
+// Peeku website: the character, the notch island and the hero background.
 (() => {
   'use strict';
 
@@ -96,7 +96,7 @@
   if (copyBtn) {
     let reset;
     copyBtn.addEventListener('click', () => {
-      navigator.clipboard?.writeText('xattr -dr com.apple.quarantine /Applications/Nudge.app').catch(() => {});
+      navigator.clipboard?.writeText('xattr -dr com.apple.quarantine /Applications/Peeku.app').catch(() => {});
       copyBtn.textContent = 'Copied';
       clearTimeout(reset);
       reset = setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);

@@ -4,41 +4,41 @@
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:Nudge}",
-            "name": "Debug Nudge",
-            "target": "Nudge",
+            "cwd": "${workspaceFolder:Peeku}",
+            "name": "Debug Peeku",
+            "target": "Peeku",
             "configuration": "debug",
-            "preLaunchTask": "swift: Build Debug Nudge"
+            "preLaunchTask": "swift: Build Debug Peeku"
         },
         {
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:Nudge}",
-            "name": "Release Nudge",
-            "target": "Nudge",
+            "cwd": "${workspaceFolder:Peeku}",
+            "name": "Release Peeku",
+            "target": "Peeku",
             "configuration": "release",
-            "preLaunchTask": "swift: Build Release Nudge"
+            "preLaunchTask": "swift: Build Release Peeku"
         },
         {
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:Nudge}",
-            "name": "Debug nudge-hook",
-            "target": "nudge-hook",
+            "cwd": "${workspaceFolder:Peeku}",
+            "name": "Debug peeku-hook",
+            "target": "peeku-hook",
             "configuration": "debug",
-            "preLaunchTask": "swift: Build Debug nudge-hook"
+            "preLaunchTask": "swift: Build Debug peeku-hook"
         },
         {
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:Nudge}",
-            "name": "Release nudge-hook",
-            "target": "nudge-hook",
+            "cwd": "${workspaceFolder:Peeku}",
+            "name": "Release peeku-hook",
+            "target": "peeku-hook",
             "configuration": "release",
-            "preLaunchTask": "swift: Build Release nudge-hook"
+            "preLaunchTask": "swift: Build Release peeku-hook"
         }
     ]
 }
