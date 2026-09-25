@@ -229,6 +229,7 @@ struct SettingsView: View {
     private var shortcuts: some View {
         Section {
             shortcut("Session manager", "⌥⌘.")
+            shortcut("Session manager on tab 1–4", "⌥⌘. then 1–4")
             shortcut("Next waiting agent", "⌥⌘↓")
             shortcut("Open the focused session", "↵")
             shortcut("Fold the alert", "Esc")
@@ -236,7 +237,7 @@ struct SettingsView: View {
         } header: {
             Text("Shortcuts")
         } footer: {
-            Text("↵, Esc and ⌘1–9 work once the notch has focus: click it, or use ⌥⌘. or ⌥⌘↓.")
+            Text("↵, Esc and ⌘1–9 work once the notch has focus: click it, or use ⌥⌘. or ⌥⌘↓. For a tab, keep ⌥⌘ held after the period: Now, History, Usage, Commands.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }

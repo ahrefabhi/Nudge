@@ -9,6 +9,10 @@ struct AlertCardView: View {
     let onOpen: () -> Void
     let onLater: () -> Void
     let onAllAgents: () -> Void
+    /// For a failed command, which gets Restart beside Show Output.
+    var onRestart: (() -> Void)?
+    /// For a command asking yes or no, which gets both as buttons.
+    var onAnswer: ((String) -> Void)?
 
     var body: some View {
         if palette.isLight {
@@ -46,7 +50,7 @@ struct AlertCardView: View {
             }
             Spacer(minLength: 12)
             HStack(spacing: 5) {
-                AgentMark(agent: session.agent, size: 11)
+                SourceMark(session: session, size: 11)
                 Text(session.hostLabel)
             }
             .font(.peeku(11))
@@ -57,15 +61,16 @@ struct AlertCardView: View {
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(session.kind.alertTitle(for: session.agent))
+            // "Dashboard exited with code 1".
+            Text(session.kind.isCommand ? "\(session.project) \(session.task)" : session.kind.alertTitle(for: session.agent))
                 .font(.peeku(15, .semibold))
                 .tracking(-0.15)
                 .foregroundStyle(palette.primary)
                 .lineLimit(1)
             LiveText { now in
-                [session.project, session.branch, RelativeTime.ago(since: session.since, now: now)]
-                    .compactMap { $0 }
-                    .joined(separator: " · ")
+                // A command's name is already in the title.
+                let place = session.kind.isCommand ? [] : [session.project, session.branch].compactMap { $0 }
+                return (place + [RelativeTime.ago(since: session.since, now: now)]).joined(separator: " · ")
             }
             .font(.peeku(12))
             .foregroundStyle(palette.label(0.5))
@@ -79,18 +84,42 @@ struct AlertCardView: View {
             HStack(spacing: 8) {
                 Button(action: onOpen) {
                     HStack(spacing: 8) {
-                        Text(session.kind == .usage ? "Show Usage" : "Open Session")
+                        Text(primaryTitle)
                         Text("↵").font(.peeku(11)).opacity(0.45)
                     }
                 }
                 .buttonStyle(PrimaryPillStyle())
-                Button(session.kind == .finished ? "Dismiss" : "Later", action: onLater)
-                    .buttonStyle(GhostPillStyle())
-                Spacer(minLength: 0)
-                Button("All agents", action: onAllAgents)
-                    .buttonStyle(LinkTextStyle())
+                if let onAnswer {
+                    Button("Yes") { onAnswer("y") }
+                        .buttonStyle(GhostPillStyle())
+                    Button("No") { onAnswer("n") }
+                        .buttonStyle(GhostPillStyle())
+                    Spacer(minLength: 0)
+                    Button("Later", action: onLater)
+                        .buttonStyle(LinkTextStyle())
+                } else if let onRestart {
+                    Button("Restart", action: onRestart)
+                        .buttonStyle(GhostPillStyle())
+                    Spacer(minLength: 0)
+                    Button("Later", action: onLater)
+                        .buttonStyle(LinkTextStyle())
+                } else {
+                    Button(session.kind == .finished ? "Dismiss" : "Later", action: onLater)
+                        .buttonStyle(GhostPillStyle())
+                    Spacer(minLength: 0)
+                    Button("All agents", action: onAllAgents)
+                        .buttonStyle(LinkTextStyle())
+                }
             }
             .padding(.top, 12)
+        }
+    }
+
+    private var primaryTitle: String {
+        switch session.kind {
+        case .usage: "Show Usage"
+        case .command, .commandInput: "Show Output"
+        default: "Open Session"
         }
     }
 
@@ -102,6 +131,8 @@ struct AlertCardView: View {
                     .lineSpacing(3.5)
                     .foregroundStyle(palette.context)
                     .lineLimit(2)
+                    // A prompt's question and "(Y/n)" are at its end.
+                    .truncationMode(session.kind == .commandInput ? .head : .tail)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if !session.choices.isEmpty {

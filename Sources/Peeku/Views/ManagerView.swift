@@ -7,6 +7,7 @@ struct ManagerView: View {
     @Environment(\.palette) private var palette
     let machine: PhaseMachine
     let bar: CGFloat
+    var commands: CommandRunner?
     /// The machine owns the tab, so opening a usage alert can switch to Usage.
     private var tab: ManagerTab { machine.managerTab }
 
@@ -30,7 +31,7 @@ struct ManagerView: View {
             .padding(.horizontal, 18)
             .frame(height: bar)
 
-            // Its own row, below the camera: three tabs are wider than the space beside the notch.
+            // Its own row, below the camera: the tabs are wider than the space beside the notch.
             segmented
                 .frame(maxWidth: .infinity)
                 .frame(height: IslandMetrics.managerTabRow)
@@ -39,6 +40,7 @@ struct ManagerView: View {
             case .now: nowList(need)
             case .history: HistoryView(machine: machine).frame(maxHeight: .infinity, alignment: .top)
             case .usage: UsageView(machine: machine).frame(maxHeight: .infinity, alignment: .top)
+            case .commands: CommandsView(runner: commands).frame(maxHeight: .infinity, alignment: .top)
             }
 
             footer
@@ -110,6 +112,7 @@ struct ManagerView: View {
             segment("Now", .now)
             segment("History", .history)
             segment("Usage", .usage)
+            segment("Commands", .commands)
         }
         .font(.peeku(11))
         .padding(2)
@@ -168,7 +171,7 @@ private struct NeedsYouRow: View {
                             .font(.peeku(13, .semibold))
                             .foregroundStyle(palette.primary)
                         HStack(spacing: 4) {
-                            AgentMark(agent: session.agent, size: 10)
+                            SourceMark(session: session, size: 10)
                             Text(session.hostName)
                         }
                             .font(.peeku(10.5))

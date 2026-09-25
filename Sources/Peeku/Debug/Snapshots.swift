@@ -59,6 +59,24 @@ enum Snapshots {
         try writeWindowed(editor, size: CGSize(width: 460, height: 720), appearance: .darkAqua,
                           to: directory.appending(path: "usage-alert-editor.png"))
 
+        let commandsRoot = FileManager.default.temporaryDirectory.appending(path: "peeku-snapshot-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: commandsRoot) }
+        let runner = MockSessions.commands(root: commandsRoot)
+        historyMachine.managerTab = .commands
+        let commands = ManagerView(machine: historyMachine, bar: 32, commands: runner)
+            .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
+            .background(Color.black)
+            .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
+            .padding(40)
+            .background(Color(hex: 0x1a1d26))
+            .environment(\.colorScheme, .dark)
+        try write(commands, to: directory.appending(path: "manager-commands.png"))
+        try writeWindowed(CommandLogView(runner: runner, id: runner.commands[2].id), size: CGSize(width: 720, height: 360),
+                          appearance: .aqua, to: directory.appending(path: "command-log.png"))
+        try writeWindowed(CommandEditorView(original: runner.commands[0], chooseFolder: { _, _ in }, onSave: { _, _ in },
+                                            onDelete: {}, onCancel: {}),
+                          size: CGSize(width: 460, height: 250), appearance: .aqua, to: directory.appending(path: "command-editor.png"))
+
         let setupMachine = PhaseMachine(scheduler: ManualScheduler(start: Date()))
         setupMachine.update(sessions: MockSessions.calm())
         setupMachine.usage = [AgentUsage(agent: .claude, source: .needsSetup, report: nil),
@@ -107,7 +125,7 @@ enum Snapshots {
         try write(glow, to: directory.appending(path: "island-glow.png"))
 
         // Light mode: the same alerts and manager in the light panel under a black notch.
-        for name in ["alert-permission", "alert-question", "alert-multi", "alert-usage", "manager", "manager-empty"] {
+        for name in ["alert-permission", "alert-question", "alert-multi", "alert-usage", "alert-command", "manager", "manager-empty"] {
             guard let drive = scenarios.first(where: { $0.0 == name })?.1 else { continue }
             let clock = ManualScheduler(start: Date())
             let machine = PhaseMachine(scheduler: clock)
@@ -144,6 +162,19 @@ enum Snapshots {
         ("alert-multi", { machine, clock in trigger(.multiple, machine, clock); clock.advance(by: 1.5) }),
         ("alert-usage", { machine, clock in
             machine.update(usageAlerts: [MockSessions.usageAlert(now: clock.now)])
+            clock.advance(by: 1.5)
+        }),
+        ("alert-command", { machine, clock in
+            machine.update(commandAlerts: [MockSessions.commandAlert(now: clock.now)])
+            clock.advance(by: 1.5)
+        }),
+        ("alert-command-input", { machine, clock in
+            machine.update(commandAlerts: [MockSessions.commandPrompt(now: clock.now)])
+            clock.advance(by: 1.5)
+        }),
+        ("alert-multi-command", { machine, clock in
+            trigger(.error, machine, clock)
+            machine.update(commandAlerts: [MockSessions.commandAlert(now: clock.now)])
             clock.advance(by: 1.5)
         }),
         ("alert-multi-usage", { machine, clock in

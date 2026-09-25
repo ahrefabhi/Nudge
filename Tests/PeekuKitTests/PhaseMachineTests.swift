@@ -337,6 +337,18 @@ import Testing
         #expect(machine.phase == .manager)
         #expect(machine.managerTab == .usage)
     }
+
+    @Test func numberedTabsSwitchOnlyWhileTheManagerIsOpen() {
+        let machine = PhaseMachine(scheduler: ManualScheduler())
+        #expect(!machine.showTab(2))
+        machine.toggleManager()
+        #expect(machine.showTab(4))
+        #expect(machine.managerTab == .commands)
+        #expect(machine.showTab(2))
+        #expect(machine.managerTab == .history)
+        #expect(!machine.showTab(5))
+        #expect(machine.managerTab == .history)
+    }
 }
 
 @MainActor

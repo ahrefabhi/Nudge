@@ -26,6 +26,8 @@ enum ReadmeImages {
         try write(island("manager", height: 670), "manager")
         try write(island("alert-permission", light: true, height: 320), "light")
         try write(island("alert-usage", height: 300), "usage-alert")
+        try write(island("alert-command", height: 300), "command-alert")
+        try write(island("alert-command-input", height: 300), "command-input")
 
         let tabs = PhaseMachine(scheduler: ManualScheduler(start: Date()))
         tabs.update(sessions: MockSessions.calm())
@@ -33,9 +35,12 @@ enum ReadmeImages {
         tabs.usage = MockSessions.usage()
         tabs.spend = MockSessions.spend()
         tabs.setUsageAlertRules([UsageAlertRule(scope: .claude, threshold: 75)] + UsageAlertRule.defaults)
+        let commandsRoot = FileManager.default.temporaryDirectory.appending(path: "peeku-readme-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: commandsRoot) }
+        let commands = MockSessions.commands(root: commandsRoot)
         func manager(_ tab: ManagerTab) -> some View {
             tabs.managerTab = tab
-            return ManagerView(machine: tabs, bar: 32)
+            return ManagerView(machine: tabs, bar: 32, commands: commands)
                 .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
                 .background(Color.black)
                 .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
@@ -46,6 +51,13 @@ enum ReadmeImages {
         }
         try write(manager(.history), "history")
         try write(manager(.usage), "usage")
+        try write(manager(.commands), "commands")
+        // The docs preview asking about its port, answered from the output window.
+        // cacheDisplay leaves out the window's own background, so give the view one.
+        try Snapshots.writeWindowed(CommandLogView(runner: commands, id: commands.commands[2].id)
+                                        .background(Color(nsColor: .windowBackgroundColor)),
+                                    size: CGSize(width: 720, height: 380),
+                                    appearance: .darkAqua, to: directory.appending(path: "command-output.png"))
 
         try write(NotchStates().background(Desktop()), "notch")
         try write(MenuBarStates().background(Desktop()), "menu-bar")

@@ -285,3 +285,19 @@ private struct AgentShape: Shape {
     }
 }
 
+
+/// Where a queued item comes from: the agent's mark, or a terminal for a failed quick command.
+struct SourceMark: View {
+    let session: PeekuSession
+    let size: CGFloat
+
+    var body: some View {
+        if session.kind.isCommand {
+            Image(systemName: "terminal")
+                .font(.system(size: size * 0.9, weight: .medium))
+                .frame(width: size, height: size)
+        } else {
+            AgentMark(agent: session.agent, size: size)
+        }
+    }
+}

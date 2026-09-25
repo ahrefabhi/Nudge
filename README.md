@@ -31,8 +31,9 @@ https://github.com/user-attachments/assets/975ed425-4376-4fab-8937-5d9e5c9f5df5
 - **Every session at a glance:** click the notch for what's waiting, working and finished, plus a week of history.
 - **Rate limits:** your Claude and Codex 5-hour and weekly usage, with alerts at thresholds you set.
 - **Spend:** what today, the last 7 or the last 30 days cost at API prices, tokens used, and bars split by model.
+- **Quick commands:** save `npm run dev` with its folder, then run, restart and stop it from the notch. Read its output, answer its prompts, and hear about it when it fails.
 - **Stays out of the way:** alerts fold into a pill, full screen shrinks Peeku to a glow, and it goes quiet while your screen is shared.
-- **Read-only and private:** Peeku never types or approves anything, and everything stays on your Mac.
+- **Read-only and private:** Peeku never types into or approves anything in your agent sessions, and everything stays on your Mac.
 - **Native:** Swift and SwiftUI, light and dark mode, Reduce Motion, about 6 MB.
 
 ## A closer look
@@ -67,6 +68,24 @@ Peeku asks Claude Code and Codex for your limits every few minutes, with no setu
 <p align="center"><img src="docs/images/usage.png" width="49%" alt="The Usage tab set to 30 days: Claude Code cost $970.43, 911M tokens, 11,625 replies, top model Opus 5, with a bar per day split into Opus 5, Fable 5.1 and other models; then its 5-hour limit at 64% and weekly limit at 38%; below, Codex on the Plus plan with 75M tokens, 959 replies and GPT-6 Luna as top model"></p>
 
 <p align="center"><img src="docs/images/usage-alert.png" width="760" alt="A usage alert in the notch: Claude reached your usage alert, 5-hour limit, 92% used, alert at 90%, and when it resets, with Show Usage and Later buttons"></p>
+
+### Commands
+
+The Commands tab keeps the commands you run all day, like a dev server, a worker or a docs preview. Add one with **+ New Command**: pick its folder and type the command. It runs in your login shell, like a new terminal tab, so nvm, pyenv and your aliases work. Each row shows whether it's running and its latest line of output. Hover a row to edit or delete it.
+
+<p align="center"><img src="docs/images/commands.png" width="49%" alt="The Commands tab: Dashboard running npm run dev for 12 minutes with its latest Vite line, payments-api exited with code 1, and Docs waiting for input on a port question, each with output, restart and stop buttons"></p>
+
+When a command exits with an error, Peeku tells you with its last line of output. **Restart** runs it again, and **Show Output** opens everything it printed.
+
+<p align="center"><img src="docs/images/command-alert.png" width="760" alt="A notch alert: Dashboard exited with code 1, with the last line Error: listen EADDRINUSE: address already in use :::5173, and Show Output, Restart and Later buttons"></p>
+
+Commands run in a real terminal, so tools can ask questions, like which port to use when theirs is taken. When a command asks and waits, Peeku drops out of the notch. Answer a yes/no question right there, or type any answer in the output window. Its buttons send Yes, No, Return and Ctrl-C.
+
+<p align="center"><img src="docs/images/command-input.png" width="760" alt="A notch alert: Storefront is waiting for input, asking whether to run the app on another port because something is already running on port 3000, with Show Output, Yes and No buttons"></p>
+
+<p align="center"><img src="docs/images/command-output.png" width="720" alt="A command's output window: pnpm build and pnpm preview in ~/code/docs, waiting for input on the question Port 4173 is in use. Use 4174 instead? (Y/n), with a reply field and Yes, No, Return and Ctrl-C buttons"></p>
+
+Stopping a command stops everything it started, so a dev server doesn't keep its port. Quitting Peeku stops them all.
 
 ### Light mode
 
@@ -108,6 +127,7 @@ Everything runs on your Mac. The only network request Peeku makes itself is the 
 - **Hooks:** setup adds hooks to `~/.claude/settings.json` (and `~/.codex/hooks.json`) that run `peeku-hook`. It records only what Peeku shows (command, question, error, summary, branch, app and tab), never transcripts, into `~/Library/Application Support/Peeku/inbox`, which Peeku deletes after reading. It never answers or blocks anything and exits immediately. For Codex, type `/hooks` and trust Peeku's entries.
 - **Usage:** Peeku asks `claude -p` and `codex app-server` for rate limits using their own sign-ins; it never reads credentials. If that fails, **Set Up…** reads Claude's numbers from its status line instead, keeping any status line you have.
 - **Spend:** Peeku reads the session logs in `~/.claude/projects` and `~/.codex/sessions` and keeps only each reply's time, model and token counts, priced from a table built into the app. Nothing else is kept, saved or sent.
+- **Commands:** saved in `~/Library/Application Support/Peeku/commands.json`, with each command's latest output next to it. They run only when you press Run, in your login shell, with the same access as your terminal.
 - **Permissions:** *Automation* selects the right iTerm or Terminal tab. *Accessibility* finds the exact window and detects screen sharing.
 
 Your settings files are backed up before any change.
@@ -117,6 +137,7 @@ Your settings files are backed up before any change.
 | Shortcut | Action |
 |---|---|
 | ⌥⌘. | Show or hide the session manager |
+| ⌥⌘. then 1–4 | Open the manager on Now, History, Usage or Commands (keep ⌥⌘ held) |
 | ⌥⌘↓ | Next waiting agent |
 | ↵ | Open the highlighted session |
 | Esc | Fold the alert into the pill |
@@ -145,6 +166,8 @@ To remove it, choose **Uninstall Peeku…** from the menu bar. It removes its ho
 - **Opens the app but not the tab:** allow Peeku under Privacy & Security → Automation (iTerm, Terminal) or Accessibility (other apps).
 - **Accessibility is on but Peeku asks again:** the permission belongs to an older build. Choose **Reset…** in Settings.
 - **⌥⌘. does nothing:** another app uses it. Click the notch instead.
+- **A command can't find `node`, `npm` or another tool:** Peeku runs commands in your login shell with your `.zshrc`, like a new terminal tab. Check that the command works in a new tab, or give the tool's full path.
+- **A command's output has no colors:** expected. Commands see a plain terminal, so tools skip colors and spinners and the output stays readable.
 
 ## Building from source
 
@@ -164,7 +187,7 @@ PEEKU_HOME=/tmp/peeku swift run Peeku         # use a scratch data folder
 
 | Path | What's there |
 |---|---|
-| `Sources/PeekuKit` | Model, queue, phase machine, session observation, hook installer, history, usage. Unit-tested. |
+| `Sources/PeekuKit` | Model, queue, phase machine, session observation, hook installer, history, usage, quick commands. Unit-tested. |
 | `Sources/PeekuHook` | `peeku-hook`, the collector hooks run. |
 | `Sources/PeekuHookSchema` | The inbox record format. |
 | `Sources/Peeku` | The app: notch, views, onboarding, settings, macOS integration. |

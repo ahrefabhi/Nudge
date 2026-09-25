@@ -62,11 +62,12 @@ struct IslandMetrics: Equatable {
         }
     }
 
-    /// The manager's Now · History · Usage row, under the camera row.
+    /// The manager's Now · History · Usage · Commands row, under the camera row.
     static let managerTabRow: CGFloat = 30
 
     static func managerIsEmpty(_ machine: PhaseMachine) -> Bool {
-        machine.sessions.isEmpty && machine.history.isEmpty
+        // Commands have nothing to do with sessions, so their tab keeps its full height.
+        machine.managerTab != .commands && machine.sessions.isEmpty && machine.history.isEmpty
     }
 
     private static func alertHeight(_ session: PeekuSession?) -> CGFloat {

@@ -24,16 +24,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let updater = Updater()
     private let historyStore = HistoryStore()
     private lazy var history = HistoryRecorder(entries: historyStore.load())
+    private let commands = CommandRunner()
+    private lazy var commandWindows = CommandWindows(runner: commands)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         LegacyUpgrade.run()
-        let notch = NotchWindowController(machine: machine, presence: presence)
+        commands.stopLeftovers()
+        commands.onEdit = { [weak self] command in self?.openCommandWindow { $0.edit(command) } }
+        commands.onShowLog = { [weak self] command in self?.openCommandWindow { $0.showLog(command) } }
+        commands.onChange = { [weak self] in self?.deliverCommandAlerts() }
+        let notch = NotchWindowController(machine: machine, presence: presence, commands: commands)
         machine.onOpen = { [weak self] session in
-            if session.kind == .usage { self?.openedUsageAlert(session) } else { self?.focus(session) }
+            switch session.kind {
+            case .usage: self?.openedUsageAlert(session)
+            case .command, .commandInput: self?.openedCommandAlert(session)
+            default: self?.focus(session)
+            }
+        }
+        machine.onRestartCommand = { [weak self] alert in
+            guard let self else { return }
+            if self.demoMode { return self.demo.didOpen(alert) }
+            if let id = CommandRunner.commandID(forAlert: alert) { self.commands.restart(id) }
+        }
+        machine.onAnswerCommand = { [weak self] alert, answer in
+            guard let self else { return }
+            if self.demoMode { return self.demo.didOpen(alert) }
+            if let id = CommandRunner.commandID(forAlert: alert) { self.commands.send(id, answer + "\r") }
         }
         machine.onChime = { Sounds.play($0) }
         machine.isInView = { [weak self] session in
-            guard let self, !self.demoMode, Preferences.quietInView, session.kind != .usage else { return false }
+            guard let self, !self.demoMode, Preferences.quietInView, session.kind != .usage, !session.kind.isCommand else { return false }
             return ForegroundSession.isInView(session, observed: self.observation.observed(session.id))
         }
         applyPreferences()
@@ -79,6 +99,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             setDemo: { [weak self] in self?.setDemoMode($0) },
             simulate: { [weak self] in self?.demo.trigger($0) },
             simulateUsage: { [weak self] in self?.demo.triggerUsage() },
+            simulateCommandFailure: { [weak self] in self?.demo.triggerCommandFailure() },
+            simulateCommandPrompt: { [weak self] in self?.demo.triggerCommandPrompt() },
             resetDemo: { [weak self] in self?.demo.reset() },
             toggleManager: { [weak self] in self?.toggleManager() },
             showCharacterSheet: { [weak self] in self?.showCharacterSheet() },
@@ -114,9 +136,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notch?.show()
         deliverSessions()
         deliverUsageAlerts()
+        deliverCommandAlerts()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        // Quick commands belong to Peeku's run; a dev server left behind would keep its port.
+        commands.stopAll()
         observation.stop()
         usage.stop()
         spend.stop()
@@ -146,6 +171,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let alerts = usageAlerts.update(usage.usage, rules: machine.usageAlertRules)
         if usageAlerts.handled != Preferences.handledUsageAlerts { Preferences.handledUsageAlerts = usageAlerts.handled }
         machine.update(usageAlerts: alerts)
+    }
+
+    /// Quick commands that exited with an error queue like sessions that need you.
+    private func deliverCommandAlerts() {
+        guard !demoMode, !setupPending else { return }
+        machine.update(commandAlerts: commands.alerts)
+    }
+
+    /// The notch has folded; show the failed command's output.
+    private func openedCommandAlert(_ alert: PeekuSession) {
+        if demoMode { return demo.didOpen(alert) }
+        guard let id = CommandRunner.commandID(forAlert: alert), let command = commands.command(id) else { return }
+        openCommandWindow { $0.showLog(command) }
     }
 
     /// The machine has already switched the manager to its Usage tab.
@@ -191,6 +229,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             deliverSessions()
             deliverUsageAlerts()
+            deliverCommandAlerts()
         }
     }
 
@@ -220,6 +259,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let window = SettingsWindow(model: model)
         settings = window
         window.show()
+    }
+
+    /// The notch panel floats above ordinary windows, so close the manager before the window shows.
+    private func openCommandWindow(_ open: @escaping (CommandWindows) -> Void) {
+        machine.tapOutside()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            guard let self else { return }
+            open(self.commandWindows)
+        }
     }
 
     private func showOnboarding() {
