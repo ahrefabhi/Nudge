@@ -1,0 +1,8 @@
+{
+  "name": "peeku-launch-video",
+  "private": true,
+  "description": "Renders the Peeku launch video. See README.md.",
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}

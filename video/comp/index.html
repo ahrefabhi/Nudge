@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Peeku launch video</title>
+<link rel="stylesheet" href="../../docs/site.css">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0d0e12; }
+  * { box-sizing: border-box; }
+  #stage { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(90% 70% at 50% -10%, #1d2130 0%, #0d0e12 70%); }
+  .layer { position: absolute; inset: 0; }
+
+  /* background: glow orb + dot grid, from the site's hero */
+  #glow { position: absolute; top: -260px; left: 50%; width: 1500px; height: 640px; margin-left: -750px; border-radius: 50%; filter: blur(140px); }
+  #grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.06) 1.4px, transparent 1.4px); background-size: 30px 30px;
+          -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, #000 0%, transparent 75%); mask-image: radial-gradient(70% 60% at 50% 30%, #000 0%, transparent 75%); }
+
+  /* the "screen": menu bar, notch, agent windows. The camera scales it from the top centre. */
+  #screen { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 0; }
+  #menubar { position: absolute; left: 0; right: 0; top: 0; height: 45px; background: rgba(12,13,17,.72); box-shadow: 0 .5px 0 rgba(255,255,255,.07);
+             display: flex; align-items: center; justify-content: space-between; padding: 0 40px; font: 500 17px var(--sans); color: rgba(235,235,245,.86); }
+  #menubar .l { display: flex; gap: 26px; align-items: center; }
+  #menubar .l b { font-weight: 700; }
+  #menubar .r { display: flex; gap: 22px; align-items: center; color: rgba(235,235,245,.8); }
+  .apple { width: 17px; height: 20px; }
+
+  .win { position: absolute; width: 340px; transform-origin: 0 0; }
+  .win .ghost-win { opacity: 1; transition: none; }
+
+  /* notch island (site styles, transitions off: every frame is set from the timeline) */
+  #notch { position: absolute; left: 960px; top: 0; transform-origin: 0 0; }
+  #notch .island { transition: none; cursor: default; left: 0; }
+  #notch .isl-wing, #notch .isl-count, #notch .isl-alert, #notch .isl-drop { animation: none; }
+  #notch .isl-alert { opacity: 0; }
+  #notch .isl-code { white-space: normal; }
+
+  #toast { position: absolute; left: 960px; top: 62px; transform: translateX(-50%); white-space: nowrap; font-size: 19px; padding: 10px 20px; animation: none; }
+
+  /* captions */
+  .cap { position: absolute; left: 0; right: 0; text-align: center; font: 600 64px/1.15 var(--sans); letter-spacing: -.02em; color: var(--text); }
+  .cap .dim { color: rgba(235,235,245,.55); }
+  .cap span { display: inline-block; }
+  #scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 520px; background: linear-gradient(to top, rgba(13,14,18,.96) 30%, rgba(13,14,18,0)); }
+
+  #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 50px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+
+  /* real app panels */
+  .panel { position: absolute; width: 575px; height: 763px; overflow: hidden; border-radius: 0 0 50px 50px;
+           box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06); background: #000; }
+  .panel img { position: absolute; left: -187.5px; top: 0; width: 950px; max-width: none; }
+
+  /* outro */
+  #outro { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #outro img { width: 200px; height: 200px; border-radius: 44px; filter: drop-shadow(0 30px 60px rgba(0,0,0,.55)); }
+  #outro h1 { margin: 26px 0 0; font: 700 150px/1 var(--sans); letter-spacing: -.045em; }
+  #outro .tag { margin-top: 22px; font: 500 46px var(--sans); letter-spacing: -.015em; color: rgba(235,235,245,.78); }
+  #outro .meta { margin-top: 30px; font: 500 26px var(--mono); color: rgba(235,235,245,.45); display: flex; gap: 20px; }
+  #outro .url { margin-top: 34px; font: 600 30px var(--sans); color: var(--amber); letter-spacing: .01em; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="bg"><div id="glow"></div><div id="grid"></div></div>
+
+  <div id="screen">
+    <div id="wins"></div>
+    <div id="menubar">
+      <div class="l">
+        <svg class="apple" viewBox="0 0 17 20"><path fill="currentColor" d="M14.1 10.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2-.9-3.4-.9C3.6 4.8 2 5.8 1.1 7.4c-1.8 3.2-.5 7.9 1.3 10.5.9 1.3 1.9 2.7 3.2 2.6 1.3-.1 1.8-.8 3.3-.8s2 .8 3.4.8 2.3-1.3 3.1-2.6c1-1.5 1.4-2.9 1.4-3-.1 0-2.7-1-2.7-4.3zM11.5 3c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5z"/></svg>
+        <b>iTerm2</b><span>Shell</span><span>Edit</span><span>View</span><span>Session</span><span>Window</span>
+      </div>
+      <div class="r"><span>Fri Sep 25</span><span>3:42 PM</span></div>
+    </div>
+    <div id="notch"><div class="island"><div class="island-inner"></div></div></div>
+    <div class="toast" id="toast">Switched to iTerm · Tab 1 · payments-api</div>
+  </div>
+
+  <div id="scrim"></div>
+  <div id="vig" style="position:absolute;left:50%;top:505px;width:1500px;height:520px;margin:-260px 0 0 -750px;background:radial-gradient(closest-side, rgba(13,14,18,.9) 40%, rgba(13,14,18,0) 100%)"></div>
+  <div class="cap" id="cap1" style="top:430px"><span id="c1a">One agent stopped to ask.</span><br><span id="c1b" class="dim">Ten minutes later, you notice.</span></div>
+  <div class="cap" id="cap2" style="top:800px"><span>Meet Peeku.</span> <span class="dim">It lives in your notch.</span></div>
+  <div class="cap" id="cap3" style="top:800px"><span class="dim"><b style="color:var(--text);font-weight:600">Open Session</b> jumps to the exact tab.</span></div>
+  <div class="cap" id="cap4" style="top:800px"><span id="c4a" style="color:var(--blue)">Questions.</span> <span id="c4b" style="color:var(--red)">Errors.</span> <span id="c4c" style="color:var(--green)">Finished runs.</span></div>
+
+  <div class="layer" id="panels">
+    <div class="cap" id="cap5" style="top:70px;font-size:56px">Every session, <span class="dim">and your Claude and Codex limits.</span></div>
+    <div class="panel" id="pNow" style="left:357px;top:200px"><img src="../../docs/images/manager.png" alt=""></div>
+    <div class="panel" id="pUse" style="left:988px;top:200px"><img src="../../docs/images/usage.png" alt=""></div>
+  </div>
+
+  <div class="layer" id="outro">
+    <img src="../../docs/images/icon.png" alt="">
+    <h1>Peeku</h1>
+    <div class="tag">A tiny companion in your notch.</div>
+    <div class="meta"><span>For Claude Code and Codex</span><span>·</span><span>macOS 14+</span><span>·</span><span>Open source</span></div>
+    <div class="url">peeku.ahrefabhi.com</div>
+  </div>
+
+  <svg id="cursor" viewBox="0 0 34 50"><path d="M3 2 L3 38 L12 30 L18 45 L24 42.5 L18 28 L30 28 Z" fill="#000" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/></svg>
+</div>
+
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+// The character, copied from docs/site.js. Keep the two in step if the character changes.
+const INK = '#060607';
+const C = { idle:'#d6d6dc', working:'#f5f5f7', question:'oklch(0.8 0.12 250)', permission:'oklch(0.83 0.13 78)', error:'oklch(0.75 0.15 25)', success:'oklch(0.82 0.14 152)', multiple:'oklch(0.83 0.13 78)' };
+const ANIM = { idle:'pipBreath 4.5s ease-in-out infinite', working:'pipBreath 2.2s ease-in-out infinite', question:'pipTilt 2.8s ease-in-out infinite', permission:'pipHop 1.8s cubic-bezier(.3,.7,.4,1) infinite', error:'pipShake 2.6s ease-in-out infinite', success:'pipHop 1.3s cubic-bezier(.3,.7,.4,1) infinite', multiple:'pipHop 1.8s cubic-bezier(.3,.7,.4,1) infinite' };
+const UNITLESS = new Set(['opacity', 'fontWeight', 'lineHeight', 'zIndex']);
+function el(tag, style, kids) {
+  const n = document.createElement(tag);
+  for (const k in style || {}) { const v = style[k]; n.style[k] = typeof v === 'number' && !UNITLESS.has(k) ? v + 'px' : v; }
+  for (const kid of kids || []) if (kid != null) n.append(kid);
+  return n;
+}
+const esc = (s) => s.replace(/[&<>"]/g, (ch) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
+function eyes(state, s, c, box) {
+  const glow = `0 0 ${Math.max(2, s * .14)}px ${c}`;
+  const mk = (x) => {
+    const side = x === 'L' ? 'left' : 'right';
+    let w = s * .12, hh = s * .2, t; const extra = {};
+    if (state === 'permission' || state === 'multiple') { w = s * .14; hh = s * .24; }
+    if (state === 'question') hh = x === 'L' ? s * .15 : s * .23;
+    if (state === 'error') { w = s * .16; hh = s * .065; extra.transform = `rotate(${x === 'L' ? -22 : 22}deg)`; }
+    t = (box.height - hh) / 2;
+    if (state === 'idle') { hh = Math.max(1.5, s * .045); t = box.height * .6; extra.opacity = .7; }
+    if (state === 'success') {
+      w = s * .15; hh = s * .1; t = (box.height - hh) / 2;
+      return el('div', { position:'absolute', top:t, [side]:0, width:w, height:hh, boxSizing:'border-box', border:`${Math.max(1.5, s * .045)}px solid ${c}`, borderBottom:'none', borderRadius:`${w}px ${w}px 0 0`, filter:`drop-shadow(0 0 ${s * .07}px ${c})` });
+    }
+    return el('div', { position:'absolute', top:t, [side]:0, width:w, height:hh, borderRadius:Math.min(w, hh) / 2, background:c, boxShadow:glow, ...extra });
+  };
+  const blink = state !== 'idle' && state !== 'success' && state !== 'error';
+  return el('div', { position:'absolute', ...box, animation: state === 'working' ? 'pipGlance 3.4s ease-in-out infinite' : 'none' }, [
+    el('div', { position:'absolute', inset:0, animation: blink ? 'pipBlink 5.5s infinite' : 'none' }, [mk('L'), mk('R')])
+  ]);
+}
+function extras(state, s, c, o) {
+  const k = [];
+  if (o.noBadge) return k;
+  if (state === 'permission' || state === 'multiple') {
+    const b = Math.max(13, s * .32);
+    k.push(el('div', { position:'absolute', top:s * .02, right:-s * .1, width:b, height:b, borderRadius:'50%', background:c, color:'#1b1406', fontSize:b * .62, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 0 0 2px ${o.ring || '#000'}`, lineHeight:1 }, [state === 'multiple' ? '3' : '!']));
+  }
+  if (state === 'question') k.push(el('div', { position:'absolute', top:-s * .24, right:-s * .16, fontSize:s * .38, fontWeight:700, color:c, textShadow:`0 0 ${s * .12}px ${c}`, animation:'pipBob 1.6s ease-in-out infinite', lineHeight:1 }, ['?']));
+  if (state === 'success') {
+    const d = Math.max(3, s * .1);
+    k.push(el('div', { position:'absolute', top:-s * .04, left:-s * .1, width:d, height:d, background:c, animation:'pipTwinkle 1.4s ease-in-out infinite' }));
+    k.push(el('div', { position:'absolute', top:s * .16, right:-s * .16, width:d * .8, height:d * .8, background:c, animation:'pipTwinkle 1.4s .5s ease-in-out infinite' }));
+  }
+  return k;
+}
+function pip(state, s, o = {}) {
+  const c = C[state], rim = !o.flat;
+  const ear = (side) => el('div', { position:'absolute', top:s * .04, [side]:s * .13, width:s * .22, height:s * .28, background:INK, borderRadius:'50%', transform:`rotate(${side === 'left' ? -20 : 20}deg)`, boxShadow: rim ? 'inset 0 1px 1px rgba(255,255,255,.2)' : 'none' });
+  return el('div', { position:'relative', width:s, height:s, flex:'none', animation:o.still ? 'none' : ANIM[state], transformOrigin:'50% 100%' }, [
+    ear('left'), ear('right'),
+    el('div', { position:'absolute', left:0, top:s * .14, width:s, height:s * .82, background:INK, borderRadius:'50% 50% 46% 46% / 60% 60% 40% 40%', boxShadow: rim ? 'inset 0 1px 1px rgba(255,255,255,.2), inset 0 -4px 10px rgba(255,255,255,.04), 0 0 0 .5px rgba(255,255,255,.1)' : 'none' }),
+    eyes(state, s, c, { left:s * .29, top:s * .44, width:s * .42, height:s * .26 }),
+    ...extras(state, s, c, o)
+  ]);
+}
+
+// ---------------------------------------------------------------------------
+// Events, from docs/site.js.
+const EV = {
+  permission:{ state:'permission', tag:'Permission', env:'iTerm · Tab 1', title:'Claude needs your permission', meta:'payments-api · feat/stripe-v17 · 12s ago', code:'$ npm install stripe@17.2.0', cta:'Open Session' },
+  question:{ state:'question', tag:'Question', env:'VS Code · Window 1', title:'Claude has a question', meta:'dashboard-v2 · main · 2m ago', code:'Reuse <Popover> for chart tooltips, or build a new <ChartTooltip>?', cta:'Open Session' },
+  error:{ state:'error', tag:'Blocked', env:'iTerm · Tab 2', title:'Claude hit an error', meta:'infra-terraform · chore/tf-1.9 · 6m ago', code:'Error acquiring the state lock', cta:'Open Session' },
+  success:{ state:'success', tag:'Finished', env:'iTerm · Tab 3', title:'Claude finished', meta:'docs-site · main · 2m 41s', code:'Migrated 14 pages to MDX · build passes', cta:'Open Session' },
+};
+
+// ---------------------------------------------------------------------------
+// Agent windows, from the site's hero.
+const WINS = [
+  { id:'permission', x:150, y:95, rot:-2.5, html:`<div class="g-bar"><i></i><i></i><i></i><span>payments-api — claude</span></div><div class="g-tabs"><span class="on">payments-api</span><span>infra</span><span>docs</span></div><div class="g-body"><div>~/code/payments-api  feat/stripe-v17</div><div class="hi"><span class="g-spin">✻</span> Upgrading Stripe SDK to v17</div><div>  ⎿ Edit src/billing/webhooks.ts  +42 −18</div><div class="amber">╭─ Bash ─────────────────</div><div class="hi">│ npm install stripe@17.2.0</div><div class="amber">│ ❯ 1. Yes</div><div>│   2. No</div><div class="hi">&gt; <span class="g-caret"></span></div><div class="g-sweep"></div></div>` },
+  { id:'question', x:1255, y:110, rot:2, html:`<div class="g-bar"><i></i><i></i><i></i><span>ChartTooltip.tsx — dashboard-v2</span></div><div class="g-tabs"><span class="on">ChartTooltip.tsx</span><span>Popover.tsx</span></div><div class="g-body"><div class="hi">export function ChartTooltip({ point }) {</div><div>  const label = format(point.x)</div><div>  return &lt;Popover anchor={point.el}&gt;</div><div> </div><div>CLAUDE CODE</div><div class="blue">Reuse the existing &lt;Popover&gt;, or build</div><div class="blue">a dedicated &lt;ChartTooltip&gt;?</div><div class="hi">&gt; <span class="g-caret"></span></div><div class="g-sweep"></div></div>` },
+  { id:'error', x:110, y:690, rot:1.5, html:`<div class="g-bar"><i></i><i></i><i></i><span>infra-terraform — claude</span></div><div class="g-tabs"><span class="on">infra-terraform</span><span>payments</span><span>docs</span></div><div class="g-body"><div>~/code/infra-terraform  chore/tf-1.9</div><div>  ⎿ Bash terraform plan</div><div> </div><div class="red">  Error: Error acquiring the state lock</div><div>  Lock Info: held by ci-runner@build-04</div><div class="hi"><span class="g-spin">✻</span> Wait for CI, or force-unlock?</div><div class="hi">&gt; <span class="g-caret"></span></div><div class="g-sweep"></div></div>` },
+  { id:'success', x:1300, y:700, rot:-1.5, html:`<div class="g-bar"><i></i><i></i><i></i><span>docs-site — claude</span></div><div class="g-tabs"><span class="on">docs-site</span><span>chrome-ext</span></div><div class="g-body"><div>~/code/docs-site  main</div><div>  ⎿ Bash pnpm build  ✓</div><div>  ⎿ Bash pnpm check-links  ✓</div><div> </div><div class="green">✓ Migrated 14 pages to MDX.</div><div>  2m 41s · 38.2k tokens</div><div class="hi">&gt; <span class="g-caret"></span></div><div class="g-sweep"></div></div>` },
+];
+const WIN_SCALE = 1.5;
+const winEls = {};
+for (const w of WINS) {
+  const wrap = el('div', { left:w.x, top:w.y });
+  wrap.className = 'win';
+  const inner = document.createElement('div');
+  inner.className = 'ghost-win';
+  inner.innerHTML = w.html;
+  wrap.append(inner);
+  document.getElementById('wins').append(wrap);
+  winEls[w.id] = { wrap, inner, w };
+}
+
+// ---------------------------------------------------------------------------
+// Notch island: all contents built once; each frame only sets sizes and opacity.
+const NOTCH_SCALE = 1.4;
+const island = document.querySelector('#notch .island');
+const inner = island.querySelector('.island-inner');
+const wing = el('div', {}, [pip('working', 22, { flat:true, noBadge:true })]); wing.className = 'isl-wing';
+const count = document.createElement('div'); count.className = 'isl-count'; count.innerHTML = '<i class="isl-spinner"></i><span>5</span>';
+inner.append(wing, count);
+const drops = {}, alerts = {};
+for (const key of Object.keys(EV)) {
+  const e = EV[key];
+  const d = el('div', {}, [pip(e.state, 30, { flat:true, noBadge:true })]); d.className = 'isl-drop'; d.style.opacity = 0;
+  const box = document.createElement('div');
+  box.className = 'isl-alert';
+  box.style.setProperty('--ev', C[e.state]);
+  box.innerHTML =
+    `<div class="isl-head"><span class="isl-tag"><i></i>${esc(e.tag)}</span><span class="isl-env">${esc(e.env)}</span></div>` +
+    '<div class="isl-body"><div class="isl-pip"></div><div class="isl-text">' +
+    `<div class="isl-title">${esc(e.title)}</div><div class="isl-meta">${esc(e.meta)}</div><div class="isl-code">${esc(e.code)}</div>` +
+    `<div class="isl-actions"><button type="button" class="isl-open">${esc(e.cta)}<span>↵</span></button><button type="button" class="isl-later">Later</button></div>` +
+    '</div></div>';
+  box.querySelector('.isl-pip').append(pip(e.state, 50));
+  inner.append(d, box);
+  drops[key] = d; alerts[key] = box;
+}
+// Outro: Peeku peeks out of the notch, happy.
+const outroDrop = el('div', {}, [pip('success', 30, { flat:true, noBadge:true })]); outroDrop.className = 'isl-drop'; outroDrop.style.opacity = 0;
+inner.append(outroDrop);
+
+// ---------------------------------------------------------------------------
+// Timing helpers
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+function bezier(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const sx = (t) => ((ax * t + bx) * t + cx) * t, sy = (t) => ((ay * t + by) * t + cy) * t;
+  const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+  return (x) => {
+    if (x <= 0) return 0; if (x >= 1) return 1;
+    let t = x;
+    for (let i = 0; i < 8; i++) { const e = sx(t) - x; const d = dx(t); if (Math.abs(e) < 1e-6 || !d) break; t -= e / d; }
+    return sy(clamp(t));
+  };
+}
+const spring = bezier(.3, 1.28, .45, 1);   // the site's island curve
+const inOut = bezier(.65, 0, .35, 1);
+const out = bezier(.16, 1, .3, 1);
+const ease = bezier(.25, .1, .25, 1);
+const prog = (t, t0, d, f = ease) => f(clamp((t - t0) / d));
+// fade in at a, out at b (seconds), with short ramps
+function window01(t, a, b, rin = .35, rout = .3) { return Math.min(prog(t, a, rin, out), 1 - prog(t, b - rout, rout, ease)); }
+
+// Fade-up as on the site: opacity, 8px rise, blur 5px -> 0
+function fadeUp(node, p, px = 8) {
+  node.style.opacity = p;
+  node.style.transform = `translateY(${(1 - p) * px}px) scale(${lerp(.98, 1, p)})`;
+  node.style.filter = p >= 1 ? 'none' : `blur(${(1 - p) * 5}px)`;
+}
+function capIn(node, t, a, b) {
+  const p = window01(t, a, b, .45, .3);
+  node.style.opacity = p;
+  node.style.transform = `translateY(${(1 - p) * 18}px)`;
+  node.style.filter = p >= 1 ? 'none' : `blur(${(1 - p) * 8}px)`;
+}
+
+// ---------------------------------------------------------------------------
+// Timeline (seconds). audio.py has the same times; keep the two in step.
+const T = {
+  pushIn: 3.2, drop1: 4.5, alert1: 5.15,
+  cursor: 7.3, click: 8.45, close1: 8.55, pullOut: 8.6, pushIn2: 10.35,
+  q: 10.75, qAlert: 11.35, err: 12.35, fin: 13.3, dip1: 14.75,
+  panels: 15.05, dip2: 18.15, outro: 18.45, end: 21.7,
+};
+// Island phases: [start, phase, event]
+const PHASES = [
+  [0, 'working'], [T.drop1, 'peek', 'permission'], [T.alert1, 'alert', 'permission'],
+  [T.close1, 'working'], [T.q, 'peek', 'question'], [T.qAlert, 'alert', 'question'],
+  [T.err, 'alert', 'error'], [T.fin, 'alert', 'success'], [T.dip1 + .2, 'working'],
+  [T.outro + .5, 'peekOutro'],
+];
+const SIZE = { working:[252, 32, 12], peek:[206, 60, 28], peekOutro:[206, 60, 28], alert:[420, 212, 30] };
+const ALERT_H = { question: 232 };
+function sizeOf(ph) {
+  const [w, h, r] = SIZE[ph[1]];
+  return [w, ph[1] === 'alert' && ALERT_H[ph[2]] ? ALERT_H[ph[2]] : h, r];
+}
+function phaseAt(t) {
+  let i = 0;
+  for (let k = 0; k < PHASES.length; k++) if (t >= PHASES[k][0]) i = k;
+  return i;
+}
+function glowColor(t) {
+  const ph = PHASES[phaseAt(t)];
+  if (ph[1] === 'working') return '#5b6a9a';
+  if (ph[1] === 'peekOutro') return C.success;
+  return C[EV[ph[2]].state];
+}
+
+// Camera: [time, scale] keys, eased between
+const CAM = [[0, 1], [3.2, 1.03], [4.25, 1.75], [8.6, 1.75], [9.45, 1.18], [10.35, 1.18], [11.0, 1.75]];
+function camAt(t) {
+  for (let i = 0; i < CAM.length - 1; i++) {
+    const [t0, s0] = CAM[i], [t1, s1] = CAM[i + 1];
+    if (t < t1) return lerp(s0, s1, (i === 0 ? ease : inOut)(clamp((t - t0) / (t1 - t0))));
+  }
+  return CAM[CAM.length - 1][1];
+}
+
+const $ = (id) => document.getElementById(id);
+const cursor = $('cursor');
+let anims = null;
+
+function seek(t) {
+  // 1) Looping CSS animations follow the global clock.
+  if (!anims) anims = document.getAnimations();
+  for (const a of anims) { a.pause(); a.currentTime = t * 1000; }
+
+  // 2) Camera and background
+  const s = camAt(t);
+  $('screen').style.transform = `scale(${s})`;
+  $('screen').style.opacity = t < T.dip1 ? 1 : t < T.outro ? clamp(1 - (t - T.dip1) / .3) : prog(t, T.outro, .5);
+  $('glow').style.background = glowColor(t);
+  $('glow').style.opacity = t < T.outro ? (PHASES[phaseAt(t)][1] === 'working' ? .2 : .32) : .26;
+  $('grid').style.backgroundPosition = `${t * 2.4}px ${t * 2.4}px`;
+
+  // Screen contents: during the outro only the menu bar and notch come back
+  const outroOn = t >= T.outro;
+  $('wins').style.opacity = outroOn ? 0 : 1;
+
+  // 3) Agent windows float in, then dim while the notch has the stage
+  const dimP = prog(t, T.pushIn, .8);
+  WINS.forEach((w, i) => {
+    const { wrap, inner } = winEls[w.id];
+    const inP = prog(t, .05 + i * .12, .7, out);
+    const bob = Math.sin(t * .9 + i * 1.7) * 6;
+    wrap.style.opacity = inP * lerp(1, .42, dimP);
+    wrap.style.transform = `translateY(${(1 - inP) * 40 + bob}px) rotate(${w.rot}deg) scale(${WIN_SCALE})`;
+    wrap.style.filter = inP >= 1 ? 'none' : `blur(${(1 - inP) * 6}px)`;
+    let ring = '';
+    if (w.id === 'permission' && t < T.pushIn + .6) {
+      // Waiting: a slow amber pulse around the stuck session
+      const pulse = .55 + .45 * Math.sin(t * 4.2);
+      ring = `0 0 0 1.5px color-mix(in oklch, ${C.permission} ${Math.round(pulse * 100)}%, transparent), 0 0 50px color-mix(in oklch, ${C.permission} ${Math.round(pulse * 30)}%, transparent), 0 30px 60px rgba(0,0,0,.5)`;
+    }
+    if (w.id === 'permission' && t >= T.close1 && t < T.q) {
+      // Opened: the exact tab lights up and comes forward
+      const p = window01(t, T.close1 + .1, T.q - .05, .3, .4);
+      wrap.style.opacity = lerp(inP * .42, 1, p);
+      ring = `0 0 0 ${lerp(0, 2, p)}px ${C.permission}, 0 0 70px color-mix(in oklch, ${C.permission} ${Math.round(p * 40)}%, transparent), 0 30px 60px rgba(0,0,0,.5)`;
+    }
+    inner.style.boxShadow = ring;
+  });
+
+  // 4) Notch island
+  $('notch').style.transform = `translateX(0) scale(${NOTCH_SCALE})`;
+  const i = phaseAt(t), ph = PHASES[i], prev = PHASES[Math.max(0, i - 1)];
+  const [w1, h1, r1] = sizeOf(ph), [w0, h0, r0] = i === 0 ? sizeOf(ph) : sizeOf(prev);
+  const sp = spring(clamp((t - ph[0]) / .56));
+  const w = lerp(w0, w1, sp), h = lerp(h0, h1, sp), r = lerp(r0, r1, clamp((t - ph[0]) / .42));
+  island.style.width = w + 'px'; island.style.height = h + 'px';
+  island.style.transform = 'translateX(-50%)';
+  island.style.borderRadius = `0 0 ${r}px ${r}px`;
+  island.style.boxShadow = ph[1] === 'alert' ? '0 24px 60px rgba(0,0,0,.55), 0 0 0 .5px rgba(255,255,255,.06)' : 'none';
+  const local = t - ph[0];
+  const isWorking = ph[1] === 'working';
+  fadeUp(wing, isWorking ? prog(local, .2, .3) : 0);
+  fadeUp(count, isWorking ? prog(local, .2, .3) : 0);
+  // start: the working wing is already there
+  if (i === 0) { fadeUp(wing, 1); fadeUp(count, 1); }
+  for (const key of Object.keys(EV)) {
+    const d = drops[key];
+    if (ph[1] === 'peek' && ph[2] === key) dropAt(d, local); else d.style.opacity = 0;
+    const box = alerts[key];
+    if (ph[1] === 'alert' && ph[2] === key) {
+      // A new alert straight after another one fades in faster
+      const chained = prev[1] === 'alert';
+      fadeUp(box, prog(local, chained ? .05 : .17, chained ? .3 : .38));
+    } else box.style.opacity = 0;
+  }
+  if (ph[1] === 'peekOutro') dropAt(outroDrop, local); else outroDrop.style.opacity = 0;
+
+  // Open Session press
+  const btn = alerts.permission.querySelector('.isl-open');
+  const press = t >= T.click - .02 && t < T.click + .14;
+  btn.style.transform = press ? 'scale(.96)' : 'none';
+  btn.style.background = press ? '#fff' : '';
+
+  // 5) Toast after opening
+  const tp = window01(t, T.close1 + .25, T.pushIn2, .3, .35);
+  const toast = $('toast');
+  toast.style.opacity = tp;
+  toast.style.transform = `translateX(-50%) translateY(${(1 - tp) * -8}px)`;
+  toast.style.transformOrigin = 'center';
+  // keep the toast readable at any camera scale
+  toast.style.scale = `${1 / s * 1.18}`;
+
+  // 6) Cursor: glides to Open Session, clicks, leaves
+  const cp = prog(t, T.cursor, 1.0, inOut);
+  if (t >= T.cursor - .01 && t < T.close1 + .7) {
+    const r = btn.getBoundingClientRect();
+    const tx = r.left + r.width * .42, ty = r.top + r.height * .55;
+    const sx = 1560, sy = 1000;
+    const arc = Math.sin(cp * Math.PI) * -60;
+    const leave = prog(t, T.close1 + .2, .5);
+    cursor.style.opacity = 1 - leave;
+    const clickScale = press ? .88 : 1;
+    cursor.style.transform = `translate(${lerp(sx, tx, cp) + arc * .3}px, ${lerp(sy, ty, cp) + arc}px) scale(${clickScale})`;
+  } else cursor.style.opacity = 0;
+
+  // 7) Captions
+  capIn($('c1a'), t, .35, T.pushIn);
+  capIn($('c1b'), t, 1.3, T.pushIn);
+  $('cap1').style.opacity = 1;
+  capIn($('cap2'), t, T.alert1 + .1, T.cursor + .15);
+  capIn($('cap3'), t, T.cursor + .45, T.pushIn2 + .15);
+  $('cap4').style.opacity = 1;
+  capIn($('c4a'), t, T.qAlert, T.dip1);
+  capIn($('c4b'), t, T.err + .05, T.dip1);
+  capIn($('c4c'), t, T.fin, T.dip1);
+  $('scrim').style.opacity = clamp(prog(t, T.pushIn, .8) * (1 - prog(t, T.dip1, .3)));
+
+  // 8) Real app panels
+  const pv = window01(t, T.panels, T.dip2 + .3, .5, .3);
+  $('panels').style.opacity = t >= T.panels - .01 && t < T.dip2 + .31 ? 1 : 0;
+  capIn($('cap5'), t, T.panels + .25, T.dip2 + .3);
+  [['pNow', 0], ['pUse', .18]].forEach(([id, dl]) => {
+    const p = prog(t, T.panels + dl, .8, out) * (1 - prog(t, T.dip2, .3));
+    const drift = (t - T.panels) * 6;
+    const n = $(id);
+    n.style.opacity = p;
+    n.style.transform = `translateY(${(1 - p) * 70 - drift}px) scale(${lerp(.96, 1, p)})`;
+  });
+
+  // 9) Outro
+  const op = $('outro');
+  op.style.opacity = t >= T.outro ? 1 : 0;
+  const kids = [op.querySelector('img'), op.querySelector('h1'), op.querySelector('.tag'), op.querySelector('.meta'), op.querySelector('.url')];
+  kids.forEach((k, j) => {
+    const p = prog(t, T.outro + .1 + j * .2, .6, out);
+    k.style.opacity = p;
+    k.style.transform = `translateY(${(1 - p) * 26}px) scale(${j === 0 ? lerp(.9, 1, p) : 1})`;
+    k.style.filter = p >= 1 ? 'none' : `blur(${(1 - p) * 8}px)`;
+  });
+  // Menu bar labels step back while the camera is close, and in the outro
+  const lab = t >= T.outro ? 0 : 1 - clamp((s - 1.05) / .35) * .75;
+  for (const n of $('menubar').children) n.style.opacity = lab;
+  $('vig').style.opacity = window01(t, .2, T.pushIn + .2, .5, .6);
+}
+
+// Peeku drops out of the notch: the site's pipDrop keyframes, sampled by time.
+function dropAt(node, local) {
+  node.style.opacity = 1;
+  const p = clamp(local / .52);
+  const f = bezier(.3, 1.2, .45, 1)(p);
+  // keyframes: 0 translateY(-130%) scaleY(1.3); 58% translateY(10%) scale(1.1,.88); 78% translateY(-4%) scale(.97,1.03); 100% none
+  const K = [[0, -130, 1, 1.3], [.58, 10, 1.1, .88], [.78, -4, .97, 1.03], [1, 0, 1, 1]];
+  let k = 0; while (k < K.length - 2 && f > K[k + 1][0]) k++;
+  const [a, b] = [K[k], K[k + 1]];
+  const q = clamp((f - a[0]) / (b[0] - a[0]));
+  node.style.transform = `translateY(${lerp(a[1], b[1], q)}%) scale(${lerp(a[2], b[2], q)}, ${lerp(a[3], b[3], q)})`;
+}
+
+window.seek = seek;
+window.DURATION = T.end;
+window.ready = Promise.all([document.fonts.ready, ...[...document.images].map((im) => im.decode().catch(() => {}))]);
+seek(0);
+</script>
+</body>
+</html>
