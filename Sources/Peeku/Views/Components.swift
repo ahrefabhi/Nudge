@@ -159,7 +159,10 @@ struct SnapshotSafeScrollView<Content: View>: View {
 
     var body: some View {
         if peekuStill {
-            content.frame(maxHeight: .infinity, alignment: .top)
+            // Like a scroll view at its top: full height, pinned up, the rest clipped.
+            content.fixedSize(horizontal: false, vertical: true)
+                .frame(minHeight: 0, maxHeight: .infinity, alignment: .top)
+                .clipped()
         } else {
             ScrollView { content }.scrollIndicators(.never)
         }
