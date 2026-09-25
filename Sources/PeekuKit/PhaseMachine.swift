@@ -64,6 +64,8 @@ public final class PhaseMachine {
     public var history: [HistoryEntry] = []
     /// Each agent's latest rate limit reading, for the manager's Usage tab.
     public var usage: [AgentUsage] = []
+    /// Each agent's tokens and dollars over the last 30 days, from its session logs.
+    public var spend: [SpendReport] = []
     /// The user's usage alerts, edited in the Usage tab.
     public private(set) var usageAlertRules: [UsageAlertRule] = []
 

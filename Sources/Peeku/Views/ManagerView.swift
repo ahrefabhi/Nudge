@@ -62,12 +62,12 @@ struct ManagerView: View {
             VStack(alignment: .leading, spacing: 0) {
                 if !need.isEmpty {
                     SectionLabel(title: "NEEDS YOU").padding(EdgeInsets(top: 6, leading: 12, bottom: 4, trailing: 12))
-                    ForEach(need) { NeedsYouRow(session: $0, onOpen: open) }
+                    ForEach(need) { NeedsYouRow(session: $0, spend: machine.spend.session($0.id), onOpen: open) }
                 }
                 if !machine.working.isEmpty {
                     SectionLabel(title: "WORKING").padding(EdgeInsets(top: 12, leading: 12, bottom: 4, trailing: 12))
                     ForEach(machine.working) { session in
-                        QuietRow(session: session, detail: session.activity ?? session.task, onOpen: open) {
+                        QuietRow(session: session, spend: machine.spend.session(session.id), detail: session.activity ?? session.task, onOpen: open) {
                             Spinner(track: .fill(0.18), head: palette.accent(.finished), period: 1.1)
                         }
                     }
@@ -75,13 +75,13 @@ struct ManagerView: View {
                 if !machine.finished.isEmpty {
                     SectionLabel(title: "FINISHED").padding(EdgeInsets(top: 12, leading: 12, bottom: 4, trailing: 12))
                     ForEach(machine.finished) { session in
-                        QuietRow(session: session, detail: session.task, dimmed: true, onOpen: open) { mark("✓", session) }
+                        QuietRow(session: session, spend: machine.spend.session(session.id), detail: session.task, dimmed: true, onOpen: open) { mark("✓", session) }
                     }
                 }
                 if !machine.idle.isEmpty {
                     SectionLabel(title: "IDLE").padding(EdgeInsets(top: 12, leading: 12, bottom: 4, trailing: 12))
                     ForEach(machine.idle) { session in
-                        QuietRow(session: session, detail: session.task, dimmed: true, onOpen: open) { mark("·", session) }
+                        QuietRow(session: session, spend: machine.spend.session(session.id), detail: session.task, dimmed: true, onOpen: open) { mark("·", session) }
                     }
                 }
             }
@@ -148,6 +148,7 @@ struct ManagerView: View {
 private struct NeedsYouRow: View {
     @Environment(\.palette) private var palette
     let session: PeekuSession
+    let spend: SessionSpend?
     let onOpen: (PeekuSession) -> Void
 
     var body: some View {
@@ -179,6 +180,7 @@ private struct NeedsYouRow: View {
                         .font(.peeku(12))
                         .foregroundStyle(palette.label(0.55))
                         .lineLimit(1)
+                    if !SessionDetails.isEmpty(session, spend) { SessionDetails(session: session, spend: spend) }
                     if let quote = session.quote {
                         Text(quote)
                             .font(.peekuMono(11))
@@ -211,6 +213,7 @@ private struct NeedsYouRow: View {
 private struct QuietRow<Mark: View>: View {
     @Environment(\.palette) private var palette
     let session: PeekuSession
+    let spend: SessionSpend?
     let detail: String
     var dimmed = false
     let onOpen: (PeekuSession) -> Void
@@ -218,37 +221,44 @@ private struct QuietRow<Mark: View>: View {
     @State private var hovering = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            mark.frame(width: 16)
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(session.project)
-                    .font(.peeku(13, .semibold))
-                    .foregroundStyle(dimmed ? palette.label(0.75) : palette.primary)
-                    .layoutPriority(1)
-                Text(detail)
-                    .font(.peeku(12))
-                    .foregroundStyle(palette.label(dimmed ? 0.45 : 0.55))
-                    .truncationMode(.tail)
-            }
-            .lineLimit(1)
-            Spacer(minLength: 8)
-            HStack(spacing: 5) {
-                AgentMark(agent: session.agent, size: 10)
-                LiveText { "\(session.hostName) · \(RelativeTime.short(since: session.since, now: $0))" }
-            }
-                .font(.peeku(11))
-                .foregroundStyle(palette.label(0.38))
-                .lineLimit(1)
-                .fixedSize()
-                .opacity(hovering ? 0 : 1)
-                // Drawn over the label, so the row keeps its one-line height.
-                .overlay(alignment: .trailing) {
-                    if hovering {
-                        Button("Open") { onOpen(session) }
-                            .buttonStyle(RowOpenStyle())
-                            .fixedSize()
-                    }
+        // The details run under the whole first line, "host · time" included, so they have room.
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 10) {
+                mark.frame(width: 16)
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(session.project)
+                        .font(.peeku(13, .semibold))
+                        .foregroundStyle(dimmed ? palette.label(0.75) : palette.primary)
+                        .layoutPriority(1)
+                    Text(detail)
+                        .font(.peeku(12))
+                        .foregroundStyle(palette.label(dimmed ? 0.45 : 0.55))
+                        .truncationMode(.tail)
                 }
+                .lineLimit(1)
+                Spacer(minLength: 8)
+                HStack(spacing: 5) {
+                    AgentMark(agent: session.agent, size: 10)
+                    LiveText { "\(session.hostName) · \(RelativeTime.short(since: session.since, now: $0))" }
+                }
+                    .font(.peeku(11))
+                    .foregroundStyle(palette.label(0.38))
+                    .lineLimit(1)
+                    .fixedSize()
+                    .opacity(hovering ? 0 : 1)
+                    // Drawn over the label, so the row keeps its height.
+                    .overlay(alignment: .trailing) {
+                        if hovering {
+                            Button("Open") { onOpen(session) }
+                                .buttonStyle(RowOpenStyle())
+                                .fixedSize()
+                        }
+                    }
+            }
+            if !SessionDetails.isEmpty(session, spend) {
+                SessionDetails(session: session, spend: spend)
+                    .padding(.leading, 26)
+            }
         }
         .padding(.vertical, 9)
         .padding(.horizontal, 12)

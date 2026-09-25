@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let machine = PhaseMachine()
     private let observation = ObservationService()
     private let usage = UsageService()
+    private let spend = SpendService()
     private var usageAlerts = UsageAlerts(handled: Preferences.handledUsageAlerts)
     private let hookSetup = HookSetup()
     private lazy var demo = DemoController(machine: machine)
@@ -50,8 +51,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.machine.usage = $0
             self?.deliverUsageAlerts()
         }
-        machine.onShowUsageTab = { [weak self] in self?.usage.refreshNow() }
+        spend.onChange = { [weak self] in self?.machine.spend = $0 }
+        machine.onShowUsageTab = { [weak self] in
+            self?.usage.refreshNow()
+            self?.spend.refresh()
+        }
         usage.start()
+        spend.start()
         machine.onSetUpUsage = { [weak self] agent in
             guard agent == .claude else { return }
             // The notch panel floats above ordinary windows, so close the manager before the alert shows.
@@ -113,6 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         observation.stop()
         usage.stop()
+        spend.stop()
     }
 
     // MARK: Sessions

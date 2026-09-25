@@ -1,37 +1,76 @@
 import PeekuKit
 import SwiftUI
 
-/// The manager's third tab: how much of each agent's rate limits is used, and when they reset,
-/// plus the alerts that say when one gets close. Peeku asks each agent every few minutes, and the
+/// The manager's third tab: what each agent cost over the last 30 days, how much of its rate
+/// limits is used and when they reset, plus the alerts that say when one gets close. Peeku asks each agent every few minutes, and the
 /// status line and session logs fill in between, so each agent says how old its numbers are.
 struct UsageView: View {
     let machine: PhaseMachine
     /// Opens with the new-alert editor showing, and a typed percentage, for snapshots.
     var adding = false
     var custom = ""
+    /// Which period the spend covers, kept between openings.
+    @AppStorage("usageSpendPeriod") private var period = SpendReport.Period.month
 
     var body: some View {
         SnapshotSafeScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(machine.usage) { usage in
-                    AgentUsageSection(usage: usage) { machine.onSetUpUsage?(usage.agent) }
+                if machine.spend.contains(where: { !$0.isEmpty }) { periodSwitch }
+                ForEach(Array(machine.usage.enumerated()), id: \.element.id) { index, usage in
+                    if index > 0 { SectionDivider() }
+                    AgentUsageSection(usage: usage, spend: machine.spend.first { $0.agent == usage.agent }, period: period) {
+                        machine.onSetUpUsage?(usage.agent)
+                    }
                 }
+                SectionDivider()
                 UsageAlertsSection(machine: machine, adding: adding, custom: custom)
             }
             .padding(EdgeInsets(top: 4, leading: 8, bottom: 10, trailing: 8))
         }
+    }
+
+    /// Today · 7 days · 30 days. Buttons, since a picker opens a window of its own that the
+    /// notch panel reads as a click outside.
+    private var periodSwitch: some View {
+        HStack(spacing: 6) {
+            ForEach(SpendReport.Period.allCases, id: \.self) { value in
+                Button(value.title) { period = value }
+                    .buttonStyle(ChipStyle(selected: period == value))
+                    .accessibilityAddTraits(period == value ? .isSelected : [])
+            }
+        }
+        .font(.peeku(11.5))
+        .padding(EdgeInsets(top: 10, leading: 12, bottom: 0, trailing: 12))
+    }
+}
+
+/// A full-width hairline between the agents and before the alerts.
+private struct SectionDivider: View {
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        Rectangle().fill(palette.hairline).frame(height: 1)
+            .padding(.horizontal, 4).padding(.top, 12)
     }
 }
 
 private struct AgentUsageSection: View {
     @Environment(\.palette) private var palette
     let usage: AgentUsage
+    let spend: SpendReport?
+    let period: SpendReport.Period
     let onSetUp: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
                 .padding(EdgeInsets(top: 14, leading: 12, bottom: 6, trailing: 12))
+            if let spend, !spend.isEmpty {
+                SpendSummary(report: spend, period: period)
+                // Lighter than between sections: the same agent's spend, then its limits.
+                Rectangle().fill(palette.hairline.opacity(0.6)).frame(height: 1)
+                    .padding(.horizontal, 12).padding(.top, 4).padding(.bottom, 2)
+            }
             if let report = usage.report {
                 ForEach(report.windows) { WindowRow(window: $0) }
             } else {
