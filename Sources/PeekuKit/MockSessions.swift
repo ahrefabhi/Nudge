@@ -124,4 +124,62 @@ public enum MockSessions {
                 plan: "plus", observedAt: now.addingTimeInterval(-720))),
         ]
     }
+
+    /// Thirty days of spend for the Usage tab: mostly Opus, some Fable, a little Haiku; Codex unpriced.
+    public static func spend(now: Date = Date(), calendar: Calendar = .current) -> [SpendReport] {
+        let today = calendar.startOfDay(for: now)
+        func spend(_ model: String, _ scale: Double) -> Spend {
+            let tokens = TokenCounts(input: Int(4_000 * scale), output: Int(90_000 * scale), cacheRead: Int(9_000_000 * scale),
+                                     cacheWrite5m: Int(50_000 * scale), cacheWrite1h: Int(300_000 * scale))
+            let price = ModelPrices.price(for: model)
+            return Spend(tokens: tokens, cost: price?.cost(tokens) ?? 0, requests: Int(120 * scale) + 1, unpriced: price == nil ? Int(120 * scale) + 1 : 0)
+        }
+        // A fixed shape, weekends quiet, so snapshots don't change from run to run.
+        let shape: [Double] = [3, 1.2, 6, 0.4, 1.8, 2.6, 0, 0.8, 2, 4, 0.6, 7, 7.4, 0.9, 4.5, 3.2, 0, 0, 0, 0.8, 0.7, 2.5, 0.5, 3.8, 4, 2.2, 0.9, 6.8, 4.9, 2.4]
+        func days(_ models: (Double, Int) -> [String: Spend]) -> [SpendReport.Bucket] {
+            shape.enumerated().map { index, scale in
+                SpendReport.Bucket(date: calendar.date(byAdding: .day, value: index - (shape.count - 1), to: today) ?? today,
+                                   models: scale == 0 ? [:] : models(scale, index))
+            }
+        }
+        // Today by hour: a morning, a lunch dip and an afternoon, and the day is what the hours add up to.
+        let hourShape: [Double] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0.15, 0.35, 0.3, 0.05, 0.1, 0.4, 0.45, 0.3, 0.2, 0.1, 0, 0, 0, 0, 0]
+        func hours(_ models: (Double, Int) -> [String: Spend]) -> [SpendReport.Bucket] {
+            hourShape.enumerated().compactMap { hour, scale in
+                calendar.date(byAdding: .hour, value: hour, to: today).map {
+                    SpendReport.Bucket(date: $0, models: scale == 0 ? [:] : models(scale, hour))
+                }
+            }
+        }
+        func report(_ agent: Agent, days: [SpendReport.Bucket], hours: [SpendReport.Bucket], sessions: [String: SessionSpend]) -> SpendReport {
+            var days = days
+            var today: [String: Spend] = [:]
+            for hour in hours { for (model, spend) in hour.models { today[model, default: Spend()] += spend } }
+            days[days.count - 1].models = today
+            return SpendReport(agent: agent, days: days, hours: hours, sessions: sessions)
+        }
+        let claude = days { scale, index in
+            var models = ["claude-opus-5": spend("claude-opus-5", scale)]
+            if index % 3 == 0 { models["claude-fable-5-1"] = spend("claude-fable-5-1", scale * 0.4) }
+            if index % 5 == 1 { models["claude-haiku-4-5"] = spend("claude-haiku-4-5", scale * 0.5) }
+            return models
+        }
+        let codex = days { scale, index in index % 4 == 0 ? ["gpt-6-luna": spend("gpt-6-luna", scale * 0.3)] : [:] }
+        let claudeHours = hours { scale, hour in
+            var models = ["claude-opus-5": spend("claude-opus-5", scale * 2)]
+            if hour % 4 == 2 { models["claude-fable-5-1"] = spend("claude-fable-5-1", scale) }
+            return models
+        }
+        let codexHours = hours { scale, hour in hour == 10 || hour == 15 ? ["gpt-6-luna": spend("gpt-6-luna", scale)] : [:] }
+        // The sample sessions: what each has cost and how full its context is.
+        func session(_ model: String, _ scale: Double, context: Double, window: Int = 1_000_000) -> SessionSpend {
+            SessionSpend(model: model, spend: spend(model, scale), context: Int(context * Double(window)), contextWindow: window)
+        }
+        let claudeSessions = ["payments": session("claude-opus-5", 0.9, context: 0.38), "dash": session("claude-fable-5-1", 0.8, context: 0.72),
+                              "chrome": session("claude-opus-5-5", 0.4, context: 0.12), "auth": session("claude-sonnet-5", 0.3, context: 0.93),
+                              "docs": session("claude-opus-5", 0.5, context: 0.44)]
+        let codexSessions = ["infra": session("gpt-6-luna", 0.6, context: 0.3, window: 258_400)]
+        return [report(.claude, days: claude, hours: claudeHours, sessions: claudeSessions),
+                report(.codex, days: codex, hours: codexHours, sessions: codexSessions)]
+    }
 }

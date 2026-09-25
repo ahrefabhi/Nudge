@@ -21,6 +21,7 @@ struct SettingsView: View {
     // MARK: Sections
 
     @AppStorage(PanelAppearance.defaultsKey) private var appearance = PanelAppearance.automatic.rawValue
+    @AppStorage(SpendFormat.showCostKey) private var showCost = true
 
     private var general: some View {
         Section {
@@ -83,6 +84,10 @@ struct SettingsView: View {
             } label: {
                 Text("Usage alerts")
                 Text(usageAlertsDetail)
+            }
+            Toggle(isOn: $showCost) {
+                Text("Show costs")
+                Text("Dollars at API prices in the Usage tab and beside each session. Off shows tokens only.")
             }
             Toggle(isOn: Binding(get: { model.soundsEnabled }, set: { model.setSoundsEnabled($0) })) {
                 Text("Play sounds")

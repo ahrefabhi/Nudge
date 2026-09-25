@@ -27,6 +27,7 @@ enum Snapshots {
 
         let historyMachine = PhaseMachine(scheduler: ManualScheduler(start: Date()))
         historyMachine.update(sessions: MockSessions.calm())
+        historyMachine.spend = MockSessions.spend()
         historyMachine.history = MockSessions.history()
         historyMachine.managerTab = .history
         let history = ManagerView(machine: historyMachine, bar: 32)
@@ -153,6 +154,7 @@ enum Snapshots {
         ("pill", { machine, clock in trigger(.multiple, machine, clock); clock.advance(by: 1); machine.later() }),
         ("manager", { machine, clock in
             machine.update(sessions: MockSessions.sample(now: clock.now))
+            machine.spend = MockSessions.spend(now: clock.now)
             clock.advance(by: 1)
             machine.toggleManager()
         }),

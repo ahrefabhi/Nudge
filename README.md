@@ -30,6 +30,7 @@ https://github.com/user-attachments/assets/975ed425-4376-4fab-8937-5d9e5c9f5df5
 - **One queue, most urgent first:** permissions, then questions, then errors. Cycle with ⌥⌘↓.
 - **Every session at a glance:** click the notch for what's waiting, working and finished, plus a week of history.
 - **Rate limits:** your Claude and Codex 5-hour and weekly usage, with alerts at thresholds you set.
+- **Spend:** what today, the last 7 or the last 30 days cost at API prices, tokens used, and bars split by model.
 - **Stays out of the way:** alerts fold into a pill, full screen shrinks Peeku to a glow, and it goes quiet while your screen is shared.
 - **Read-only and private:** Peeku never types or approves anything, and everything stays on your Mac.
 - **Native:** Swift and SwiftUI, light and dark mode, Reduce Motion, about 6 MB.
@@ -61,7 +62,7 @@ On an external display or older MacBook, Peeku hides while idle and slides down 
 
 ### Usage
 
-Peeku asks Claude Code and Codex for your limits every few minutes, with no setup. Add alerts (50–95% or a custom value) for Claude, Codex or both; each fires once per threshold until the limit resets.
+Peeku asks Claude Code and Codex for your limits every few minutes, with no setup. Above each agent's limits, it adds up their session logs for **Today**, **7 days** or **30 days**: the cost at API prices, tokens (cache reads included), replies, the top model, and a bar per hour (today) or day, split by model. Hover a bar for its numbers. On a subscription, the dollars are what the same tokens would cost on the API, not what you pay. Add alerts (50–95% or a custom value) for Claude, Codex or both; each fires once per threshold until the limit resets.
 
 <p align="center"><img src="docs/images/usage.png" width="49%" alt="The Usage tab: Claude Code at 64% of its 5-hour limit, resetting in 2h 13m, and 38% of its weekly limit; Codex on the Plus plan at 91% of its 5-hour limit in red, resetting in 37m, and 22% of its weekly limit; below them, two alerts: Claude at 75%, and Claude and Codex at 90%"></p>
 
@@ -106,6 +107,7 @@ Everything runs on your Mac. The only network request Peeku makes itself is the 
 - **Session list:** Claude Code's `~/.claude/sessions` says which sessions run and whether they're busy, idle or waiting.
 - **Hooks:** setup adds hooks to `~/.claude/settings.json` (and `~/.codex/hooks.json`) that run `peeku-hook`. It records only what Peeku shows (command, question, error, summary, branch, app and tab), never transcripts, into `~/Library/Application Support/Peeku/inbox`, which Peeku deletes after reading. It never answers or blocks anything and exits immediately. For Codex, type `/hooks` and trust Peeku's entries.
 - **Usage:** Peeku asks `claude -p` and `codex app-server` for rate limits using their own sign-ins; it never reads credentials. If that fails, **Set Up…** reads Claude's numbers from its status line instead, keeping any status line you have.
+- **Spend:** Peeku reads the session logs in `~/.claude/projects` and `~/.codex/sessions` and keeps only each reply's time, model and token counts, priced from a table built into the app. Nothing else is kept, saved or sent.
 - **Permissions:** *Automation* selects the right iTerm or Terminal tab. *Accessibility* finds the exact window and detects screen sharing.
 
 Your settings files are backed up before any change.
@@ -124,7 +126,7 @@ Your settings files are backed up before any change.
 
 **Goes quiet** (count only, no pop-up or sound) while your screen is shared or recorded, when **Quiet** is on, or for the session you're already looking at. In full screen it shrinks to a glow along the top edge.
 
-**Settings** covers appearance, login, updates, sounds per state, usage alerts, which apps to watch, hooks and permissions.
+**Settings** covers appearance, login, updates, sounds per state, usage alerts, showing costs, which apps to watch, hooks and permissions.
 
 <p align="center"><img src="docs/images/settings.png" width="360" alt="Peeku's settings: appearance, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
 
