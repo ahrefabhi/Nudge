@@ -294,7 +294,7 @@ private struct SocialPreview: View {
                         AppIconView().scaleEffect(128 / AppIconView.canvas).frame(width: 128, height: 128)
                         Text("Peeku").font(.peeku(92, .bold)).foregroundStyle(Tokens.textPrimary)
                     }
-                    Text("A tiny companion in your notch that tells you when a Claude Code or Codex session needs you.")
+                    Text("A tiny companion for your coding agents, in your notch or menu bar.")
                         .font(.peeku(34, .medium))
                         .foregroundStyle(Color.label(0.7))
                         .lineSpacing(6)
