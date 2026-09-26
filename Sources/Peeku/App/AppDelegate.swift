@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var history = HistoryRecorder(entries: historyStore.load())
     private let commands = CommandRunner()
     private lazy var commandWindows = CommandWindows(runner: commands)
+    private let skills = SkillManager()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         LegacyUpgrade.run()
@@ -33,7 +34,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         commands.onEdit = { [weak self] command in self?.openCommandWindow { $0.edit(command) } }
         commands.onShowLog = { [weak self] command in self?.openCommandWindow { $0.showLog(command) } }
         commands.onChange = { [weak self] in self?.deliverCommandAlerts() }
-        let notch = NotchWindowController(machine: machine, presence: presence, commands: commands, settings: settings,
+        skills.chooseFolder = { [weak self] message, done in self?.chooseSkillFolder(message, done) }
+        let notch = NotchWindowController(machine: machine, presence: presence, commands: commands, skills: skills, settings: settings,
                                           anchor: { [weak self] in self?.statusMenu?.anchor })
         machine.onOpen = { [weak self] session in
             switch session.kind {
@@ -133,15 +135,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// The notch and its hotkeys, once setup is out of the way.
     private func startNotch() {
-        let hotKeys = HotKeys()
-        // ⌥⌘. rather than ⌘⇧., which Finder and Open/Save dialogs use to show hidden files.
-        hotKeys.register(keyCode: kVK_ANSI_Period, modifiers: cmdKey | optionKey) { [weak self] in self?.toggleManager() }
-        hotKeys.register(keyCode: kVK_ANSI_Comma, modifiers: cmdKey | optionKey) { [weak self] in self?.toggleCommands() }
-        hotKeys.register(keyCode: kVK_DownArrow, modifiers: cmdKey | optionKey) { [weak self] in
-            self?.machine.cycleNext()
-            self?.notch?.focusIsland()
-        }
-        self.hotKeys = hotKeys
+        hotKeys = HotKeys()
+        Shortcuts.shared.onChange = { [weak self] in self?.registerShortcuts() }
+        registerShortcuts()
         notch?.show()
         deliverSessions()
         deliverUsageAlerts()
@@ -242,17 +238,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// ⌥⌘.: the manager on the agents.
+    /// The user's shortcuts, set in Settings. None while Settings records a new one, so pressing
+    /// the current combination records it; any another app holds are reported there.
+    private func registerShortcuts() {
+        guard let hotKeys else { return }
+        hotKeys.unregisterAll()
+        let shortcuts = Shortcuts.shared
+        guard shortcuts.recording == nil else { return }
+        var unavailable: Set<ShortcutAction> = []
+        for (action, shortcut) in shortcuts.active {
+            let registered = hotKeys.register(shortcut) { [weak self] in self?.perform(action) }
+            if !registered { unavailable.insert(action) }
+        }
+        if shortcuts.unavailable != unavailable { shortcuts.unavailable = unavailable }
+    }
+
+    private func perform(_ action: ShortcutAction) {
+        switch action {
+        case .agents: toggleManager()
+        case .commands: toggleCommands()
+        case .skills: toggleSkills()
+        case .nextWaiting:
+            machine.cycleNext()
+            notch?.focusIsland()
+        }
+    }
+
+    /// The agents' shortcut: the manager on the agents.
     private func toggleManager() {
         if setupPending { return showOnboarding() }
         machine.toggleAgents()
         if machine.phase == .manager { notch?.focusIsland() }
     }
 
-    /// ⌥⌘,: the manager on Commands.
+    /// Commands' shortcut: the manager on Commands.
     private func toggleCommands() {
         if setupPending { return showOnboarding() }
         machine.toggleCommands()
+        if machine.phase == .manager { notch?.focusIsland() }
+    }
+
+    /// Skills' shortcut: the manager on Skills.
+    private func toggleSkills() {
+        if setupPending { return showOnboarding() }
+        machine.toggleSkills()
         if machine.phase == .manager { notch?.focusIsland() }
     }
 
@@ -260,6 +289,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         machine.autoCollapse = Preferences.autoCollapse
         machine.expandFinished = Preferences.popUpOnFinish
         machine.commandsEnabled = Preferences.commandsEnabled
+        machine.skillsEnabled = Preferences.skillsEnabled
     }
 
     /// Settings live in the manager, behind the gear at its top right.
@@ -321,6 +351,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case 0: return .init(mood: machine.working.isEmpty ? .idle : .working)
         case 1: return .init(mood: queue[0].kind.mood, count: 1)
         default: return .init(mood: .multiple, count: queue.count)
+        }
+    }
+
+    /// The notch floats above the open panel, so close the manager, ask, then come back to Skills.
+    private func chooseSkillFolder(_ message: String, _ done: @escaping @MainActor (URL) -> Void) {
+        machine.tapOutside()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            NSApp.activate()
+            let panel = NSOpenPanel()
+            panel.message = message
+            panel.prompt = "Choose"
+            panel.canChooseFiles = false
+            panel.canChooseDirectories = true
+            panel.allowsMultipleSelection = false
+            let url = panel.runModal() == .OK ? panel.url : nil
+            self?.machine.showSkills()
+            self?.notch?.focusIsland()
+            if let url { done(url) }
         }
     }
 

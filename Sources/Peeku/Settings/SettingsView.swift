@@ -121,6 +121,9 @@ struct SettingsView: View {
             SettingsRow("Commands", "Save commands like npm run dev, then run, restart and stop them from the dock.") {
                 SettingsSwitch(isOn: model.commandsEnabled) { model.setCommandsEnabled($0) }
             }
+            SettingsRow("Skills", "Browse, install and remove Claude Code and Codex plugins and skills, globally or per project.") {
+                SettingsSwitch(isOn: model.skillsEnabled) { model.setSkillsEnabled($0) }
+            }
         }
     }
 
@@ -185,14 +188,32 @@ struct SettingsView: View {
     }
 
     private var shortcuts: some View {
-        SettingsSection("SHORTCUTS", footer: "↵, Esc and the rest work once the notch has focus: click it, or use ⌥⌘. or ⌥⌘↓.") {
-            shortcut("Agents", "⌥⌘.")
-            shortcut("Now, History or Usage", "⌥⌘. then 1–3")
-            shortcut("Commands", "⌥⌘,")
-            shortcut("Next waiting agent", "⌥⌘↓")
+        let keys = Shortcuts.shared
+        return SettingsSection("SHORTCUTS", footer: "Click a shortcut, then press the keys you want. Esc cancels; Delete turns it off. ↵, Esc and the rest work once the notch has focus: click it, or use a shortcut above.") {
+            ForEach(ShortcutAction.allCases, id: \.self) { action in
+                SettingsRow(action.title, shortcutDetail(action, keys)) {
+                    ShortcutRecorder(action: action)
+                }
+            }
+            shortcut("Now, History or Usage", "⌥⌘1–3")
             shortcut("Open the focused session", "↵")
             shortcut("Fold the alert, or back to Agents", "Esc")
             shortcut("Open row 1–9", "⌘1–9")
+            SettingsRow("Reset shortcuts", nil) {
+                SettingsButton("Reset") { keys.resetToDefaults() }
+                    .disabled(ShortcutAction.allCases.allSatisfy { keys.active[$0] == $0.defaultShortcut })
+            }
+        }
+    }
+
+    /// Why a shortcut isn't doing anything, or what it does in a utility's case.
+    private func shortcutDetail(_ action: ShortcutAction, _ keys: Shortcuts) -> String? {
+        if keys.recording == action { return keys.recordingError ?? "Press the new shortcut…" }
+        if keys.unavailable.contains(action) { return "Another app already uses this. Pick a different one." }
+        switch action {
+        case .commands where !model.commandsEnabled, .skills where !model.skillsEnabled:
+            return "Turned off under Utilities."
+        default: return nil
         }
     }
 
@@ -342,9 +363,40 @@ private struct SettingsRow<Control: View>: View {
     }
 }
 
+/// A shortcut you click and then retype: "⌥⌘," until clicked, "Type shortcut" while listening.
+private struct ShortcutRecorder: View {
+    let action: ShortcutAction
+    @Environment(\.palette) private var palette
+    @State private var hovering = false
+
+    var body: some View {
+        let keys = Shortcuts.shared
+        let listening = keys.recording == action
+        let warn = keys.unavailable.contains(action) || (listening && keys.recordingError != nil)
+        Button {
+            listening ? keys.stopRecording() : keys.startRecording(action)
+        } label: {
+            Text(listening ? "Type shortcut" : keys.label(action) ?? "None")
+                .font(listening || keys.label(action) == nil ? .peeku(11.5, .medium) : .peekuMono(11.5, .semibold))
+                .foregroundStyle(warn ? palette.accent(.error) : listening ? palette.primary : keys.label(action) == nil ? palette.label(0.45) : palette.primary)
+                .frame(minWidth: 64)
+                .padding(EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 10))
+                .background(Capsule().fill(palette.fill(listening ? 0.16 : hovering ? 0.14 : 0.09)))
+                .overlay(Capsule().strokeBorder(listening ? palette.label(0.5) : .clear, lineWidth: 1))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .onDisappear { if keys.recording == action { keys.stopRecording() } }
+        .accessibilityLabel("\(action.title) shortcut")
+        .accessibilityValue(listening ? "Listening" : keys.label(action) ?? "None")
+        .accessibilityHint("Click, then press the new shortcut")
+    }
+}
+
 /// A small switch drawn in the panel's colors, since the system one greys out while Peeku
 /// isn't the active app.
-private struct SettingsSwitch: View {
+struct SettingsSwitch: View {
     let isOn: Bool
     let set: (Bool) -> Void
     @Environment(\.palette) private var palette
@@ -407,7 +459,7 @@ private struct SettingsButton: View {
 }
 
 /// A pop-up menu that looks like a `SettingsButton` with a chevron.
-private struct SettingsMenu<Items: View>: View {
+struct SettingsMenu<Items: View>: View {
     let title: String
     @ViewBuilder let items: Items
     @Environment(\.palette) private var palette

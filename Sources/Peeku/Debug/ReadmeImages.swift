@@ -55,6 +55,53 @@ enum ReadmeImages {
         try write(manager(.history), "history")
         try write(manager(.usage), "usage")
         try write(manager(.commands), "commands")
+        // Skills: what's installed, then Discover with an install asking where it goes. Its
+        // pop-up menus are AppKit, so these render in a window.
+        let skills = MockSessions.skills()
+        tabs.managerTab = .skills
+        for (name, section) in [("skills", SkillManager.Section.installed), ("skills-discover", .discover)] {
+            skills.section = section
+            skills.expanded = section == .installed ? skills.installed[0].id : nil
+            skills.installing = section == .discover ? skills.catalog[2].id : nil
+            skills.installScope = .project(skills.projects[1])
+            let panel = ManagerView(machine: tabs, bar: 32, commands: commands, skills: skills)
+                .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
+                .background(Color.black)
+                .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
+                .shadow(color: .black.opacity(0.55), radius: 30, y: 24)
+                .environment(\.peekuStill, true)
+                .environment(\.colorScheme, .dark)
+                .frame(width: 760, height: 670, alignment: .top)
+                .background(Desktop())
+            try Snapshots.writeWindowed(panel, size: CGSize(width: 760, height: 670),
+                                        appearance: .darkAqua, to: directory.appending(path: "\(name).png"))
+        }
+        // The website's wide Skills picture: Installed and Discover side by side, each its own
+        // manager so both can show at once.
+        func skillsPanel(_ section: SkillManager.Section) -> some View {
+            let skills = MockSessions.skills()
+            skills.section = section
+            skills.expanded = section == .installed ? skills.installed[0].id : nil
+            skills.installing = section == .discover ? skills.catalog[2].id : nil
+            skills.installScope = .project(skills.projects[1])
+            return ManagerView(machine: tabs, bar: 32, commands: commands, skills: skills)
+                .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
+                .background(Color.black)
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .scaleEffect(0.72)
+                .frame(width: 460 * 0.72, height: (580 + IslandMetrics.managerTabRow) * 0.72)
+                .shadow(color: .black.opacity(0.55), radius: 24, y: 18)
+        }
+        let flow = HStack(spacing: 28) {
+            skillsPanel(.installed)
+            skillsPanel(.discover)
+        }
+        .environment(\.peekuStill, true)
+        .environment(\.colorScheme, .dark)
+        .frame(width: 760, height: 480)
+        .background(Desktop())
+        try Snapshots.writeWindowed(flow, size: CGSize(width: 760, height: 480),
+                                    appearance: .darkAqua, to: directory.appending(path: "skills-flow.png"))
         // The docs preview asking about its port, answered from the output window.
         // cacheDisplay leaves out the window's own background, so give the view one.
         try Snapshots.writeWindowed(CommandLogView(runner: commands, id: commands.commands[2].id)

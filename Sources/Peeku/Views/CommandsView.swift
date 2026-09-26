@@ -199,7 +199,7 @@ private struct StatusMark: View {
 }
 
 /// The red confirm pill that takes the trash button's place.
-private struct DeleteStyle: ButtonStyle {
+struct DeleteStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         Label(label: configuration.label, pressed: configuration.isPressed)
     }
@@ -224,7 +224,7 @@ private struct DeleteStyle: ButtonStyle {
 }
 
 /// A small round symbol button, for the row's actions.
-private struct IconButton: View {
+struct IconButton: View {
     @Environment(\.palette) private var palette
     @Environment(\.isEnabled) private var isEnabled
     let symbol: String

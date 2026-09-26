@@ -9,6 +9,8 @@ struct IslandView: View {
     var presence: PresenceMonitor?
     /// For the manager's Commands utility.
     var commands: CommandRunner?
+    /// For the manager's Skills utility.
+    var skills: SkillManager?
     /// For the manager's Settings view.
     var settings: SettingsModel?
     /// On a Mac without a notch, Peeku lives in its menu bar icon instead of a fake notch.
@@ -177,7 +179,7 @@ struct IslandView: View {
                                       ? { machine.answerCommand(session.id, $0) } : nil)
                 }
             case .manager:
-                ManagerView(machine: machine, bar: bar, commands: commands, settings: settings)
+                ManagerView(machine: machine, bar: bar, commands: commands, skills: skills, settings: settings)
             case .opening:
                 EmptyView()
             }

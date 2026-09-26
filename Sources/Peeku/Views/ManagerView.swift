@@ -9,6 +9,7 @@ struct ManagerView: View {
     let machine: PhaseMachine
     let bar: CGFloat
     var commands: CommandRunner?
+    var skills: SkillManager?
     /// Nil in snapshots, which show the agent tabs only.
     var settings: SettingsModel?
     /// The machine owns the tab, so opening a usage alert can switch to Usage.
@@ -23,7 +24,7 @@ struct ManagerView: View {
                     if !hangsAbove && !machine.sessions.isEmpty {
                         PeekuView(mood: headerMood(need), size: 22, flat: true, extras: false)
                     }
-                    Text(need.isEmpty ? "All clear" : "\(need.count) need\(need.count == 1 ? "s" : "") you")
+                    Text(need.isEmpty ? "Peeku" : "\(need.count) need\(need.count == 1 ? "s" : "") you")
                         .font(.peeku(12, .semibold))
                         .foregroundStyle(need.isEmpty ? palette.label(0.86) : palette.accent(.permission))
                         .lineLimit(1)
@@ -54,6 +55,21 @@ struct ManagerView: View {
                         .buttonStyle(ChipStyle(selected: false))
                         .disabled(commands == nil)
                     }
+                case .skills:
+                    UtilityHeader(title: "Skills", onBack: machine.showAgents) {
+                        Button { skills?.refresh() } label: {
+                            HStack(spacing: 4) {
+                                if skills?.loading == true {
+                                    Spinner(size: 9)
+                                } else {
+                                    Image(systemName: "arrow.clockwise").font(.system(size: 9, weight: .bold))
+                                }
+                                Text("Refresh")
+                            }
+                        }
+                        .buttonStyle(ChipStyle(selected: false))
+                        .disabled(skills == nil || skills?.loading == true)
+                    }
                 case .settings:
                     UtilityHeader(title: "Settings", onBack: machine.showAgents) { EmptyView() }
                 default:
@@ -67,6 +83,7 @@ struct ManagerView: View {
             case .history: HistoryView(machine: machine).frame(maxHeight: .infinity, alignment: .top)
             case .usage: UsageView(machine: machine).frame(maxHeight: .infinity, alignment: .top)
             case .commands: CommandsView(runner: commands).frame(maxHeight: .infinity, alignment: .top)
+            case .skills: SkillsView(manager: skills).frame(maxHeight: .infinity, alignment: .top)
             case .settings:
                 if let settings { SettingsView(model: settings).frame(maxHeight: .infinity, alignment: .top) }
             }
@@ -161,14 +178,21 @@ struct ManagerView: View {
     private var dock: some View {
         let running = commands?.activeCount ?? 0
         return HStack(spacing: 4) {
-            DockButton(selected: tab.isAgentTab, label: "Agents") { machine.showAgents() } icon: {
+            DockButton(selected: tab.isAgentTab, label: "Agents", shortcut: .agents) { machine.showAgents() } icon: {
                 PeekuView(mood: .working, size: 16, flat: true, extras: false)
             }
-            DockButton(selected: tab == .commands, label: "Commands", count: running) { machine.managerTab = .commands } icon: {
-                Text(">_").font(.peekuMono(10.5, .semibold))
+            if machine.dock.contains(.commands) {
+                DockButton(selected: tab == .commands, label: "Commands", count: running, shortcut: .commands) { machine.managerTab = .commands } icon: {
+                    Text(">_").font(.peekuMono(10.5, .semibold))
+                }
+            }
+            if machine.dock.contains(.skills) {
+                DockButton(selected: tab == .skills, label: "Skills", shortcut: .skills) { machine.managerTab = .skills } icon: {
+                    Image(systemName: "sparkles").font(.system(size: 11, weight: .semibold))
+                }
             }
             Spacer()
-            Text("⌥⌘.").font(.peekuMono(11)).foregroundStyle(palette.label(0.4))
+            Text(Shortcuts.shared.label(.agents) ?? "").font(.peekuMono(11)).foregroundStyle(palette.label(0.4))
                 .padding(.trailing, 8)
         }
         .padding(.leading, 12)
@@ -186,7 +210,7 @@ struct ManagerView: View {
             Text(count == 0 ? "No agents running"
                  : "\(count) agent\(count == 1 ? "" : "s")" + (hosts.isEmpty ? "" : " · " + hosts.joined(separator: ", ")))
             Spacer()
-            Text("⌥⌘.").font(.peekuMono(11))
+            Text(Shortcuts.shared.label(.agents) ?? "").font(.peekuMono(11))
         }
         .font(.peeku(11))
         .foregroundStyle(palette.label(0.4))
@@ -254,6 +278,7 @@ private struct DockButton<Icon: View>: View {
     let selected: Bool
     let label: String
     var count = 0
+    var shortcut: ShortcutAction?
     let action: () -> Void
     @ViewBuilder let icon: Icon
     @Environment(\.palette) private var palette
@@ -281,6 +306,7 @@ private struct DockButton<Icon: View>: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
+        .help([label, shortcut.flatMap { Shortcuts.shared.label($0) }].compactMap { $0 }.joined(separator: "  "))
         .accessibilityLabel(count > 0 ? "\(label), \(count) running" : label)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }

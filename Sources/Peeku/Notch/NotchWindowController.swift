@@ -13,6 +13,7 @@ final class NotchWindowController {
     private let machine: PhaseMachine
     private let presence: PresenceMonitor?
     private let commands: CommandRunner?
+    private let skills: SkillManager?
     private let settings: SettingsModel?
     /// The menu bar icon's frame on screen, for Macs without a notch.
     private let anchor: () -> NSRect?
@@ -29,15 +30,16 @@ final class NotchWindowController {
     var menuBarMode: Bool { menuBar != nil }
 
     init(machine: PhaseMachine, presence: PresenceMonitor? = nil, commands: CommandRunner? = nil,
-         settings: SettingsModel? = nil, anchor: @escaping () -> NSRect? = { nil }) {
+         skills: SkillManager? = nil, settings: SettingsModel? = nil, anchor: @escaping () -> NSRect? = { nil }) {
         self.machine = machine
         self.presence = presence
         self.commands = commands
+        self.skills = skills
         self.settings = settings
         self.anchor = anchor
         panel = NotchPanel(contentRect: NSRect(origin: .zero, size: Self.canvas))
         hosting = FirstClickHostingView(rootView: IslandView(machine: machine, notch: .fallback, presence: presence, commands: commands,
-                                                             settings: settings, hitArea: hitArea))
+                                                             skills: skills, settings: settings, hitArea: hitArea))
         hosting.sizingOptions = []
         panel.contentView = hosting
 
@@ -55,7 +57,7 @@ final class NotchWindowController {
         panel.orderFrontRegardless()
     }
 
-    /// Takes keyboard focus without activating Peeku, e.g. for the ⌥⌘. shortcut.
+    /// Takes keyboard focus without activating Peeku, e.g. for the agents' shortcut.
     func focusIsland() {
         panel.makeKey()
     }
@@ -87,7 +89,7 @@ final class NotchWindowController {
         notch = geometry
         self.menuBar = menuBar
         hosting.rootView = IslandView(machine: machine, notch: notch, presence: presence, commands: commands,
-                                      settings: settings, menuBar: menuBar, hitArea: hitArea)
+                                      skills: skills, settings: settings, menuBar: menuBar, hitArea: hitArea)
         panel.setFrame(NSRect(x: midX - Self.canvas.width / 2, y: screen.frame.maxY - Self.canvas.height,
                               width: Self.canvas.width, height: Self.canvas.height), display: true)
         if menuBarMode != wasMenuBar { onMenuBarModeChange?(menuBarMode) }
@@ -160,6 +162,11 @@ final class NotchWindowController {
     }
 
     private func handleKey(_ event: NSEvent) -> Bool {
+        // Settings is listening for a new shortcut, so every key is for it, Esc included.
+        if Shortcuts.shared.recording != nil {
+            Shortcuts.shared.record(event)
+            return true
+        }
         let command = event.modifierFlags.contains(.command)
         switch Int(event.keyCode) {
         case kVK_Return, kVK_ANSI_KeypadEnter:
@@ -169,7 +176,7 @@ final class NotchWindowController {
             machine.escape()
         default:
             guard command, let digit = event.charactersIgnoringModifiers.flatMap(Int.init), (1...9).contains(digit) else { return false }
-            // ⌥⌘. then ⌥⌘1–3, with ⌥⌘ still held, picks a manager tab; ⌘ alone opens a row.
+            // ⌥⌘1–3 picks a manager tab, e.g. right after the agents' shortcut with ⌥⌘ still held; ⌘ alone opens a row.
             if event.modifierFlags.contains(.option) { return machine.showTab(digit) }
             machine.openRow(digit)
         }

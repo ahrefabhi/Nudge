@@ -64,6 +64,33 @@ enum Preferences {
         set { defaults.set(newValue, forKey: "commandsEnabled") }
     }
 
+    /// The action's global shortcut: the user's, nil if they cleared it, or the default.
+    static func shortcut(for action: ShortcutAction) -> Shortcut? {
+        guard let data = defaults.data(forKey: "shortcut.\(action.rawValue)"),
+              let stored = try? JSONDecoder().decode(StoredShortcut.self, from: data) else { return action.defaultShortcut }
+        return stored.shortcut
+    }
+
+    static func setShortcut(_ shortcut: Shortcut?, for action: ShortcutAction) {
+        guard let data = try? JSONEncoder().encode(StoredShortcut(shortcut: shortcut)) else { return }
+        defaults.set(data, forKey: "shortcut.\(action.rawValue)")
+    }
+
+    static func resetShortcuts() {
+        for action in ShortcutAction.allCases { defaults.removeObject(forKey: "shortcut.\(action.rawValue)") }
+    }
+
+    /// Wraps the shortcut so a cleared one (nil) is stored, not mistaken for "never set".
+    private struct StoredShortcut: Codable {
+        var shortcut: Shortcut?
+    }
+
+    /// Skills in the manager's footer dock. On by default; turned off in Settings → Utilities.
+    static var skillsEnabled: Bool {
+        get { defaults.object(forKey: "skillsEnabled") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "skillsEnabled") }
+    }
+
     /// Play a sound when a session starts waiting or finishes. On by default; Quiet silences it.
     static var soundsEnabled: Bool {
         get { defaults.object(forKey: "soundsEnabled") as? Bool ?? true }

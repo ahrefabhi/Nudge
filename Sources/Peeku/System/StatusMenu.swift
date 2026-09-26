@@ -129,8 +129,10 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         // What Peeku is watching, and how loudly.
         let manager = entry("Session Manager") { $0.actions.toggleManager() }
         // Shown for reference; the global hotkey does the work outside this menu.
-        manager.keyEquivalent = "."
-        manager.keyEquivalentModifierMask = [.option, .command]
+        if let shortcut = Shortcuts.shared.active[.agents], let key = shortcut.menuKeyEquivalent {
+            manager.keyEquivalent = key
+            manager.keyEquivalentModifierMask = shortcut.eventModifiers
+        }
         menu.addItem(manager)
         addQuiet(to: menu)
 

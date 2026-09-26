@@ -18,9 +18,9 @@ public enum Phase: String, Sendable, Hashable, CaseIterable {
 }
 
 /// What the session manager shows. Now, History and Usage are the agent tabs at the top;
-/// Commands is a utility in the footer dock, and Settings opens from the gear.
+/// Commands and Skills are utilities in the footer dock, and Settings opens from the gear.
 public enum ManagerTab: Sendable, Hashable, CaseIterable {
-    case now, history, usage, commands, settings
+    case now, history, usage, commands, skills, settings
 
     public static let agentTabs: [ManagerTab] = [.now, .history, .usage]
 
@@ -62,6 +62,10 @@ public final class PhaseMachine {
     /// Whether Commands is turned on in Settings, so it has a dock button.
     public var commandsEnabled = true {
         didSet { if !commandsEnabled, managerTab == .commands { managerTab = lastAgentTab } }
+    }
+    /// Whether Skills is turned on in Settings, so it has a dock button.
+    public var skillsEnabled = true {
+        didSet { if !skillsEnabled, managerTab == .skills { managerTab = lastAgentTab } }
     }
     /// The Usage tab was selected, so its numbers should be fresh.
     public var onShowUsageTab: (() -> Void)?
@@ -281,23 +285,41 @@ public final class PhaseMachine {
 
     /// The footer dock's buttons in order: Agents, then each enabled utility.
     public var dock: [ManagerTab] {
-        commandsEnabled ? [.now, .commands] : []
+        let utilities = (commandsEnabled ? [ManagerTab.commands] : []) + (skillsEnabled ? [.skills] : [])
+        return utilities.isEmpty ? [] : [.now] + utilities
     }
 
-    /// ⌥⌘.: opens the manager on the agents, or goes back to them from a utility or Settings.
+    /// Opens the manager on Skills, e.g. after a folder dialog closed it.
+    public func showSkills() {
+        guard skillsEnabled, phase != .opening else { return }
+        if phase == .manager { managerTab = .skills } else { openManager(on: .skills) }
+    }
+
+    /// The agents' shortcut: opens the manager on the agents, or goes back to them from a utility or Settings.
     /// Closes it when the agents already show.
     public func toggleAgents() {
         if phase == .manager, !managerTab.isAgentTab { return showAgents() }
         toggleManager()
     }
 
-    /// ⌥⌘,: opens the manager on Commands, or closes it when Commands already shows.
+    /// Commands' shortcut: opens the manager on Commands, or closes it when Commands already shows.
     public func toggleCommands() {
-        guard commandsEnabled, phase != .opening else { return }
+        guard commandsEnabled else { return }
+        toggle(.commands)
+    }
+
+    /// Skills' shortcut, the same way.
+    public func toggleSkills() {
+        guard skillsEnabled else { return }
+        toggle(.skills)
+    }
+
+    private func toggle(_ utility: ManagerTab) {
+        guard phase != .opening else { return }
         switch phase {
-        case .manager where managerTab == .commands: closeManager()
-        case .manager: managerTab = .commands
-        default: openManager(on: .commands)
+        case .manager where managerTab == utility: closeManager()
+        case .manager: managerTab = utility
+        default: openManager(on: utility)
         }
     }
 
