@@ -41,11 +41,15 @@ https://github.com/user-attachments/assets/eefa5891-946c-46a3-9c4b-7ca000052e3b
 
 - **Quick commands:** save `npm run dev` with its folder, then run, restart and stop it from the dock at the bottom of the session manager. Read its output, answer its prompts, and hear about it when it fails. Turn it off if you only want the companion.
 
+**Your skills**
+
+- **Skills:** every plugin and skill Claude Code and Codex load, globally and per project, in one list. Browse their marketplaces, install a plugin for everything or one project, turn it off, uninstall it, and add skill folders or copy one to the other agent.
+
 **Where it lives**
 
 - **Notch or menu bar:** in the notch on a MacBook that has one, or in its own menu bar icon on other Macs or if you'd rather.
 - **Stays out of the way:** alerts fold into a pill, full screen shrinks Peeku to a glow, and it goes quiet while your screen is shared.
-- **Read-only and private:** Peeku never types into or approves anything in your agent sessions, and everything stays on your Mac.
+- **Read-only and private:** Peeku never types into or approves anything in your agent sessions, and your sessions stay on your Mac. Plugins download only when you install one.
 - **Native:** Swift and SwiftUI, light and dark mode, Reduce Motion, about 6 MB.
 
 ## A closer look
@@ -56,7 +60,7 @@ Idle, the notch is just the notch. While agents work, two eyes glance around. Wh
 
 <p align="center"><img src="docs/images/notch.png" width="760" alt="Three notch states: working with a spinner and a count of 5, Peeku dropping out of the notch with amber eyes, and a folded pill with a badge showing 3 waiting"></p>
 
-On an external display or older MacBook, there's no fake notch. Peeku lives in its menu bar icon instead, and you can choose that on a MacBook with a notch too (**Settings → Show Peeku in**). The icon's eyes show what it's doing: they glance around while agents work, and change color with a dot or a count when something needs you. When an agent needs you, Peeku climbs down from the icon, hangs from the menu bar and holds the alert. Click the icon (or press ⌥⌘.) for the session manager, right-click it for the menu.
+On an external display or older MacBook, there's no fake notch. Peeku lives in its menu bar icon instead, and you can choose that on a MacBook with a notch too (**Settings → Show Peeku in**). The icon's eyes show what it's doing: they glance around while agents work, and change color with a dot or a count when something needs you. When an agent needs you, Peeku climbs down from the icon, hangs from the menu bar and holds the alert. Click the icon (or press ⌥⌘,) for the session manager, right-click it for the menu.
 
 <p align="center"><img src="docs/images/menu-bar.png" width="760" alt="Four states of Peeku's menu bar icon on a display without a notch: idle with sleepy eyes, working with open eyes, Peeku climbing down from the icon with amber eyes while the icon shows an amber dot, and folded with a badge showing 3 waiting"></p>
 
@@ -69,7 +73,7 @@ On an external display or older MacBook, there's no fake notch. Peeku lives in i
 ### Every session, and what happened today
 
 <p align="center">
-  <img src="docs/images/manager.png" width="49%" alt="The session manager, with Now, History and Usage tabs, a settings gear and a footer dock with Agents and Commands: three sessions that need you with their commands and questions, two working, one finished; under each, its branch, model, cost so far and how full its context is, auth-service at 93% in red">
+  <img src="docs/images/manager.png" width="49%" alt="The session manager, with Now, History and Usage tabs, a settings gear and a footer dock with Agents, Commands and Skills: three sessions that need you with their commands and questions, two working, one finished; under each, its branch, model, cost so far and how full its context is, auth-service at 93% in red">
   <img src="docs/images/history.png" width="49%" alt="History: today's permission requests with how long they took to answer, a finished run, a cleared error and a new task">
 </p>
 
@@ -98,6 +102,14 @@ Commands run in a real terminal, so tools can ask questions, like which port to 
 <p align="center"><img src="docs/images/command-output.png" width="720" alt="A command's output window: pnpm build and pnpm preview in ~/code/docs, waiting for input on the question Port 4173 is in use. Use 4174 instead? (Y/n), with a reply field and Yes, No, Return and Ctrl-C buttons"></p>
 
 Stopping a command stops everything it started, so a dev server doesn't keep its port. Quitting Peeku stops them all.
+
+### Skills
+
+Skills, next to Commands in the dock, lists every plugin and skill your agents load: Claude Code's and Codex's, globally and in each project they've run in. Filter by agent or search. Click a row for the skills a plugin brings, its ID and its folder. The switch turns a Claude Code plugin off without uninstalling it; the trash button uninstalls a plugin or moves a skill folder to the Trash. **Add a skill folder** copies a folder with a `SKILL.md` (or a folder of them), like one you wrote or cloned, into Claude Code's or Codex's skills, globally or in a project,, and **Also for Codex** copies a skill so the other agent loads it too.
+
+<p align="center"><img src="docs/images/skills.png" width="49%" alt="Skills, opened from the footer dock: Installed, filtered to all agents, with a panel to add a skill folder for Claude globally; superpowers expanded to show its four skills and ID, with a trash button and an on switch; code-review turned off; GitHub for Codex; a changelog skill for each agent; then a dashboard project"> <img src="docs/images/skills-discover.png" width="49%" alt="Skills, Discover: a From marketplace picker and Add Marketplace button, Claude Code marketplace plugins with install counts and source links, superpowers already installed, and playwright asking to install for the payments-api project, warning that plugins can add hooks, commands and MCP servers that run on your Mac, from github.com/microsoft/playwright-mcp"></p>
+
+**Discover** lists everything your marketplaces offer, most installed first and what you already have marked Installed, each with a link to where its code lives. **From** narrows it to one marketplace, and **+ Add Marketplace** adds one by its `owner/repo` or Git URL. **Install** asks where it goes, Global or a project (Codex plugins are always global), before anything runs. New sessions pick up changes; running ones keep what they started with. Turn Skills off in Settings → Utilities if you don't need it.
 
 ### Light mode
 
@@ -139,6 +151,7 @@ Everything runs on your Mac. The only network request Peeku makes itself is the 
 - **Hooks:** setup adds hooks to `~/.claude/settings.json` (and `~/.codex/hooks.json`) that run `peeku-hook`. It records only what Peeku shows (command, question, error, summary, branch, app and tab), never transcripts, into `~/Library/Application Support/Peeku/inbox`, which Peeku deletes after reading. It never answers or blocks anything and exits immediately. For Codex, type `/hooks` and trust Peeku's entries.
 - **Usage:** Peeku asks `claude -p` and `codex app-server` for rate limits using their own sign-ins; it never reads credentials. If that fails, **Set Up…** reads Claude's numbers from its status line instead, keeping any status line you have.
 - **Spend:** Peeku reads the session logs in `~/.claude/projects` and `~/.codex/sessions` and keeps only each reply's time, model and token counts, priced from a table built into the app. Nothing else is kept, saved or sent.
+- **Skills:** Peeku lists plugins with `claude plugin list` and `codex plugin list`, and installs, turns off and uninstalls them with the same commands, only when you click. Standalone skills are folders in `~/.claude/skills`, `~/.agents/skills` (Codex), `~/.codex/skills` and each project's `.claude/skills` or `.agents/skills`; removing one moves it to the Trash. Projects come from the folders Claude Code and Codex have run in, or any folder you choose.
 - **Commands:** saved in `~/Library/Application Support/Peeku/commands.json`, with each command's latest output next to it. They run only when you press Run, in your login shell, with the same access as your terminal.
 - **Permissions:** *Automation* selects the right iTerm or Terminal tab. *Accessibility* finds the exact window and detects screen sharing.
 
@@ -148,12 +161,15 @@ Your settings files are backed up before any change.
 
 | Shortcut | Action |
 |---|---|
-| ⌥⌘. | Show or hide the session manager on your agents |
-| ⌥⌘. then 1–3 | Open the manager on Now, History or Usage (keep ⌥⌘ held) |
-| ⌥⌘, | Show or hide Commands |
+| ⌥⌘, | Show or hide the session manager on your agents |
+| ⌥⌘, then 1–3 | Open the manager on Now, History or Usage (keep ⌥⌘ held) |
+| ⌥⌘. | Show or hide Commands |
+| ⌥⌘/ | Show or hide Skills |
 | ⌥⌘↓ | Next waiting agent |
 | ↵ | Open the highlighted session |
-| Esc | Fold the alert into the pill, or go back to Agents from Commands or Settings |
+| Esc | Fold the alert into the pill, or go back to Agents from Commands, Skills or Settings |
+
+Change the four global shortcuts (Agents, Commands, Skills, next waiting agent) in **Settings → Shortcuts**: click one and press the keys you want, or press Delete to turn it off.
 | ⌘1–9 | Open a row by number |
 
 ↵, Esc and ⌘1–9 work once Peeku has focus. Peeku never takes the keyboard on its own.
@@ -178,8 +194,9 @@ To remove it, choose **Uninstall Peeku…** from the menu bar. It removes its ho
 - **No Claude usage:** the Usage tab says why. Update Claude Code, or choose **Set Up…** and run Claude Code in a terminal.
 - **Opens the app but not the tab:** allow Peeku under Privacy & Security → Automation (iTerm, Terminal) or Accessibility (other apps).
 - **Accessibility is on but Peeku asks again:** the permission belongs to an older build. Choose **Reset…** in Settings.
-- **⌥⌘. does nothing:** another app uses it. Click the notch instead.
+- **A shortcut does nothing:** another app uses it, and Settings → Shortcuts says so. Pick a different one there, or click the notch.
 - **A command can't find `node`, `npm` or another tool:** Peeku runs commands in your login shell with your `.zshrc`, like a new terminal tab. Check that the command works in a new tab, or give the tool's full path.
+- **Skills lists nothing for an agent:** Peeku runs `claude` and `codex` from where their installers put them. Check that `claude plugin list` works in a terminal, then click **Refresh**.
 - **A command's output has no colors:** expected. Commands see a plain terminal, so tools skip colors and spinners and the output stays readable.
 
 ## Building from source
@@ -194,7 +211,7 @@ swift test                                    # unit tests
 swift run Peeku --snapshot snapshots          # render every state to PNG
 swift run Peeku --dump-sessions               # print the sessions Peeku sees
 swift run Peeku --readme-images docs/images   # re-render README images
-pngquant --quality=70-95 --strip --skip-if-larger --force --ext .png docs/images/*.png   # then shrink them (brew install pngquant)
+pngquant --quality=45-70 --speed 1 --strip --skip-if-larger --force --ext .png docs/images/*.png   # then shrink them (brew install pngquant)
 PEEKU_HOME=/tmp/peeku swift run Peeku         # use a scratch data folder
 ```
 

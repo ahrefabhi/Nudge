@@ -142,9 +142,17 @@
     <div class="flow-text">
       <span class="eyebrow" style="color:var(--green)">05 · YOUR DEV COMMANDS</span>
       <h2 class="h-md">Your dev server, one shortcut away.</h2>
-      <p class="lede">Save the commands you run all day, like <code>npm run dev</code>, with their folder. Run, restart and stop them from the dock at the bottom of the session manager, or press ⌥⌘,. When one exits with an error, Peeku tells you with its last line of output.</p>
+      <p class="lede">Save the commands you run all day, like <code>npm run dev</code>, with their folder. Run, restart and stop them from the dock at the bottom of the session manager, or press ⌥⌘. to open them. When one exits with an error, Peeku tells you with its last line of output.</p>
     </div>
     <img class="shot" src="images/command-alert.png" alt="A notch alert: Dashboard exited with code 1, with the last line Error: listen EADDRINUSE: address already in use :::5173, and Show Output, Restart and Later buttons" width="1520" height="600" loading="lazy" decoding="async">
+  </div>
+  <div class="flow-row">
+    <div class="flow-text">
+      <span class="eyebrow" style="color:var(--blue)">06 · YOUR SKILLS</span>
+      <h2 class="h-md">Every skill your agents load, in one place.</h2>
+      <p class="lede">See what Claude Code and Codex load, globally and in each project, and turn a plugin off without uninstalling it. Browse their marketplaces, see where each plugin's code lives, and install one for everything or just one project. Add your own skill folders, or share one with the other agent. Press ⌥⌘/.</p>
+    </div>
+    <img class="shot" src="images/skills-flow.png" alt="Skills in two panels. Installed: a panel to add a skill folder for Claude globally, superpowers expanded with its four skills and a switch, code-review turned off, GitHub for Codex and a changelog skill. Discover: marketplace plugins with install counts and GitHub links, and playwright asking to install for the payments-api project" width="1520" height="960" loading="lazy" decoding="async">
   </div>
 </section>
 
@@ -227,6 +235,13 @@
       <div class="tile-body"><b>Runs your dev commands.</b><span>Commands lives in the dock at the bottom of the session manager, never in the tabs. Start, restart and stop saved commands, read their output, answer their prompts, and see how many are running at a glance.</span></div>
     </div>
 
+    <div class="tile wide">
+      <div class="tile-vis glance">
+        <img src="images/skills.png" alt="Skills in the session manager: Claude Code and Codex plugins and skills, globally and per project, with a switch to turn a plugin off" width="1520" height="1340" loading="lazy" decoding="async">
+      </div>
+      <div class="tile-body"><b>Manages your skills.</b><span>Skills sits in the dock too. Browse the Claude Code and Codex marketplaces, install a plugin for everything or one project, turn it off, uninstall it, and add or share skill folders between agents.</span></div>
+    </div>
+
     <div class="tile">
       <div class="tile-vis sounds" aria-hidden="true">
         <div class="sound"><div class="eq" style="--c:var(--amber);--d:0s"><i></i><i></i><i></i><i></i><i></i></div><span>Permission</span></div>
@@ -261,7 +276,7 @@
           <div class="remote"><span class="ok">↗</span><span class="path">github.com</span><span class="where">updates only</span></div>
         </div>
       </div>
-      <div class="tile-body"><b>Private.</b><span>Everything stays on your Mac. The only network request Peeku makes is its update check to GitHub.</span></div>
+      <div class="tile-body"><b>Private.</b><span>Your sessions stay on your Mac. The only network request Peeku makes is its update check to GitHub. Plugins you choose to install are downloaded by Claude Code or Codex.</span></div>
     </div>
 
     <div class="tile">
@@ -300,12 +315,16 @@
 <section class="section closer">
   <div class="closer-head">
     <h2 class="h-lg">Utilities in the dock. Settings behind the gear.</h2>
-    <p>The tabs at the top are always about your agents. Commands sits in the footer dock, and everything you can change is one click away in the same panel.</p>
+    <p>The tabs at the top are always about your agents. Commands and Skills sit in the footer dock, and everything you can change is one click away in the same panel.</p>
   </div>
   <div class="shots">
     <figure>
       <img src="images/commands.png" alt="Commands: Dashboard running npm run dev, payments-api exited with code 1, and Docs waiting for input on a port question" width="1520" height="1340" loading="lazy" decoding="async">
-      <figcaption><b>Commands</b><span>Your dev servers and workers, with their latest output. Press ⌥⌘,.</span></figcaption>
+      <figcaption><b>Commands</b><span>Your dev servers and workers, with their latest output. Press ⌥⌘. to open it.</span></figcaption>
+    </figure>
+    <figure>
+      <img src="images/skills-discover.png" alt="Skills, Discover: Claude Code and Codex marketplace plugins with install counts, and playwright asking which project to install into before it runs" width="1520" height="1340" loading="lazy" decoding="async">
+      <figcaption><b>Skills</b><span>Every plugin and skill both agents load. Install globally or into one project. Press ⌥⌘/ to open it.</span></figcaption>
     </figure>
     <figure>
       <img src="images/settings.png" alt="Settings inside the session manager: appearance, notch or menu bar, login, updates and notifications" width="1520" height="1340" loading="lazy" decoding="async">
@@ -348,6 +367,7 @@
       <div class="source"><span>02</span><div><b>Claude Code hooks</b><span>Say why a session is waiting. The collector keeps only what Peeku shows and drops the rest, including transcripts.</span><code>~/.claude/settings.json</code></div></div>
       <div class="source"><span>03</span><div><b>Codex hooks</b><span>Work the same way if Codex is installed. Trust Peeku's entries once with /hooks in Codex.</span><code>~/.codex/hooks.json</code></div></div>
       <div class="source"><span>04</span><div><b>Usage</b><span>Codex writes rate limits to its session logs. For Claude, Peeku reads them from the status line.</span><code>~/.codex/sessions</code></div></div>
+      <div class="source"><span>05</span><div><b>Skills</b><span>Lists what the agents load. Plugins install and uninstall through Claude Code and Codex themselves, only when you click; removed skill folders go to the Trash.</span><code>~/.claude/skills · ~/.agents/skills</code></div></div>
     </div>
   </div>
 </section>
@@ -355,12 +375,13 @@
 <section class="section shortcuts">
   <div class="shortcuts-intro">
     <h2 class="h-md">Stays out of the way.</h2>
-    <p class="lede">Unanswered alerts fold into a small pill. In full screen Peeku shrinks to a thin glow, and it goes quiet while Zoom shares your screen or when you ask it to. Peeku never takes the keyboard from your editor on its own.</p>
+    <p class="lede">Unanswered alerts fold into a small pill. In full screen Peeku shrinks to a thin glow, and it goes quiet while Zoom shares your screen or when you ask it to. Peeku never takes the keyboard from your editor on its own, and every shortcut can be changed in Settings.</p>
   </div>
   <dl class="keys">
-    <div><dt>Show or hide your agents</dt><dd><kbd>⌥⌘.</kbd></dd></div>
-    <div><dt>Open Now, History or Usage</dt><dd><kbd>⌥⌘.</kbd> <kbd>1–3</kbd></dd></div>
-    <div><dt>Show or hide Commands</dt><dd><kbd>⌥⌘,</kbd></dd></div>
+    <div><dt>Show or hide your agents</dt><dd><kbd>⌥⌘,</kbd></dd></div>
+    <div><dt>Open Now, History or Usage</dt><dd><kbd>⌥⌘,</kbd> <kbd>1–3</kbd></dd></div>
+    <div><dt>Show or hide Commands</dt><dd><kbd>⌥⌘.</kbd></dd></div>
+    <div><dt>Show or hide Skills</dt><dd><kbd>⌥⌘/</kbd></dd></div>
     <div><dt>Move to the next waiting agent</dt><dd><kbd>⌥⌘↓</kbd></dd></div>
     <div><dt>Open the highlighted session</dt><dd><kbd>↵</kbd></dd></div>
     <div><dt>Fold the alert, or go back to your agents</dt><dd><kbd>Esc</kbd></dd></div>
