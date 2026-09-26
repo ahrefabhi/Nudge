@@ -88,11 +88,12 @@ enum ReadmeImages {
             .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
             .background(Color.black)
             .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
+            .shadow(color: .black.opacity(0.55), radius: 30, y: 24)
             .environment(\.peekuStill, true)
             .environment(\.colorScheme, .dark)
-            .frame(width: 540, height: 690, alignment: .top)
+            .frame(width: 760, height: 670, alignment: .top)
             .background(Desktop())
-        try Snapshots.writeWindowed(settingsPanel, size: CGSize(width: 540, height: 690),
+        try Snapshots.writeWindowed(settingsPanel, size: CGSize(width: 760, height: 670),
                                     appearance: .darkAqua, to: directory.appending(path: "settings.png"))
 
         try write(AppIconView().frame(width: 1024, height: 1024).scaleEffect(0.25).frame(width: 256, height: 256), "icon")

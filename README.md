@@ -162,7 +162,7 @@ Your settings files are backed up before any change.
 
 **Settings** opens from the gear at the top right of the session manager (or **Settings…** in the menu bar). It covers appearance, login, updates, sounds per state, usage alerts, showing costs, utilities, which apps to watch, hooks and permissions.
 
-<p align="center"><img src="docs/images/settings.png" width="420" alt="Peeku's settings inside the session manager, opened from the gear: appearance, notch or menu bar, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, showing costs, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
+<p align="center"><img src="docs/images/settings.png" width="49%" alt="Peeku's settings inside the session manager, opened from the gear: appearance, notch or menu bar, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, showing costs, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
 
 ## Updates and uninstall
 
