@@ -342,7 +342,7 @@ private struct SocialPreview: View {
                         AppIconView().scaleEffect(128 / AppIconView.canvas).frame(width: 128, height: 128)
                         Text("Peeku").font(.peeku(92, .bold)).foregroundStyle(Tokens.textPrimary)
                     }
-                    Text("A tiny companion for your coding agents, in your notch or menu bar.")
+                    Text("Never miss an agent waiting on you. Your dev commands and skills are one shortcut away, too.")
                         .font(.peeku(34, .medium))
                         .foregroundStyle(Color.label(0.7))
                         .lineSpacing(6)
