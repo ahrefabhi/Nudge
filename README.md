@@ -5,7 +5,7 @@
 <h1 align="center">Peeku</h1>
 
 <p align="center">
-  <strong>A tiny companion for your coding agents. It lives in your notch or menu bar and tells you when Claude Code or Codex needs you.</strong>
+  <strong>Never miss an agent waiting on you. Peeku peeks out when Claude Code or Codex needs you. Your dev commands and skills are one shortcut away, too.</strong>
 </p>
 
 <p align="center">
