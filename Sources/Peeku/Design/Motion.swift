@@ -3,6 +3,9 @@ import SwiftUI
 extension EnvironmentValues {
     /// Renders every loop at rest, for snapshots. Reduce Motion does the same for users.
     @Entry var peekuStill = false
+    /// Peeku hangs above the content (the light panel, or from the menu bar icon), so the content
+    /// leaves out its own Peeku and the camera row.
+    @Entry var peekuHangsAbove = false
 }
 
 enum Motion {

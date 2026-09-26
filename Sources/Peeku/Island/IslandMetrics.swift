@@ -66,8 +66,8 @@ struct IslandMetrics: Equatable {
     static let managerTabRow: CGFloat = 30
 
     static func managerIsEmpty(_ machine: PhaseMachine) -> Bool {
-        // Commands have nothing to do with sessions, so their tab keeps its full height.
-        machine.managerTab != .commands && machine.sessions.isEmpty && machine.history.isEmpty
+        // Commands and Settings have nothing to do with sessions, so they keep the full height.
+        machine.managerTab.isAgentTab && machine.sessions.isEmpty && machine.history.isEmpty
     }
 
     private static func alertHeight(_ session: PeekuSession?) -> CGFloat {
@@ -120,6 +120,62 @@ struct LightPanelLayout: Equatable {
                                     peekuMood: mood, count: need.count, fitsContent: false)
         default:
             return nil
+        }
+    }
+}
+
+/// Where the menu bar icon sits, relative to the middle of Peeku's window.
+struct MenuBarAnchor: Equatable {
+    var offset: CGFloat
+}
+
+/// No notch: what hangs under the menu bar icon. Quiet phases draw nothing (the icon shows
+/// them); Peeku drops out for a peek and holds the alert; the manager is a panel under the icon.
+struct MenuBarLayout: Equatable {
+    struct Panel: Equatable {
+        var width: CGFloat
+        var height: CGFloat
+        /// Distance from the top of the screen.
+        var top: CGFloat
+        /// Alerts size to their content; the manager scrolls in a fixed height.
+        var fitsContent: Bool
+    }
+
+    struct Hanging: Equatable {
+        var top: CGFloat
+        var mood: PeekuMood
+        var count: Int
+    }
+
+    var panel: Panel?
+    var peeku: Hanging?
+
+    static let peekuSize: CGFloat = 38
+    /// The panel's own top row, in place of the camera row.
+    static let headerHeight: CGFloat = 40
+    /// Widest panel, so the window keeps it on screen near the edges.
+    static let maxWidth: CGFloat = 440
+
+    static func make(for machine: PhaseMachine, bar: CGFloat) -> MenuBarLayout {
+        // Peeku hangs by its ears from the bottom of the menu bar.
+        let peekuTop = bar - 10
+        switch machine.phase {
+        case .peek:
+            return MenuBarLayout(peeku: Hanging(top: peekuTop, mood: machine.focused?.kind.mood ?? .permission, count: 1))
+        case .alert:
+            let queue = machine.queue
+            guard let first = queue.first else { return MenuBarLayout() }
+            let multiple = queue.count > 1
+            // The dark heights include the 32pt camera row; the panel has a 14pt row plus padding instead.
+            let design = IslandMetrics.make(for: machine, notch: .fallback).height
+            let top = peekuTop - (multiple ? 6 : 0)
+            return MenuBarLayout(panel: Panel(width: 380, height: design, top: top + peekuSize + 4, fitsContent: true),
+                                 peeku: Hanging(top: top, mood: multiple ? .multiple : first.kind.mood, count: queue.count))
+        case .manager:
+            let height: CGFloat = IslandMetrics.managerIsEmpty(machine) ? 340 : 580
+            return MenuBarLayout(panel: Panel(width: maxWidth, height: height, top: bar + 6, fitsContent: false))
+        case .idle, .working, .pill, .opening:
+            return MenuBarLayout()
         }
     }
 }

@@ -4,6 +4,7 @@ import SwiftUI
 /// Single notification: what happened, where, and one primary action.
 struct AlertCardView: View {
     @Environment(\.palette) private var palette
+    @Environment(\.peekuHangsAbove) private var hangsAbove
     let session: PeekuSession
     let bar: CGFloat
     let onOpen: () -> Void
@@ -15,8 +16,8 @@ struct AlertCardView: View {
     var onAnswer: ((String) -> Void)?
 
     var body: some View {
-        if palette.isLight {
-            // In the light panel Peeku hangs above, so there's no wing row and no Peeku column.
+        if hangsAbove {
+            // In a panel Peeku hangs above, so there's no wing row and no Peeku column.
             VStack(alignment: .leading, spacing: 0) {
                 tagRow
                 details.padding(.top, 8)

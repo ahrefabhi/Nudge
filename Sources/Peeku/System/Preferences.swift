@@ -51,6 +51,19 @@ enum Preferences {
         set { defaults.set(newValue, forKey: "quietInView") }
     }
 
+    /// Peeku in the notch, or in its menu bar icon even on a Mac with a notch. Macs without a
+    /// notch always use the menu bar.
+    static var prefersMenuBar: Bool {
+        get { defaults.bool(forKey: "prefersMenuBar") }
+        set { defaults.set(newValue, forKey: "prefersMenuBar") }
+    }
+
+    /// Commands in the manager's footer dock. On by default; turned off in Settings → Utilities.
+    static var commandsEnabled: Bool {
+        get { defaults.object(forKey: "commandsEnabled") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "commandsEnabled") }
+    }
+
     /// Play a sound when a session starts waiting or finishes. On by default; Quiet silences it.
     static var soundsEnabled: Bool {
         get { defaults.object(forKey: "soundsEnabled") as? Bool ?? true }

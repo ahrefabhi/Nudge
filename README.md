@@ -46,9 +46,11 @@ Idle, the notch is just the notch. While agents work, two eyes glance around. Wh
 
 ### On a Mac without a notch
 
-On an external display or older MacBook, Peeku hides while idle and slides down as a black pill when agents work. Open the manager from the menu bar icon or ⌥⌘.
+On an external display or older MacBook, there's no fake notch. Peeku lives in its menu bar icon, and the icon's eyes show what it's doing: they glance around while agents work, and change color with a dot or a count when something needs you. When an agent needs you, Peeku climbs down from the icon, hangs from the menu bar and holds the alert. Click the icon (or press ⌥⌘.) for the session manager, right-click it for the menu.
 
-<p align="center"><img src="docs/images/menu-bar.png" width="760" alt="Four menu bar states on a display without a notch: idle with nothing showing, working as a black pill with a spinner and a count of 5, Peeku dropping out of the menu bar with amber eyes, and a folded pill with a badge showing 3 waiting"></p>
+<p align="center"><img src="docs/images/menu-bar.png" width="760" alt="Four states of Peeku's menu bar icon on a display without a notch: idle with sleepy eyes, working with open eyes, Peeku climbing down from the icon with amber eyes while the icon shows an amber dot, and folded with a badge showing 3 waiting"></p>
+
+<p align="center"><img src="docs/images/menu-bar-alert.png" width="760" alt="On a display without a notch, Peeku hangs from its menu bar icon above a frosted panel: Claude needs your permission to run npm install stripe@17.2.0 in payments-api, with Open Session and Later buttons"></p>
 
 ### When several agents need you
 
@@ -57,7 +59,7 @@ On an external display or older MacBook, Peeku hides while idle and slides down 
 ### Every session, and what happened today
 
 <p align="center">
-  <img src="docs/images/manager.png" width="49%" alt="The session manager: three sessions that need you with their commands and questions, two working, one finished; under each, its branch, model, cost so far and how full its context is, auth-service at 93% in red">
+  <img src="docs/images/manager.png" width="49%" alt="The session manager, with Now, History and Usage tabs, a settings gear and a footer dock with Agents and Commands: three sessions that need you with their commands and questions, two working, one finished; under each, its branch, model, cost so far and how full its context is, auth-service at 93% in red">
   <img src="docs/images/history.png" width="49%" alt="History: today's permission requests with how long they took to answer, a finished run, a cleared error and a new task">
 </p>
 
@@ -71,9 +73,9 @@ Peeku asks Claude Code and Codex for your limits every few minutes, with no setu
 
 ### Commands
 
-The Commands tab keeps the commands you run all day, like a dev server, a worker or a docs preview. Add one with **+ New Command**: pick its folder and type the command. It runs in your login shell, like a new terminal tab, so nvm, pyenv and your aliases work. Each row shows whether it's running and its latest line of output. Hover a row to edit or delete it.
+Commands keeps the commands you run all day, like a dev server, a worker or a docs preview. Add one with **+ New Command**: pick its folder and type the command. It runs in your login shell, like a new terminal tab, so nvm, pyenv and your aliases work. Each row shows whether it's running and its latest line of output. Hover a row to edit or delete it. Commands lives in the dock at the bottom of the session manager, not in the tabs at the top, and shows how many are running. Turn it off in Settings → Utilities if you don't need it.
 
-<p align="center"><img src="docs/images/commands.png" width="49%" alt="The Commands tab: Dashboard running npm run dev for 12 minutes with its latest Vite line, payments-api exited with code 1, and Docs waiting for input on a port question, each with output, restart and stop buttons"></p>
+<p align="center"><img src="docs/images/commands.png" width="49%" alt="Commands, opened from the footer dock, with a back arrow and a New button: Dashboard running npm run dev for 12 minutes with its latest Vite line, payments-api exited with code 1, and Docs waiting for input on a port question, each with output, restart and stop buttons"></p>
 
 When a command exits with an error, Peeku tells you with its last line of output. **Restart** runs it again, and **Show Output** opens everything it printed.
 
@@ -136,20 +138,21 @@ Your settings files are backed up before any change.
 
 | Shortcut | Action |
 |---|---|
-| ⌥⌘. | Show or hide the session manager |
-| ⌥⌘. then 1–4 | Open the manager on Now, History, Usage or Commands (keep ⌥⌘ held) |
+| ⌥⌘. | Show or hide the session manager on your agents |
+| ⌥⌘. then 1–3 | Open the manager on Now, History or Usage (keep ⌥⌘ held) |
+| ⌥⌘, | Show or hide Commands |
 | ⌥⌘↓ | Next waiting agent |
 | ↵ | Open the highlighted session |
-| Esc | Fold the alert into the pill |
+| Esc | Fold the alert into the pill, or go back to Agents from Commands or Settings |
 | ⌘1–9 | Open a row by number |
 
 ↵, Esc and ⌘1–9 work once the notch has focus. Peeku never takes the keyboard on its own.
 
 **Goes quiet** (count only, no pop-up or sound) while your screen is shared or recorded, when **Quiet** is on, or for the session you're already looking at. In full screen it shrinks to a glow along the top edge.
 
-**Settings** covers appearance, login, updates, sounds per state, usage alerts, showing costs, which apps to watch, hooks and permissions.
+**Settings** opens from the gear at the top right of the session manager (or **Settings…** in the menu bar). It covers appearance, login, updates, sounds per state, usage alerts, showing costs, utilities, which apps to watch, hooks and permissions.
 
-<p align="center"><img src="docs/images/settings.png" width="360" alt="Peeku's settings: appearance, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, showing costs, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
+<p align="center"><img src="docs/images/settings.png" width="420" alt="Peeku's settings inside the session manager, opened from the gear: appearance, notch or menu bar, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, showing costs, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
 
 ## Updates and uninstall
 

@@ -17,9 +17,14 @@ public enum Phase: String, Sendable, Hashable, CaseIterable {
     }
 }
 
-/// The session manager's tabs, in the order they show and ⌥⌘1–4 picks them.
+/// What the session manager shows. Now, History and Usage are the agent tabs at the top;
+/// Commands is a utility in the footer dock, and Settings opens from the gear.
 public enum ManagerTab: Sendable, Hashable, CaseIterable {
-    case now, history, usage, commands
+    case now, history, usage, commands, settings
+
+    public static let agentTabs: [ManagerTab] = [.now, .history, .usage]
+
+    public var isAgentTab: Bool { Self.agentTabs.contains(self) }
 }
 
 /// Owns what the notch shows and when. Views read it; inputs come from sessions, clicks and keys.
@@ -47,7 +52,16 @@ public final class PhaseMachine {
     public private(set) var commandAlerts: [PeekuSession] = []
     /// The manager's selected tab.
     public var managerTab: ManagerTab = .now {
-        didSet { if managerTab == .usage { onShowUsageTab?() } }
+        didSet {
+            if managerTab.isAgentTab { lastAgentTab = managerTab }
+            if managerTab == .usage { onShowUsageTab?() }
+        }
+    }
+    /// The agent tab to go back to from a utility or Settings.
+    public private(set) var lastAgentTab: ManagerTab = .now
+    /// Whether Commands is turned on in Settings, so it has a dock button.
+    public var commandsEnabled = true {
+        didSet { if !commandsEnabled, managerTab == .commands { managerTab = lastAgentTab } }
     }
     /// The Usage tab was selected, so its numbers should be fresh.
     public var onShowUsageTab: (() -> Void)?
@@ -221,6 +235,8 @@ public final class PhaseMachine {
     public func escape() {
         switch phase {
         case .alert, .peek: fold()
+        // Esc in a utility or Settings goes back to the agents first.
+        case .manager where !managerTab.isAgentTab: managerTab = lastAgentTab
         case .manager: closeManager()
         default: break
         }
@@ -252,6 +268,39 @@ public final class PhaseMachine {
         openManager(on: .usage)
     }
 
+    /// Opens the manager on Settings, e.g. from the menu's Settings… item.
+    public func showSettings() {
+        guard phase != .opening else { return }
+        if phase == .manager { managerTab = .settings } else { openManager(on: .settings) }
+    }
+
+    /// The dock's Agents button: back to the last agent tab.
+    public func showAgents() {
+        managerTab = lastAgentTab
+    }
+
+    /// The footer dock's buttons in order: Agents, then each enabled utility.
+    public var dock: [ManagerTab] {
+        commandsEnabled ? [.now, .commands] : []
+    }
+
+    /// ⌥⌘.: opens the manager on the agents, or goes back to them from a utility or Settings.
+    /// Closes it when the agents already show.
+    public func toggleAgents() {
+        if phase == .manager, !managerTab.isAgentTab { return showAgents() }
+        toggleManager()
+    }
+
+    /// ⌥⌘,: opens the manager on Commands, or closes it when Commands already shows.
+    public func toggleCommands() {
+        guard commandsEnabled, phase != .opening else { return }
+        switch phase {
+        case .manager where managerTab == .commands: closeManager()
+        case .manager: managerTab = .commands
+        default: openManager(on: .commands)
+        }
+    }
+
     public func toggleManager() {
         phase == .manager ? closeManager() : openManager()
     }
@@ -281,10 +330,10 @@ public final class PhaseMachine {
         open(items[number - 1].id)
     }
 
-    /// Switches the open manager to tab `number` (1-based), for ⌥⌘1–4. Returns whether it did.
+    /// Switches the open manager to agent tab `number` (1-based), for ⌥⌘1–3. Returns whether it did.
     @discardableResult
     public func showTab(_ number: Int) -> Bool {
-        let tabs = ManagerTab.allCases
+        let tabs = ManagerTab.agentTabs
         guard phase == .manager, number >= 1, number <= tabs.count else { return false }
         managerTab = tabs[number - 1]
         return true

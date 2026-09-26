@@ -7,8 +7,12 @@ struct IslandView: View {
     let machine: PhaseMachine
     let notch: NotchGeometry
     var presence: PresenceMonitor?
-    /// For the manager's Commands tab.
+    /// For the manager's Commands utility.
     var commands: CommandRunner?
+    /// For the manager's Settings view.
+    var settings: SettingsModel?
+    /// On a Mac without a notch, Peeku lives in its menu bar icon instead of a fake notch.
+    var menuBar: MenuBarAnchor?
     /// Where the light panel measured itself, for the pointer hit area.
     var hitArea: IslandHitArea?
     /// Snapshots pin the appearance; the app follows the setting.
@@ -23,6 +27,15 @@ struct IslandView: View {
     }
 
     var body: some View {
+        if let menuBar {
+            menuBarBody(menuBar)
+        } else {
+            notchBody
+        }
+    }
+
+    @ViewBuilder
+    private var notchBody: some View {
         let metrics = IslandMetrics.make(for: machine, notch: notch, minimal: presence?.state.minimal ?? false)
         let panel = isLight && !metrics.glow ? LightPanelLayout.make(for: machine, notch: notch) : nil
         Group {
@@ -67,10 +80,46 @@ struct IslandView: View {
         .environment(\.colorScheme, .dark)
     }
 
+    /// No notch: nothing is drawn while Peeku is quiet, because its menu bar icon shows that.
+    /// When an agent needs you it climbs down from the icon, hangs from the menu bar and holds
+    /// the alert; the manager opens as a panel under the icon.
+    @ViewBuilder
+    private func menuBarBody(_ anchor: MenuBarAnchor) -> some View {
+        let metrics = IslandMetrics.make(for: machine, notch: notch, minimal: presence?.state.minimal ?? false)
+        let layout = MenuBarLayout.make(for: machine, bar: notch.barHeight)
+        ZStack(alignment: .top) {
+            if metrics.glow {
+                GlowStrip(metrics: metrics, color: machine.focused?.kind.accent ?? Tokens.Accent.permission) { machine.tapIsland() }
+                    .offset(x: anchor.offset)
+            } else {
+                if let panel = layout.panel {
+                    FloatingPanel(light: isLight, fitsContent: panel.fitsContent, peekuHangsAbove: layout.peeku != nil) {
+                        content(wing: 0, expanded: true, bar: MenuBarLayout.headerHeight)
+                            .animation(reduceMotion ? Motion.reduced : .default, value: contentKey)
+                    }
+                    .frame(width: panel.width, height: panel.fitsContent ? nil : panel.height)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { hitArea?.lightPanelHeight = $0 }
+                    .padding(.top, panel.top)
+                    .transition(.lightPanel(reduceMotion: reduceMotion))
+                }
+                if let peeku = layout.peeku {
+                    PeekuView(mood: peeku.mood, size: MenuBarLayout.peekuSize, extras: peeku.count > 1, count: peeku.count, lifted: true)
+                        .modifier(DropIn(size: MenuBarLayout.peekuSize))
+                        .padding(.top, peeku.top)
+                        .offset(x: anchor.offset)
+                        .id(peeku.mood)
+                        .allowsHitTesting(false)
+                }
+            }
+        }
+        .animation(reduceMotion ? Motion.reduced : Motion.islandSpring, value: layout)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
     /// The light panel below the notch, with Peeku hanging between them.
     private func lightPanel(_ layout: LightPanelLayout) -> some View {
         ZStack(alignment: .top) {
-            LightPanel(fitsContent: layout.fitsContent) {
+            FloatingPanel(light: true, fitsContent: layout.fitsContent) {
                 content(wing: 0, expanded: true)
                     .animation(reduceMotion ? Motion.reduced : .default, value: contentKey)
             }
@@ -95,8 +144,8 @@ struct IslandView: View {
     }
 
     @ViewBuilder
-    private func content(wing: CGFloat, expanded: Bool) -> some View {
-        let bar = notch.barHeight
+    private func content(wing: CGFloat, expanded: Bool, bar: CGFloat? = nil) -> some View {
+        let bar = bar ?? notch.barHeight
         let transition = AnyTransition.islandContent(delay: expanded ? 0.17 : 0.15, reduceMotion: reduceMotion)
 
         ZStack(alignment: .top) {
@@ -128,7 +177,7 @@ struct IslandView: View {
                                       ? { machine.answerCommand(session.id, $0) } : nil)
                 }
             case .manager:
-                ManagerView(machine: machine, bar: bar, commands: commands)
+                ManagerView(machine: machine, bar: bar, commands: commands, settings: settings)
             case .opening:
                 EmptyView()
             }
@@ -165,9 +214,12 @@ private struct GlowStrip: View {
     }
 }
 
-/// The light panel: frosted, 18pt corners, a hairline and a soft shadow, with light content.
-private struct LightPanel<Content: View>: View {
+/// A frosted panel with 18pt corners, a hairline and a soft shadow: the light panel under the
+/// notch, and on Macs without a notch the panel under the menu bar icon, in dark or light.
+private struct FloatingPanel<Content: View>: View {
+    var light: Bool
     var fitsContent: Bool
+    var peekuHangsAbove = true
     @ViewBuilder let content: Content
     @Environment(\.peekuStill) private var still
 
@@ -192,13 +244,18 @@ private struct LightPanel<Content: View>: View {
                     .overlay(shape.fill(Color.black).blendMode(.destinationOut))
                     .compositingGroup()
                 // ImageRenderer can't draw the AppKit blur, so snapshots use a solid fill.
-                if !still { FrostedBackground().clipShape(shape) }
-                shape.fill(Color(hex: 0xfafafc, opacity: still ? 0.97 : 0.62))
+                if !still { FrostedBackground(light: light).clipShape(shape) }
+                if light {
+                    shape.fill(Color(hex: 0xfafafc, opacity: still ? 0.97 : 0.62))
+                } else {
+                    shape.fill(Color(hex: 0x202128, opacity: still ? 0.97 : 0.8))
+                }
             }
         }
-        .overlay(shape.strokeBorder(Color.black.opacity(0.14), lineWidth: 0.5))
-        .environment(\.palette, .light)
-        .environment(\.colorScheme, .light)
+        .overlay(shape.strokeBorder(light ? Color.black.opacity(0.14) : Color.white.opacity(0.16), lineWidth: 0.5))
+        .environment(\.peekuHangsAbove, peekuHangsAbove)
+        .environment(\.palette, light ? .light : .dark)
+        .environment(\.colorScheme, light ? .light : .dark)
     }
 }
 
@@ -210,12 +267,14 @@ final class IslandHitArea {
 
 /// `backdrop-filter: blur(30px) saturate(1.8)`: blurs whatever is behind the window.
 private struct FrostedBackground: NSViewRepresentable {
+    var light = true
+
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
         view.material = .popover
         view.blendingMode = .behindWindow
         view.state = .active
-        view.appearance = NSAppearance(named: .aqua)
+        view.appearance = NSAppearance(named: light ? .aqua : .darkAqua)
         return view
     }
 

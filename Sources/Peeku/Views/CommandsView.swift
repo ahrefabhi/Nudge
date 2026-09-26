@@ -1,7 +1,7 @@
 import PeekuKit
 import SwiftUI
 
-/// The manager's fourth tab: commands the user saved, like `npm run dev`, to start, restart and
+/// The Commands utility, opened from the manager's footer dock: commands the user saved, like `npm run dev`, to start, restart and
 /// stop from the notch. Adding, editing and the full output open in their own windows.
 struct CommandsView: View {
     @Environment(\.palette) private var palette
@@ -14,16 +14,12 @@ struct CommandsView: View {
             if commands.isEmpty {
                 empty
             } else {
-                HStack {
-                    let active = runner?.activeCount ?? 0
-                    Text(active == 0 ? "Nothing running" : "\(active) running")
-                        .font(.peeku(11.5))
-                        .foregroundStyle(palette.label(0.5))
-                    Spacer()
-                    Button { runner?.onEdit?(nil) } label: { NewCommandLabel() }
-                        .buttonStyle(ChipStyle(selected: false))
-                }
-                .padding(EdgeInsets(top: 12, leading: 20, bottom: 4, trailing: 20))
+                // New lives in the header above, beside the way back.
+                let active = runner?.activeCount ?? 0
+                Text((active == 0 ? "Nothing running" : "\(active) running") + " · \(commands.count) saved")
+                    .font(.peeku(11.5))
+                    .foregroundStyle(palette.label(0.5))
+                    .padding(EdgeInsets(top: 8, leading: 20, bottom: 2, trailing: 20))
 
                 SnapshotSafeScrollView {
                     VStack(alignment: .leading, spacing: 0) {

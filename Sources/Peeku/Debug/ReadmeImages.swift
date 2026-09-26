@@ -8,6 +8,9 @@ enum ReadmeImages {
     static func render(to directory: URL) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let notch = NotchGeometry.fallback
+        let settings = SettingsModel(setup: onboardingModel(.permissions))
+        settings.setup.accessibility = true
+        settings.setup.claudeUsage = .installed
 
         func island(_ scenario: String, light: Bool = false, height: CGFloat) -> some View {
             let clock = ManualScheduler(start: Date())
@@ -15,7 +18,7 @@ enum ReadmeImages {
             machine.update(sessions: MockSessions.calm(now: clock.now))
             Snapshots.scenarios.first { $0.0 == scenario }?.1(machine, clock)
             machine.history = MockSessions.history()
-            return IslandView(machine: machine, notch: notch, forceLight: light)
+            return IslandView(machine: machine, notch: notch, settings: settings, forceLight: light)
                 .frame(width: 760, height: height)
                 .background(alignment: .top) { MenuBarStrip(light: light) }
                 .background(light ? AnyView(LightDesktop()) : AnyView(Desktop()))
@@ -40,7 +43,7 @@ enum ReadmeImages {
         let commands = MockSessions.commands(root: commandsRoot)
         func manager(_ tab: ManagerTab) -> some View {
             tabs.managerTab = tab
-            return ManagerView(machine: tabs, bar: 32, commands: commands)
+            return ManagerView(machine: tabs, bar: 32, commands: commands, settings: settings)
                 .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
                 .background(Color.black)
                 .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
@@ -61,6 +64,7 @@ enum ReadmeImages {
 
         try write(NotchStates().background(Desktop()), "notch")
         try write(MenuBarStates().background(Desktop()), "menu-bar")
+        try write(MenuBarAlert().background(Desktop()), "menu-bar-alert")
         try write(SocialPreview(), "social-preview")
         try write(CharacterSheet(), "states")
 
@@ -77,10 +81,18 @@ enum ReadmeImages {
             .background(Desktop()),
             "onboarding")
 
-        let settings = SettingsModel(setup: onboardingModel(.permissions))
-        settings.setup.accessibility = true
-        settings.setup.claudeUsage = .installed
-        try Snapshots.writeWindowed(SettingsView(model: settings), size: CGSize(width: 480, height: 640),
+        // Settings open inside the manager. Its pop-up menus are AppKit, so it renders in a window;
+        // still, so it shows this picture's apps rather than this Mac's.
+        tabs.showSettings()
+        let settingsPanel = ManagerView(machine: tabs, bar: 32, commands: commands, settings: settings)
+            .frame(width: 460, height: 580 + IslandMetrics.managerTabRow)
+            .background(Color.black)
+            .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 30, bottomTrailingRadius: 30))
+            .environment(\.peekuStill, true)
+            .environment(\.colorScheme, .dark)
+            .frame(width: 540, height: 690, alignment: .top)
+            .background(Desktop())
+        try Snapshots.writeWindowed(settingsPanel, size: CGSize(width: 540, height: 690),
                                     appearance: .darkAqua, to: directory.appending(path: "settings.png"))
 
         try write(AppIconView().frame(width: 1024, height: 1024).scaleEffect(0.25).frame(width: 256, height: 256), "icon")
@@ -174,18 +186,21 @@ private struct NotchStates: View {
     }
 }
 
-/// On a display without a notch: hidden while idle, a pill the height of the menu bar otherwise.
+/// On a display without a notch: no fake notch. Peeku is the menu bar icon, whose eyes show the
+/// state, and it climbs down from the icon when an agent needs you.
 private struct MenuBarStates: View {
-    private static let notch = NotchGeometry(hasNotch: false, width: 190, barHeight: 24)
+    static let notch = NotchGeometry(hasNotch: false, width: 190, barHeight: 24)
+    /// The icon sits 160pt right of the strip's middle, among the other menu bar items.
+    static let iconOffset: CGFloat = 160
 
     var body: some View {
         VStack(spacing: 18) {
-            row("Idle", "Hidden, so the menu bar stays clear") { machine, _ in machine.update(sessions: []) }
-            row("Working", "A pill the height of the menu bar") { _, _ in }
-            row("Needs you", "Peeku drops out of the menu bar") { machine, clock in
+            row("Idle", "Sleepy eyes, nothing else on screen", icon: .init(mood: .idle)) { machine, _ in machine.update(sessions: []) }
+            row("Working", "The eyes glance around", icon: .init(mood: .working)) { _, _ in }
+            row("Needs you", "Peeku climbs down from the icon", icon: .init(mood: .permission, count: 1)) { machine, clock in
                 Snapshots.trigger(.permission, machine, clock)
             }
-            row("Folded", "Three waiting, out of the way") { machine, clock in
+            row("Folded", "Three waiting, out of the way", icon: .init(mood: .multiple, count: 3)) { machine, clock in
                 Snapshots.trigger(.multiple, machine, clock)
                 clock.advance(by: 1)
                 machine.later()
@@ -195,7 +210,7 @@ private struct MenuBarStates: View {
         .frame(width: 760)
     }
 
-    private func row(_ title: String, _ detail: String, drive: Snapshots.Drive) -> some View {
+    private func row(_ title: String, _ detail: String, icon: MenuBarIcon.State, drive: Snapshots.Drive) -> some View {
         let clock = ManualScheduler(start: Date())
         let machine = PhaseMachine(scheduler: clock)
         machine.update(sessions: MockSessions.calm(now: clock.now))
@@ -208,26 +223,54 @@ private struct MenuBarStates: View {
             .frame(width: 200, alignment: .leading)
             ZStack(alignment: .top) {
                 MenuBarStrip(height: Self.notch.barHeight)
-                menus
-                IslandView(machine: machine, notch: Self.notch, forceLight: false)
+                MenuBarItems(icon: icon, width: 440)
+                IslandView(machine: machine, notch: Self.notch, menuBar: MenuBarAnchor(offset: Self.iconOffset), forceLight: false)
             }
             .frame(width: 440, height: 76, alignment: .top)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.white.opacity(0.08)))
         }
     }
+}
 
-    /// The Apple menu and the clock, so the strip reads as a menu bar without a notch.
-    private var menus: some View {
-        HStack {
-            Image(systemName: "apple.logo")
-            Spacer()
-            Text("9:41")
+/// The Apple menu, Peeku's icon and the clock, so the strip reads as a menu bar without a notch.
+private struct MenuBarItems: View {
+    let icon: MenuBarIcon.State
+    let width: CGFloat
+
+    var body: some View {
+        let image = MenuBarIcon.image(icon, darkMenuBar: true)
+        ZStack {
+            HStack {
+                Image(systemName: "apple.logo")
+                Spacer()
+                Text("9:41")
+            }
+            .padding(.horizontal, 14)
+            Image(nsImage: image).renderingMode(icon.isTemplate ? .template : .original)
+                .foregroundStyle(Color.label(0.9))
+                // Centered on the icon's body; a badge adds width on the right.
+                .offset(x: MenuBarStates.iconOffset + (image.size.width - MenuBarIcon.size) / 2)
         }
         .font(.peeku(12))
         .foregroundStyle(Color.label(0.85))
-        .padding(.horizontal, 14)
-        .frame(height: Self.notch.barHeight)
+        .frame(width: width, height: MenuBarStates.notch.barHeight)
+    }
+}
+
+/// An alert on a display without a notch: Peeku hangs from its icon and holds it.
+private struct MenuBarAlert: View {
+    var body: some View {
+        let clock = ManualScheduler(start: Date())
+        let machine = PhaseMachine(scheduler: clock)
+        machine.update(sessions: MockSessions.calm(now: clock.now))
+        Snapshots.scenarios.first { $0.0 == "alert-permission" }?.1(machine, clock)
+        return ZStack(alignment: .top) {
+            MenuBarStrip(height: MenuBarStates.notch.barHeight)
+            MenuBarItems(icon: .init(mood: .permission, count: 1), width: 760)
+            IslandView(machine: machine, notch: MenuBarStates.notch, menuBar: MenuBarAnchor(offset: MenuBarStates.iconOffset), forceLight: false)
+        }
+        .frame(width: 760, height: 330, alignment: .top)
     }
 }
 
