@@ -227,4 +227,56 @@ extension MockSessions {
         }
         return runner
     }
+
+    /// Plugins and skills for snapshots: a few of each agent's, globally and in two projects, and
+    /// a marketplace to browse. Nothing is read from disk or the CLIs.
+    @MainActor
+    public static func skills() -> SkillManager {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let dashboard = "\(home)/code/dashboard", payments = "\(home)/code/payments-api"
+        let manager = SkillManager(locate: { _ in nil })
+        manager.seed(installed: [
+            InstalledSkill(agent: .claude, kind: .plugin(id: "superpowers@superpowers", cliScope: "user"), name: "superpowers",
+                           summary: "Brainstorm, plan, test-drive and debug with a library of proven skills.", scope: .global,
+                           enabled: true, version: "4.1.0", skills: ["brainstorming", "writing-plans", "test-driven-development", "systematic-debugging"]),
+            InstalledSkill(agent: .claude, kind: .plugin(id: "code-review@claude-plugins-official", cliScope: "user"), name: "code-review",
+                           summary: "Review the current diff for correctness bugs before you push.", scope: .global, enabled: false, version: "1.2.0"),
+            InstalledSkill(agent: .codex, kind: .plugin(id: "github@openai-curated", cliScope: nil), name: "GitHub",
+                           summary: "Triage PRs, issues, CI, and publish flows", scope: .global, skills: ["gh-fix-ci", "gh-address-comments"]),
+            InstalledSkill(agent: .claude, kind: .skill(folder: URL(filePath: "\(home)/.claude/skills/changelog")), name: "changelog",
+                           summary: "Write the changelog entry for the current branch in the project's voice.", scope: .global),
+            InstalledSkill(agent: .codex, kind: .skill(folder: URL(filePath: "\(home)/.agents/skills/changelog")), name: "changelog",
+                           summary: "Write the changelog entry for the current branch in the project's voice.", scope: .global),
+            InstalledSkill(agent: .claude, kind: .plugin(id: "stripe@claude-plugins-official", cliScope: "project"), name: "stripe",
+                           summary: "Stripe API best practices, test clocks and webhook debugging.", scope: .project(payments), enabled: true),
+            InstalledSkill(agent: .claude, kind: .skill(folder: URL(filePath: "\(payments)/.claude/skills/migrate-db")), name: "migrate-db",
+                           summary: "Write and dry-run a Postgres migration, then update the seed data.", scope: .project(payments)),
+            InstalledSkill(agent: .claude, kind: .skill(folder: URL(filePath: "\(dashboard)/.claude/skills/storybook-diff")), name: "storybook-diff",
+                           summary: "Screenshot the changed stories and compare them with main.", scope: .project(dashboard)),
+        ], catalog: [
+            CatalogPlugin(agent: .claude, pluginID: "frontend-design@claude-plugins-official", name: "frontend-design",
+                          summary: "Create distinctive, production-grade frontend interfaces that avoid generic AI aesthetics.",
+                          marketplace: "claude-plugins-official", origin: "github.com/anthropics/claude-plugins-official/plugins/frontend-design",
+                          installs: 1_276_062),
+            CatalogPlugin(agent: .claude, pluginID: "superpowers@superpowers", name: "superpowers",
+                          summary: "Brainstorm, plan, test-drive and debug with a library of proven skills.", marketplace: "superpowers",
+                          origin: "github.com/obra/superpowers", installs: 1_140_665),
+            CatalogPlugin(agent: .claude, pluginID: "playwright@claude-plugins-official", name: "playwright",
+                          summary: "Drive a real browser to test, screenshot and debug web apps.", marketplace: "claude-plugins-official",
+                          origin: "github.com/microsoft/playwright-mcp", installs: 402_118),
+            CatalogPlugin(agent: .claude, pluginID: "sentry@claude-plugins-official", name: "sentry",
+                          summary: "Pull Sentry issues and traces into your session and fix them in place.", marketplace: "claude-plugins-official",
+                          origin: "github.com/getsentry/sentry-mcp", installs: 98_420),
+            CatalogPlugin(agent: .codex, pluginID: "github@openai-curated", name: "github", title: "GitHub",
+                          summary: "Triage PRs, issues, CI, and publish flows", marketplace: "openai-curated", category: "Coding",
+                          origin: "github.com/openai/plugins"),
+            CatalogPlugin(agent: .codex, pluginID: "linear@openai-curated", name: "linear", title: "Linear",
+                          summary: "Find, create and update Linear issues from Codex", marketplace: "openai-curated", category: "Productivity"),
+        ], marketplaces: [
+            Marketplace(agent: .claude, name: "claude-plugins-official", origin: "github.com/anthropics/claude-plugins-official"),
+            Marketplace(agent: .claude, name: "superpowers", origin: "github.com/obra/superpowers-marketplace"),
+            Marketplace(agent: .codex, name: "openai-curated"),
+        ], projects: [dashboard, payments])
+        return manager
+    }
 }

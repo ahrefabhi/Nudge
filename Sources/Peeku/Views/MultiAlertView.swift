@@ -6,7 +6,7 @@ struct MultiAlertView: View {
     @Environment(\.palette) private var palette
     @Environment(\.peekuHangsAbove) private var hangsAbove
     let queue: [PeekuSession]
-    /// Highlighted row, once the user cycles with ⌥⌘↓.
+    /// Highlighted row, once the user cycles with the next-waiting shortcut.
     let cursor: Int?
     let bar: CGFloat
     let onOpen: (PeekuSession) -> Void
@@ -22,7 +22,7 @@ struct MultiAlertView: View {
                         .foregroundStyle(palette.accent(.permission))
                 }
                 Spacer()
-                Text("⌥⌘↓ next")
+                Text(Shortcuts.shared.label(.nextWaiting).map { "\($0) next" } ?? "")
                     .font(.peekuMono(10.5))
                     .foregroundStyle(palette.label(0.4))
             }

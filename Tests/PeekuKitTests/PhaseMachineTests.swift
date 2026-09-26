@@ -351,12 +351,30 @@ import Testing
         #expect(machine.managerTab == .history)
     }
 
+    @Test func skillsShortcutOpensAndClosesSkills() {
+        let machine = PhaseMachine(scheduler: ManualScheduler())
+        machine.toggleSkills()
+        #expect(machine.phase == .manager)
+        #expect(machine.managerTab == .skills)
+        machine.toggleCommands()
+        #expect(machine.managerTab == .commands)
+        machine.toggleSkills()
+        #expect(machine.managerTab == .skills)
+        machine.toggleSkills()
+        #expect(machine.phase != .manager)
+        machine.skillsEnabled = false
+        machine.toggleSkills()
+        #expect(machine.phase != .manager)
+    }
+
     @Test func commandsTurnedOffLeavesTheDock() {
         let machine = PhaseMachine(scheduler: ManualScheduler())
         machine.toggleCommands()
         #expect(machine.managerTab == .commands)
         machine.commandsEnabled = false
         #expect(machine.managerTab == .now)
+        #expect(machine.dock == [.now, .skills])
+        machine.skillsEnabled = false
         #expect(machine.dock.isEmpty)
         machine.toggleCommands()
         #expect(machine.managerTab == .now)

@@ -77,6 +77,25 @@ enum Snapshots {
                                             onDelete: {}, onCancel: {}),
                           size: CGSize(width: 460, height: 250), appearance: .aqua, to: directory.appending(path: "command-editor.png"))
 
+        // Skills: what's installed, in the dark panel; Discover with an install open, in the light one.
+        let skills = MockSessions.skills()
+        historyMachine.managerTab = .skills
+        skills.expanded = skills.installed[0].id
+        for (name, light, section) in [("installed", false, SkillManager.Section.installed), ("discover", true, .discover)] {
+            skills.section = section
+            if section == .discover {
+                skills.expanded = nil
+                skills.installing = skills.catalog[2].id
+                skills.installScope = .project(skills.projects[0])
+            }
+            let manager = ManagerView(machine: historyMachine, bar: 32, commands: runner, skills: skills)
+                .environment(\.palette, light ? .light : .dark)
+                .background(light ? Color(hex: 0xf4f4f7) : Color.black)
+            try writeWindowed(manager.frame(width: 460, height: 580 + IslandMetrics.managerTabRow),
+                              size: CGSize(width: 460, height: 580 + IslandMetrics.managerTabRow),
+                              appearance: light ? .aqua : .darkAqua, to: directory.appending(path: "manager-skills-\(name).png"))
+        }
+
         let setupMachine = PhaseMachine(scheduler: ManualScheduler(start: Date()))
         setupMachine.update(sessions: MockSessions.calm())
         setupMachine.usage = [AgentUsage(agent: .claude, source: .needsSetup, report: nil),

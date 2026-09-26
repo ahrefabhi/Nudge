@@ -31,6 +31,56 @@ public enum AgentCLI {
         return result
     }
 
+    /// What a tool printed and how it exited, for commands whose errors the user should read.
+    public struct Result: Sendable {
+        public var status: Int32
+        public var output: String
+        public var errors: String
+        public var succeeded: Bool { status == 0 }
+    }
+
+    /// Runs the tool to the end, collecting stdout and stderr separately. Nil if it couldn't start;
+    /// a tool still running after `timeout` is stopped and reported as failed.
+    static func execute(_ executable: URL, arguments: [String], in directory: URL? = nil, timeout: TimeInterval) -> Result? {
+        let process = Process()
+        process.executableURL = executable
+        process.arguments = arguments
+        if let directory { process.currentDirectoryURL = directory }
+        process.environment = environment(for: executable)
+        let output = Pipe(), errors = Pipe()
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = output
+        process.standardError = errors
+        guard (try? process.run()) != nil else { return nil }
+
+        let watchdog = DispatchWorkItem { [process] in
+            if process.isRunning { process.terminate() }
+        }
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + timeout, execute: watchdog)
+        // Both pipes drain at once, so a tool that fills one while we wait on the other can't stall.
+        nonisolated(unsafe) var errorData = Data()
+        let group = DispatchGroup()
+        DispatchQueue.global(qos: .utility).async(group: group) {
+            errorData = errors.fileHandleForReading.readToEnd(limit: 256 * 1024) ?? Data()
+        }
+        let outputData = output.fileHandleForReading.readToEnd(limit: 16 * 1024 * 1024) ?? Data()
+        group.wait()
+        process.waitUntilExit()
+        watchdog.cancel()
+        return Result(status: process.terminationStatus,
+                      output: String(decoding: outputData, as: UTF8.self),
+                      errors: String(decoding: errorData, as: UTF8.self))
+    }
+
+    private static func environment(for executable: URL) -> [String: String] {
+        var environment = ProcessInfo.processInfo.environment
+        // An npm install needs `node`, which sits next to it; Homebrew's may need the rest.
+        environment["PATH"] = ([executable.deletingLastPathComponent().path, "/opt/homebrew/bin", "/usr/local/bin"]
+                               + ["/usr/bin", "/bin", "/usr/sbin", "/sbin"]).joined(separator: ":")
+        environment["NO_COLOR"] = "1"
+        return environment
+    }
+
     /// Starts the tool with stdin and stdout piped, hands them to `talk` on this thread, and
     /// stops the tool when `talk` returns or `timeout` passes, whichever comes first.
     @discardableResult
@@ -40,12 +90,7 @@ public enum AgentCLI {
         process.executableURL = executable
         process.arguments = arguments
         if let directory { process.currentDirectoryURL = directory }
-        var environment = ProcessInfo.processInfo.environment
-        // An npm install needs `node`, which sits next to it; Homebrew's may need the rest.
-        environment["PATH"] = ([executable.deletingLastPathComponent().path, "/opt/homebrew/bin", "/usr/local/bin"]
-                               + ["/usr/bin", "/bin", "/usr/sbin", "/sbin"]).joined(separator: ":")
-        environment["NO_COLOR"] = "1"
-        process.environment = environment
+        process.environment = environment(for: executable)
         let input = Pipe(), output = Pipe()
         process.standardInput = input
         process.standardOutput = output

@@ -16,6 +16,7 @@ final class SettingsModel {
     private(set) var quietInView = Preferences.quietInView
     private(set) var usageAlertRules = Preferences.usageAlertRules
     private(set) var commandsEnabled = Preferences.commandsEnabled
+    private(set) var skillsEnabled = Preferences.skillsEnabled
     private(set) var prefersMenuBar = Preferences.prefersMenuBar
     private(set) var soundsEnabled = Preferences.soundsEnabled
     private(set) var sounds = Dictionary(uniqueKeysWithValues: Chime.allCases.map { ($0, Preferences.sound(for: $0)) })
@@ -95,6 +96,12 @@ final class SettingsModel {
     func setCommandsEnabled(_ on: Bool) {
         commandsEnabled = on
         Preferences.commandsEnabled = on
+        onPreferencesChanged?()
+    }
+
+    func setSkillsEnabled(_ on: Bool) {
+        skillsEnabled = on
+        Preferences.skillsEnabled = on
         onPreferencesChanged?()
     }
 
