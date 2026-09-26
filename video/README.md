@@ -1,6 +1,6 @@
 # Launch video
 
-The source of the README's launch video: a 26.7-second, 1920×1080 clip of the notch coming alive, Open Session, the moods, a failed command and a command asking which port to use, the Now, Usage and Commands panels, and the outro. [PLAN.md](PLAN.md) has the storyboard.
+The source of the README's launch video: a 31.3-second, 1920×1080 clip of the notch coming alive, Open Session, the moods, a failed command and a command asking which port to use, Skills with an install into one project, the Now, Usage, Commands and Skills panels with their shortcuts, and the outro. [PLAN.md](PLAN.md) has the storyboard.
 
 ```sh
 video/render.sh        # writes video/out/peeku.mp4 and video/out/poster.jpg
@@ -19,8 +19,8 @@ It needs node, python3 and ffmpeg. The first run installs Playwright and numpy i
 1. Edit the scenes and the `T` timeline in `comp/index.html`. If a time moves, change it in `audio.py` too.
 2. Check stills from each scene and mid-transition before a full render:
    ```sh
-   cd video && node capture.js stills 2.6 6.5 9.8 13.8 16.0 17.45 18.4 21.6 25.5   # out/stills/
+   cd video && node capture.js stills 2.6 6.5 9.8 12.9 16.6 20.6 22.95 25.4 26.6 30.2   # out/stills/
    ```
-3. Run `video/render.sh`, optionally with the poster time (default 21.6 s, the three panels).
+3. Run `video/render.sh`, optionally with the poster time (default 20.6 s, the Skills reveal).
 
 To put a new video in the README, drag `peeku.mp4` into a GitHub comment box to get a `user-attachments` link, and swap it into the README.
