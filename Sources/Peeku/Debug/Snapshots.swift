@@ -96,17 +96,41 @@ enum Snapshots {
         settings.setup.hooks = .installed
         settings.setup.codexHooks = .installed
         settings.setup.accessibility = true
-        for (name, appearance) in [("dark", NSAppearance.Name.darkAqua), ("light", .aqua)] {
-            try writeWindowed(SettingsView(model: settings), size: CGSize(width: 480, height: 640), appearance: appearance,
-                              to: directory.appending(path: "settings-\(name).png"))
+        // Settings open inside the manager, from the gear. The pop-up menus are AppKit, so these
+        // render in a window; the tall one lays every section out, unscrolled.
+        historyMachine.showSettings()
+        for (name, light) in [("dark", false), ("light", true)] {
+            let manager = ManagerView(machine: historyMachine, bar: 32, commands: runner, settings: settings)
+                .environment(\.palette, light ? .light : .dark)
+                .background(light ? Color(hex: 0xf4f4f7) : Color.black)
+            try writeWindowed(manager.frame(width: 460, height: 580 + IslandMetrics.managerTabRow),
+                              size: CGSize(width: 460, height: 580 + IslandMetrics.managerTabRow),
+                              appearance: light ? .aqua : .darkAqua, to: directory.appending(path: "settings-\(name).png"))
         }
+        try writeWindowed(ManagerView(machine: historyMachine, bar: 32, commands: runner, settings: settings)
+                            .environment(\.peekuStill, true).background(Color.black).frame(width: 460, height: 1900),
+                          size: CGSize(width: 460, height: 1900), appearance: .darkAqua,
+                          to: directory.appending(path: "settings-all.png"))
 
-        // The menu bar icon, drawn large on a light and a dark bar to check the cut-out eyes.
+        // The menu bar icon, drawn large on a light and a dark bar to check the cut-out eyes, then
+        // each state it shows on a Mac without a notch.
         for (name, bar, ink) in [("light", Color(hex: 0xe8e8ec), Color.black), ("dark", Color(hex: 0x2b2b30), Color.white)] {
             let icon = Image(nsImage: MenuBarIcon.image()).renderingMode(.template).resizable()
                 .foregroundStyle(ink).frame(width: 72, height: 72)
                 .padding(24).background(bar)
             try write(icon, to: directory.appending(path: "menubar-\(name).png"))
+            let states: [MenuBarIcon.State] = [.init(mood: .idle), .init(mood: .working), .init(mood: .question, count: 1),
+                                               .init(mood: .permission, count: 1), .init(mood: .error, count: 1),
+                                               .init(mood: .success), .init(mood: .multiple, count: 3)]
+            let row = HStack(spacing: 28) {
+                ForEach(Array(states.enumerated()), id: \.offset) { _, state in
+                    let image = MenuBarIcon.image(state, darkMenuBar: name == "dark")
+                    Image(nsImage: image).renderingMode(state.isTemplate ? .template : .original).resizable()
+                        .foregroundStyle(ink).frame(width: image.size.width * 3, height: image.size.height * 3)
+                }
+            }
+            .padding(24).background(bar)
+            try write(row, to: directory.appending(path: "menubar-states-\(name).png"))
         }
 
         let notch = NotchGeometry.fallback
@@ -136,6 +160,28 @@ enum Snapshots {
                 .background(RadialGradient(colors: [Color(hex: 0xc6d0e0), Color(hex: 0xeceef3)], center: UnitPoint(x: 0.7, y: 1.3),
                                            startRadius: 0, endRadius: 700))
             try write(view, to: directory.appending(path: "light-\(name).png"))
+        }
+
+        // No notch: Peeku hangs from its menu bar icon, 120pt right of the window's middle.
+        let plainBar = NotchGeometry(hasNotch: false, width: 190, barHeight: 24)
+        for name in ["peek", "alert-permission", "alert-multi", "manager", "manager-empty"] {
+            guard let drive = scenarios.first(where: { $0.0 == name })?.1 else { continue }
+            for light in [false, true] {
+                let clock = ManualScheduler(start: Date())
+                let machine = PhaseMachine(scheduler: clock)
+                machine.update(sessions: MockSessions.calm(now: clock.now))
+                drive(machine, clock)
+                let view = IslandView(machine: machine, notch: plainBar, commands: runner, settings: settings,
+                                      menuBar: MenuBarAnchor(offset: 120), forceLight: light)
+                    .frame(width: 600, height: 700)
+                    .background(alignment: .top) {
+                        ZStack(alignment: .top) {
+                            light ? Color(hex: 0xdfe3ea) : Color(hex: 0x1b1d24)
+                            Rectangle().fill(light ? Color(hex: 0xe9ebf0) : Color(hex: 0x2b2c33)).frame(height: 24)
+                        }
+                    }
+                try write(view, to: directory.appending(path: "menubar-\(light ? "light" : "dark")-\(name).png"))
+            }
         }
 
         for (name, drive) in scenarios {

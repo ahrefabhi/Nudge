@@ -18,7 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotKeys: HotKeys?
     private var characterSheet: NSWindow?
     private var onboarding: OnboardingWindow?
-    private var settings: SettingsWindow?
+    private lazy var settings = makeSettings()
     private let focusRing = FocusRing()
     private let presence = PresenceMonitor()
     private let updater = Updater()
@@ -33,7 +33,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         commands.onEdit = { [weak self] command in self?.openCommandWindow { $0.edit(command) } }
         commands.onShowLog = { [weak self] command in self?.openCommandWindow { $0.showLog(command) } }
         commands.onChange = { [weak self] in self?.deliverCommandAlerts() }
-        let notch = NotchWindowController(machine: machine, presence: presence, commands: commands)
+        let notch = NotchWindowController(machine: machine, presence: presence, commands: commands, settings: settings,
+                                          anchor: { [weak self] in self?.statusMenu?.anchor })
         machine.onOpen = { [weak self] session in
             switch session.kind {
             case .usage: self?.openedUsageAlert(session)
@@ -117,6 +118,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             toggleApp: { [weak self] app in self?.toggle(app) }
         ))
 
+        statusMenu?.onClick = { [weak self] in self?.clickedMenuBarIcon() }
+        notch.onMenuBarModeChange = { [weak self] on in self?.statusMenu?.menuBarMode = on }
+        // The icon exists now, so the panel can hang from it.
+        notch.placeOnPreferredScreen()
+        statusMenu?.menuBarMode = notch.menuBarMode
+        observeMenuBarIcon()
+
         self.notch = notch
         // Sessions are still read during setup, so it can say which apps have some running.
         setupPending = !Preferences.onboardingCompleted && !demoMode
@@ -128,6 +136,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let hotKeys = HotKeys()
         // ⌥⌘. rather than ⌘⇧., which Finder and Open/Save dialogs use to show hidden files.
         hotKeys.register(keyCode: kVK_ANSI_Period, modifiers: cmdKey | optionKey) { [weak self] in self?.toggleManager() }
+        hotKeys.register(keyCode: kVK_ANSI_Comma, modifiers: cmdKey | optionKey) { [weak self] in self?.toggleCommands() }
         hotKeys.register(keyCode: kVK_DownArrow, modifiers: cmdKey | optionKey) { [weak self] in
             self?.machine.cycleNext()
             self?.notch?.focusIsland()
@@ -233,32 +242,86 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// ⌥⌘.: the manager on the agents.
     private func toggleManager() {
         if setupPending { return showOnboarding() }
-        machine.toggleManager()
+        machine.toggleAgents()
+        if machine.phase == .manager { notch?.focusIsland() }
+    }
+
+    /// ⌥⌘,: the manager on Commands.
+    private func toggleCommands() {
+        if setupPending { return showOnboarding() }
+        machine.toggleCommands()
         if machine.phase == .manager { notch?.focusIsland() }
     }
 
     private func applyPreferences() {
         machine.autoCollapse = Preferences.autoCollapse
         machine.expandFinished = Preferences.popUpOnFinish
+        machine.commandsEnabled = Preferences.commandsEnabled
     }
 
+    /// Settings live in the manager, behind the gear at its top right.
     private func showSettings() {
-        if let settings { return settings.show() }
+        if setupPending { return showOnboarding() }
+        machine.showSettings()
+        notch?.focusIsland()
+    }
+
+    private func makeSettings() -> SettingsModel {
         let setup = OnboardingModel(sessions: { [weak self] in self?.observation.sessions ?? [] },
                                     otherApps: { [weak self] in self?.otherApps ?? [] }, hookSetup: hookSetup)
         setup.onEnvironmentsChanged = { [weak self] in self?.deliverSessions() }
         let model = SettingsModel(setup: setup, updater: updater)
         model.onPreferencesChanged = { [weak self] in self?.applyPreferences() }
         model.onQuietChanged = { [weak self] in self?.presence.refresh() }
-        model.onEditUsageAlerts = { [weak self] in
-            self?.machine.showUsage()
-            self?.notch?.focusIsland()
+        model.onPlacementChanged = { [weak self] in self?.notch?.placeOnPreferredScreen() }
+        model.onEditUsageAlerts = { [weak self] in self?.machine.managerTab = .usage }
+        // The notch panel floats above ordinary windows, so close the manager before a dialog shows.
+        model.presentingDialog = { [weak self] action in
+            self?.machine.tapOutside()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                NSApp.activate()
+                action()
+            }
         }
-        let window = SettingsWindow(model: model)
-        settings = window
-        window.show()
+        return model
+    }
+
+    // MARK: Menu bar mode
+
+    /// No notch: the icon is Peeku. A click opens the manager, brings a folded alert back, or
+    /// closes whatever hangs from the icon.
+    private func clickedMenuBarIcon() {
+        if setupPending { return showOnboarding() }
+        switch machine.phase {
+        case .manager, .alert: machine.tapOutside()
+        case .pill, .peek: machine.tapIsland()
+        case .idle, .working: machine.toggleManager()
+        case .opening: return
+        }
+        if machine.phase == .manager || machine.phase == .alert { notch?.focusIsland() }
+    }
+
+    /// Keeps the icon's eyes on what Peeku is doing.
+    private func observeMenuBarIcon() {
+        withObservationTracking {
+            statusMenu?.iconState = menuBarIconState
+            statusMenu?.highlighted = machine.phase == .manager || machine.phase == .alert
+        } onChange: { [weak self] in
+            DispatchQueue.main.async { self?.observeMenuBarIcon() }
+        }
+    }
+
+    private var menuBarIconState: MenuBarIcon.State {
+        if let done = machine.celebrating, machine.queue.isEmpty { return .init(mood: done.kind.mood) }
+        let queue = machine.queue
+        switch queue.count {
+        case 0: return .init(mood: machine.working.isEmpty ? .idle : .working)
+        case 1: return .init(mood: queue[0].kind.mood, count: 1)
+        default: return .init(mood: .multiple, count: queue.count)
+        }
     }
 
     /// The notch panel floats above ordinary windows, so close the manager before the window shows.

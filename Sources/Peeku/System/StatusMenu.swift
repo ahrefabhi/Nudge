@@ -2,6 +2,8 @@ import AppKit
 import PeekuKit
 
 /// Menu bar item: hook setup, demo mode and quit. Rebuilt each time it opens, so it's always current.
+/// On a Mac without a notch it's also where Peeku lives: its eyes show the state, a click opens
+/// the session manager and a right-click (or ⌃-click) opens this menu.
 final class StatusMenu: NSObject, NSMenuDelegate {
     struct Actions {
         var sessionCount: () -> Int
@@ -29,16 +31,91 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         var toggleApp: (WatchedApp) -> Void
     }
 
-    private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+    private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let actions: Actions
+    private let menu = NSMenu()
+    private var glanceTimer: Timer?
+    private var glance = 0
+    private var appearanceObservation: NSKeyValueObservation?
+
+    /// A click on the icon in menu bar mode.
+    var onClick: (() -> Void)?
+
+    /// No notch: the icon shows Peeku's state and a click opens the manager instead of the menu.
+    var menuBarMode = false {
+        didSet {
+            guard menuBarMode != oldValue else { return }
+            item.menu = menuBarMode ? nil : menu
+            refreshIcon()
+        }
+    }
+
+    /// What Peeku is doing, for the icon's eyes in menu bar mode.
+    var iconState = MenuBarIcon.State() {
+        didSet { if iconState != oldValue { refreshIcon() } }
+    }
+
+    /// Lit while the manager or an alert hangs from the icon, like an open menu.
+    var highlighted = false {
+        didSet { item.button?.highlight(highlighted && menuBarMode) }
+    }
+
+    /// The icon's frame on screen, which the notch panel hangs from in menu bar mode.
+    var anchor: NSRect? {
+        guard let button = item.button, let window = button.window, window.isVisible else { return nil }
+        return window.convertToScreen(button.convert(button.bounds, to: nil))
+    }
 
     init(actions: Actions) {
         self.actions = actions
         super.init()
-        item.button?.image = MenuBarIcon.image()
-        let menu = NSMenu()
         menu.delegate = self
         item.menu = menu
+        if let button = item.button {
+            button.target = self
+            button.action = #selector(clicked)
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            appearanceObservation = button.observe(\.effectiveAppearance) { [weak self] _, _ in
+                DispatchQueue.main.async { self?.refreshIcon() }
+            }
+        }
+        refreshIcon()
+    }
+
+    @objc private func clicked() {
+        let event = NSApp.currentEvent
+        if event?.type == .rightMouseUp || event?.modifierFlags.contains(.control) == true {
+            // Shows the menu once, then the icon goes back to opening the manager.
+            item.menu = menu
+            item.button?.performClick(nil)
+            item.menu = menuBarMode ? nil : menu
+        } else {
+            onClick?()
+        }
+    }
+
+    private func refreshIcon() {
+        guard let button = item.button else { return }
+        let dark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        var state = iconState
+        state.glance = [0, -1, 0, 1][glance % 4]
+        button.image = MenuBarIcon.image(menuBarMode ? state : nil, darkMenuBar: dark)
+        // Working eyes glance around, like Peeku in the notch.
+        let glancing = menuBarMode && iconState.mood == .working && iconState.count == 0
+            && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        if glancing, glanceTimer == nil {
+            glanceTimer = Timer.scheduledTimer(withTimeInterval: 0.9, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.glance += 1
+                    self.refreshIcon()
+                }
+            }
+        } else if !glancing, let timer = glanceTimer {
+            timer.invalidate()
+            glanceTimer = nil
+            glance = 0
+        }
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {

@@ -342,12 +342,67 @@ import Testing
         let machine = PhaseMachine(scheduler: ManualScheduler())
         #expect(!machine.showTab(2))
         machine.toggleManager()
-        #expect(machine.showTab(4))
-        #expect(machine.managerTab == .commands)
+        #expect(machine.showTab(3))
+        #expect(machine.managerTab == .usage)
         #expect(machine.showTab(2))
         #expect(machine.managerTab == .history)
-        #expect(!machine.showTab(5))
+        // Commands has its own shortcut.
+        #expect(!machine.showTab(4))
         #expect(machine.managerTab == .history)
+    }
+
+    @Test func commandsTurnedOffLeavesTheDock() {
+        let machine = PhaseMachine(scheduler: ManualScheduler())
+        machine.toggleCommands()
+        #expect(machine.managerTab == .commands)
+        machine.commandsEnabled = false
+        #expect(machine.managerTab == .now)
+        #expect(machine.dock.isEmpty)
+        machine.toggleCommands()
+        #expect(machine.managerTab == .now)
+    }
+}
+
+@MainActor
+@Suite struct FooterDockTests {
+    @Test func shortcutsOpenAgentsOrCommandsAndCloseWhenShowing() {
+        let machine = PhaseMachine(scheduler: ManualScheduler())
+        machine.toggleCommands()
+        #expect(machine.phase == .manager)
+        #expect(machine.managerTab == .commands)
+        // ⌥⌘. from Commands goes to the agents rather than closing.
+        machine.toggleAgents()
+        #expect(machine.phase == .manager)
+        #expect(machine.managerTab == .now)
+        machine.toggleCommands()
+        #expect(machine.managerTab == .commands)
+        machine.toggleCommands()
+        #expect(machine.phase == .idle)
+        machine.toggleAgents()
+        #expect(machine.managerTab == .now)
+        machine.toggleAgents()
+        #expect(machine.phase == .idle)
+    }
+
+    @Test func escapeInAUtilityReturnsToTheAgentsFirst() {
+        let machine = PhaseMachine(scheduler: ManualScheduler())
+        machine.toggleManager()
+        machine.managerTab = .usage
+        machine.managerTab = .commands
+        machine.escape()
+        #expect(machine.phase == .manager)
+        #expect(machine.managerTab == .usage)
+        machine.escape()
+        #expect(machine.phase == .idle)
+    }
+
+    @Test func settingsOpensTheManagerAndEscapeLeavesIt() {
+        let machine = PhaseMachine(scheduler: ManualScheduler())
+        machine.showSettings()
+        #expect(machine.phase == .manager)
+        #expect(machine.managerTab == .settings)
+        machine.escape()
+        #expect(machine.managerTab == .now)
     }
 }
 

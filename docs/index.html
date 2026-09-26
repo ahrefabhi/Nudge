@@ -3,24 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Peeku: a tiny companion in your MacBook's notch</title>
-<meta name="description" content="A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.">
+<title>Peeku: a tiny companion for your coding agents</title>
+<meta name="description" content="A tiny companion for your coding agents. It lives in your notch or menu bar and tells you when Claude Code or Codex needs you.">
 <meta name="theme-color" content="#0d0e12">
 <link rel="canonical" href="https://peeku.ahrefabhi.com/">
 <link rel="icon" type="image/png" href="images/icon.png">
 <link rel="apple-touch-icon" href="images/icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Peeku">
-<meta property="og:title" content="Peeku: a tiny companion in your MacBook's notch">
-<meta property="og:description" content="A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.">
+<meta property="og:title" content="Peeku: a tiny companion for your coding agents">
+<meta property="og:description" content="A tiny companion for your coding agents. It lives in your notch or menu bar and tells you when Claude Code or Codex needs you.">
 <meta property="og:url" content="https://peeku.ahrefabhi.com/">
 <meta property="og:image" content="https://peeku.ahrefabhi.com/images/social-preview.png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta property="og:image:alt" content="Peeku, a tiny companion in your notch, showing three agents that need you: a permission request, a question and a blocked run">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Peeku: a tiny companion in your MacBook's notch">
-<meta name="twitter:description" content="A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.">
+<meta name="twitter:title" content="Peeku: a tiny companion for your coding agents">
+<meta name="twitter:description" content="A tiny companion for your coding agents. It lives in your notch or menu bar and tells you when Claude Code or Codex needs you.">
 <meta name="twitter:image" content="https://peeku.ahrefabhi.com/images/social-preview.png">
 <meta name="twitter:image:alt" content="Peeku, a tiny companion in your notch, showing three agents that need you: a permission request, a question and a blocked run">
 <link rel="stylesheet" href="site.css">
@@ -89,8 +89,8 @@
       <button type="button" class="chip" data-ev="success"><i style="background:var(--green)"></i>Finished</button>
       <button type="button" class="chip" data-ev="usage"><i style="background:var(--amber)"></i>Usage alert</button>
     </div>
-    <h1>A tiny creature in your notch that watches over your agents.</h1>
-    <p class="hero-sub">A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.</p>
+    <h1>A tiny creature in your notch or menu bar that watches over your agents.</h1>
+    <p class="hero-sub">A tiny companion for your coding agents. It lives in your notch or menu bar and tells you when Claude Code or Codex needs you.</p>
     <div class="hero-ctas">
       <a href="https://github.com/ahrefabhi/peeku/releases/latest" class="btn-primary">Download for macOS</a>
       <a href="https://github.com/ahrefabhi/Peeku" class="btn-secondary">View on GitHub</a>
@@ -102,7 +102,7 @@
 <main>
 <section class="problem">
   <p class="problem-lead">You start a few Claude Code or Codex sessions in iTerm, Terminal and VS Code, switch to something else, and one of them quietly stops to ask for permission. <span>Ten minutes later you notice.</span></p>
-  <p class="problem-body">Peeku fixes that. It sits invisibly inside the notch while your agents work. When one needs you, Peeku drops out, the notch opens into a notification, and <b>Open Session</b> takes you straight to the exact terminal tab or editor window. Then Peeku tucks itself away again.</p>
+  <p class="problem-body">Peeku fixes that. It sits invisibly inside the notch, or in its own menu bar icon, while your agents work. When one needs you, Peeku drops out, a notification opens, and <b>Open Session</b> takes you straight to the exact terminal tab or editor window. Then Peeku tucks itself away again.</p>
 </section>
 
 <section class="section flow">
@@ -132,11 +132,19 @@
   </div>
   <div class="flow-row">
     <div class="flow-text">
-      <span class="eyebrow" style="color:rgba(235,235,245,.55)">04 · NO NOTCH? NO PROBLEM</span>
-      <h2 class="h-md">It lives in the menu bar instead.</h2>
-      <p class="lede">On an external display or an older MacBook, Peeku stays out of the menu bar while idle, so your app menus stay clear. When agents start working it slides down as a black pill the height of the menu bar, and everything else works the same.</p>
+      <span class="eyebrow" style="color:rgba(235,235,245,.55)">04 · NOTCH OR MENU BAR</span>
+      <h2 class="h-md">No notch? It lives in the menu bar.</h2>
+      <p class="lede">On an external display or an older MacBook there's no fake notch. Peeku moves into its own menu bar icon, and the icon's eyes show what it's doing. When an agent needs you, Peeku climbs down from the icon and holds the alert. Prefer it there on a MacBook too? Pick Menu Bar in Settings.</p>
     </div>
-    <img class="shot" src="images/menu-bar.png" alt="Four menu bar states on a display without a notch: idle with nothing showing, working, dropping out, and folded" width="1520" height="828" loading="lazy" decoding="async">
+    <img class="shot" src="images/menu-bar-alert.png" alt="On a display without a notch, Peeku hangs from its menu bar icon above a frosted panel: Claude needs your permission to run npm install stripe@17.2.0" width="1520" height="660" loading="lazy" decoding="async">
+  </div>
+  <div class="flow-row">
+    <div class="flow-text">
+      <span class="eyebrow" style="color:var(--green)">05 · YOUR DEV COMMANDS</span>
+      <h2 class="h-md">Your dev server, one shortcut away.</h2>
+      <p class="lede">Save the commands you run all day, like <code>npm run dev</code>, with their folder. Run, restart and stop them from the dock at the bottom of the session manager, or press ⌥⌘,. When one exits with an error, Peeku tells you with its last line of output.</p>
+    </div>
+    <img class="shot" src="images/command-alert.png" alt="A notch alert: Dashboard exited with code 1, with the last line Error: listen EADDRINUSE: address already in use :::5173, and Show Output, Restart and Later buttons" width="1520" height="600" loading="lazy" decoding="async">
   </div>
 </section>
 
@@ -187,7 +195,7 @@
       <div class="tile-vis glance">
         <img src="images/manager.png" alt="Session manager" width="1520" height="1340" loading="lazy" decoding="async">
       </div>
-      <div class="tile-body"><b>Every session at a glance.</b><span>Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.</span></div>
+      <div class="tile-body"><b>Every session at a glance.</b><span>Click the notch or the menu bar icon for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.</span></div>
     </div>
 
     <div class="tile">
@@ -198,6 +206,25 @@
         </div>
       </div>
       <div class="tile-body"><b>Knows how much you have left.</b><span>See how much of your Claude and Codex 5-hour and weekly limits you've used, when each resets, and get an alert at a threshold you set.</span></div>
+    </div>
+
+    <div class="tile">
+      <div class="tile-vis" aria-hidden="true">
+        <div class="spend">
+          <div class="spend-head"><span>Last 7 days</span><b>$212.40</b></div>
+          <div class="spend-bars">
+            <i style="--h:38%;--s:30%"></i><i style="--h:62%;--s:45%"></i><i style="--h:48%;--s:20%"></i><i style="--h:86%;--s:55%"></i><i style="--h:70%;--s:35%"></i><i style="--h:24%;--s:50%"></i><i style="--h:56%;--s:40%"></i>
+          </div>
+        </div>
+      </div>
+      <div class="tile-body"><b>Knows what you spent.</b><span>What today, the last 7 or the last 30 days cost at API prices, the tokens used, and a bar per day split by model.</span></div>
+    </div>
+
+    <div class="tile wide">
+      <div class="tile-vis glance">
+        <img src="images/commands.png" alt="Commands in the session manager: a dev server running, a worker that exited, and a docs preview waiting for input" width="1520" height="1340" loading="lazy" decoding="async">
+      </div>
+      <div class="tile-body"><b>Runs your dev commands.</b><span>Commands lives in the dock at the bottom of the session manager, never in the tabs. Start, restart and stop saved commands, read their output, answer their prompts, and see how many are running at a glance.</span></div>
     </div>
 
     <div class="tile">
@@ -252,7 +279,7 @@
 <section class="section closer">
   <div class="closer-head">
     <h2 class="h-lg">Every session, at a glance.</h2>
-    <p>Click the notch for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.</p>
+    <p>Click the notch or the menu bar icon for a live list of what's waiting, working and finished, plus a week of history. Any row jumps to its session.</p>
   </div>
   <div class="shots">
     <figure>
@@ -264,8 +291,25 @@
       <figcaption><b>History</b><span>A week of permission requests, errors and finished runs.</span></figcaption>
     </figure>
     <figure>
-      <img src="images/usage.png" alt="The Usage tab with Claude and Codex limits" width="1520" height="1340" loading="lazy" decoding="async">
-      <figcaption><b>Usage</b><span>5-hour and weekly limits for Claude and Codex, and when each resets.</span></figcaption>
+      <img src="images/usage.png" alt="The Usage tab with spend and Claude and Codex limits" width="1520" height="1340" loading="lazy" decoding="async">
+      <figcaption><b>Usage</b><span>What you spent, and your 5-hour and weekly limits for Claude and Codex.</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section closer">
+  <div class="closer-head">
+    <h2 class="h-lg">Utilities in the dock. Settings behind the gear.</h2>
+    <p>The tabs at the top are always about your agents. Commands sits in the footer dock, and everything you can change is one click away in the same panel.</p>
+  </div>
+  <div class="shots">
+    <figure>
+      <img src="images/commands.png" alt="Commands: Dashboard running npm run dev, payments-api exited with code 1, and Docs waiting for input on a port question" width="1520" height="1340" loading="lazy" decoding="async">
+      <figcaption><b>Commands</b><span>Your dev servers and workers, with their latest output. Press ⌥⌘,.</span></figcaption>
+    </figure>
+    <figure>
+      <img src="images/settings.png" alt="Settings inside the session manager: appearance, notch or menu bar, login, updates and notifications" width="1520" height="1340" loading="lazy" decoding="async">
+      <figcaption><b>Settings</b><span>Opened from the gear, in the same panel. No separate window.</span></figcaption>
     </figure>
   </div>
 </section>
@@ -314,11 +358,12 @@
     <p class="lede">Unanswered alerts fold into a small pill. In full screen Peeku shrinks to a thin glow, and it goes quiet while Zoom shares your screen or when you ask it to. Peeku never takes the keyboard from your editor on its own.</p>
   </div>
   <dl class="keys">
-    <div><dt>Show or hide the session manager</dt><dd><kbd>⌥⌘.</kbd></dd></div>
-    <div><dt>Open a manager tab</dt><dd><kbd>⌥⌘.</kbd> <kbd>1–4</kbd></dd></div>
+    <div><dt>Show or hide your agents</dt><dd><kbd>⌥⌘.</kbd></dd></div>
+    <div><dt>Open Now, History or Usage</dt><dd><kbd>⌥⌘.</kbd> <kbd>1–3</kbd></dd></div>
+    <div><dt>Show or hide Commands</dt><dd><kbd>⌥⌘,</kbd></dd></div>
     <div><dt>Move to the next waiting agent</dt><dd><kbd>⌥⌘↓</kbd></dd></div>
     <div><dt>Open the highlighted session</dt><dd><kbd>↵</kbd></dd></div>
-    <div><dt>Fold the alert into the pill</dt><dd><kbd>Esc</kbd></dd></div>
+    <div><dt>Fold the alert, or go back to your agents</dt><dd><kbd>Esc</kbd></dd></div>
     <div><dt>Open a row by number</dt><dd><kbd>⌘1–9</kbd></dd></div>
   </dl>
 </section>

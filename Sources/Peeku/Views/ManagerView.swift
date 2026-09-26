@@ -5,9 +5,12 @@ import SwiftUI
 /// row is one quiet line that still opens its session when clicked.
 struct ManagerView: View {
     @Environment(\.palette) private var palette
+    @Environment(\.peekuHangsAbove) private var hangsAbove
     let machine: PhaseMachine
     let bar: CGFloat
     var commands: CommandRunner?
+    /// Nil in snapshots, which show the agent tabs only.
+    var settings: SettingsModel?
     /// The machine owns the tab, so opening a usage alert can switch to Usage.
     private var tab: ManagerTab { machine.managerTab }
 
@@ -16,9 +19,8 @@ struct ManagerView: View {
         VStack(spacing: 0) {
             HStack {
                 HStack(spacing: 8) {
-                    // The light panel has Peeku hanging above it instead.
-                    // Hidden in the light panel (Peeku hangs above it) and when empty (the empty state has its own Peeku).
-                    if !palette.isLight && !machine.sessions.isEmpty {
+                    // Hidden when Peeku hangs above the panel and when empty (the empty state has its own Peeku).
+                    if !hangsAbove && !machine.sessions.isEmpty {
                         PeekuView(mood: headerMood(need), size: 22, flat: true, extras: false)
                     }
                     Text(need.isEmpty ? "All clear" : "\(need.count) need\(need.count == 1 ? "s" : "") you")
@@ -27,23 +29,49 @@ struct ManagerView: View {
                         .lineLimit(1)
                 }
                 Spacer()
+                if settings != nil {
+                    SettingsGear(selected: tab == .settings) {
+                        tab == .settings ? machine.showAgents() : machine.showSettings()
+                    }
+                }
             }
-            .padding(.horizontal, 18)
+            .padding(.leading, 18)
+            .padding(.trailing, 12)
             .frame(height: bar)
 
             // Its own row, below the camera: the tabs are wider than the space beside the notch.
-            segmented
-                .frame(maxWidth: .infinity)
-                .frame(height: IslandMetrics.managerTabRow)
+            // Utilities and Settings swap it for their own header with a way back.
+            Group {
+                switch tab {
+                case .commands:
+                    UtilityHeader(title: "Commands", onBack: machine.showAgents) {
+                        Button { commands?.onEdit?(nil) } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus").font(.system(size: 9, weight: .bold))
+                                Text("New")
+                            }
+                        }
+                        .buttonStyle(ChipStyle(selected: false))
+                        .disabled(commands == nil)
+                    }
+                case .settings:
+                    UtilityHeader(title: "Settings", onBack: machine.showAgents) { EmptyView() }
+                default:
+                    segmented.frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: IslandMetrics.managerTabRow)
 
             switch tab {
             case .now: nowList(need)
             case .history: HistoryView(machine: machine).frame(maxHeight: .infinity, alignment: .top)
             case .usage: UsageView(machine: machine).frame(maxHeight: .infinity, alignment: .top)
             case .commands: CommandsView(runner: commands).frame(maxHeight: .infinity, alignment: .top)
+            case .settings:
+                if let settings { SettingsView(model: settings).frame(maxHeight: .infinity, alignment: .top) }
             }
 
-            footer
+            if machine.dock.isEmpty { footer } else { dock }
         }
     }
 
@@ -112,7 +140,6 @@ struct ManagerView: View {
             segment("Now", .now)
             segment("History", .history)
             segment("Usage", .usage)
-            segment("Commands", .commands)
         }
         .font(.peeku(11))
         .padding(2)
@@ -127,6 +154,27 @@ struct ManagerView: View {
             .foregroundStyle(tab == value ? palette.primary : palette.label(0.5))
             .contentShape(Rectangle())
             .accessibilityAddTraits(tab == value ? .isSelected : [])
+    }
+
+    /// The footer as a small dock: Agents plus a button per utility. Clicking one swaps the
+    /// whole panel, so the tabs at the top always mean "your agents".
+    private var dock: some View {
+        let running = commands?.activeCount ?? 0
+        return HStack(spacing: 4) {
+            DockButton(selected: tab.isAgentTab, label: "Agents") { machine.showAgents() } icon: {
+                PeekuView(mood: .working, size: 16, flat: true, extras: false)
+            }
+            DockButton(selected: tab == .commands, label: "Commands", count: running) { machine.managerTab = .commands } icon: {
+                Text(">_").font(.peekuMono(10.5, .semibold))
+            }
+            Spacer()
+            Text("⌥⌘.").font(.peekuMono(11)).foregroundStyle(palette.label(0.4))
+                .padding(.trailing, 8)
+        }
+        .padding(.leading, 12)
+        .padding(.trailing, 10)
+        .frame(height: 44)
+        .overlay(alignment: .top) { Rectangle().fill(palette.hairline).frame(height: 1) }
     }
 
     private var footer: some View {
@@ -145,6 +193,96 @@ struct ManagerView: View {
         .padding(.horizontal, 20)
         .frame(height: 40)
         .overlay(alignment: .top) { Rectangle().fill(palette.hairline).frame(height: 1) }
+    }
+}
+
+/// The gear at the manager's top right. Highlighted while Settings shows; clicking it again goes back.
+private struct SettingsGear: View {
+    let selected: Bool
+    let action: () -> Void
+    @Environment(\.palette) private var palette
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "gearshape")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(selected || hovering ? palette.primary : palette.label(0.55))
+                .frame(width: 26, height: 24)
+                .background(RoundedRectangle(cornerRadius: 6).fill(palette.fill(selected ? 0.14 : hovering ? 0.08 : 0)))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help("Settings")
+        .accessibilityLabel("Settings")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+/// "‹ Commands" with the view's primary action on the right, in place of the tabs.
+private struct UtilityHeader<Action: View>: View {
+    let title: String
+    let onBack: () -> Void
+    @ViewBuilder let action: Action
+    @Environment(\.palette) private var palette
+    @State private var hovering = false
+
+    var body: some View {
+        HStack {
+            Button(action: onBack) {
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.left").font(.system(size: 10.5, weight: .semibold))
+                        .foregroundStyle(hovering ? palette.primary : palette.label(0.55))
+                    Text(title).font(.peeku(13, .semibold)).foregroundStyle(palette.primary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .onHover { hovering = $0 }
+            .accessibilityLabel("Back to Agents")
+            .accessibilityValue(title)
+            Spacer()
+            action
+        }
+        .padding(.horizontal, 18)
+    }
+}
+
+/// One dock button: 26pt pill, filled while its view shows, with a green count while commands run.
+private struct DockButton<Icon: View>: View {
+    let selected: Bool
+    let label: String
+    var count = 0
+    let action: () -> Void
+    @ViewBuilder let icon: Icon
+    @Environment(\.palette) private var palette
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                icon
+                Text(label).font(.peeku(11.5))
+                if count > 0 {
+                    Text("\(count)")
+                        .font(.peeku(9.5, .bold))
+                        .foregroundStyle(Tokens.pillBadgeText)
+                        .padding(.horizontal, 4)
+                        .frame(minWidth: 15, minHeight: 15)
+                        .background(Capsule().fill(palette.accent(.finished)))
+                }
+            }
+            .foregroundStyle(selected || hovering ? palette.primary : palette.label(0.55))
+            .padding(.horizontal, 10)
+            .frame(height: 26)
+            .background(Capsule().fill(palette.fill(selected ? 0.14 : hovering ? 0.08 : 0)))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .accessibilityLabel(count > 0 ? "\(label), \(count) running" : label)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
@@ -282,6 +420,7 @@ private struct QuietRow<Mark: View>: View {
 private struct EmptyNow: View {
     let onLaunch: (HostApp) -> Void
     @Environment(\.palette) private var palette
+    @Environment(\.peekuHangsAbove) private var hangsAbove
 
     private var hosts: [HostApp] {
         let hidden = Preferences.disabledHosts
@@ -290,8 +429,8 @@ private struct EmptyNow: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            // The light panel already has Peeku hanging above it.
-            if !palette.isLight {
+            // Peeku may already be hanging above the panel.
+            if !hangsAbove {
                 PeekuView(mood: .idle, size: 56, showZ: true)
                     .padding(.top, 8)
             }

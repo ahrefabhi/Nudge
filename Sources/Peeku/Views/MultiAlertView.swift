@@ -4,6 +4,7 @@ import SwiftUI
 /// Several agents waiting: one Peeku, one queue, most urgent first.
 struct MultiAlertView: View {
     @Environment(\.palette) private var palette
+    @Environment(\.peekuHangsAbove) private var hangsAbove
     let queue: [PeekuSession]
     /// Highlighted row, once the user cycles with ⌥⌘↓.
     let cursor: Int?
@@ -26,11 +27,11 @@ struct MultiAlertView: View {
                     .foregroundStyle(palette.label(0.4))
             }
             .padding(.horizontal, 4)
-            // Beside the camera in the notch; an ordinary row in the light panel.
-            .frame(height: palette.isLight ? 28 : bar)
+            // Beside the camera in the notch; an ordinary row in a panel.
+            .frame(height: hangsAbove ? 28 : bar)
 
             HStack(spacing: 12) {
-                if !palette.isLight { PeekuGroup(size: 42, count: queue.count) }
+                if !hangsAbove { PeekuGroup(size: 42, count: queue.count) }
                 VStack(alignment: .leading, spacing: 2) {
                     // Usage and command alerts aren't agents.
                     Text("\(Self.countWord(queue.count)) \(queue.contains { $0.kind == .usage || $0.kind.isCommand } ? "things" : "agents") need you")
@@ -49,7 +50,7 @@ struct MultiAlertView: View {
             }
         }
         .padding(.horizontal, 14)
-        .padding(.top, palette.isLight ? 8 : 0)
+        .padding(.top, hangsAbove ? 8 : 0)
         .padding(.bottom, 14)
     }
 

@@ -5,7 +5,7 @@
 <h1 align="center">Peeku</h1>
 
 <p align="center">
-  <strong>A tiny companion that lives in your MacBook's notch and tells you when a Claude Code or Codex session needs you.</strong>
+  <strong>A tiny companion for your coding agents. It lives in your notch or menu bar and tells you when Claude Code or Codex needs you.</strong>
 </p>
 
 <p align="center">
@@ -19,36 +19,48 @@
   <img src="docs/images/alert.png" width="760" alt="Peeku's notch expanded into a notification: Claude needs your permission to run npm install stripe@17.2.0 in payments-api, with Open Session and Later buttons">
 </p>
 
-When a session stops to ask for permission, a question or help with an error, Peeku drops out of the notch and tells you why. **Open Session** takes you to the exact terminal tab or editor window.
+When a session stops to ask for permission, a question or help with an error, Peeku drops out of the notch (or climbs down from its menu bar icon) and tells you why. **Open Session** takes you to the exact terminal tab or editor window.
 
 https://github.com/user-attachments/assets/eefa5891-946c-46a3-9c4b-7ca000052e3b
 
 ## Features
 
+**Your agents**
+
 - **Shows why a session is waiting:** the command, the question and its choices, the error, or the agent's last reply.
 - **Opens the right place:** the exact iTerm or Terminal tab, or VS Code window. Other apps (Warp, Ghostty, Zed, Cursor…) come to the front too.
 - **One queue, most urgent first:** permissions, then questions, then errors. Cycle with ⌥⌘↓.
-- **Every session at a glance:** click the notch for what's waiting, working and finished, plus a week of history.
+- **Every session at a glance:** what's waiting, working and finished, plus a week of history.
+
+**Your usage**
+
 - **Rate limits:** your Claude and Codex 5-hour and weekly usage, with alerts at thresholds you set.
 - **Spend:** what today, the last 7 or the last 30 days cost at API prices, tokens used, and bars split by model.
-- **Quick commands:** save `npm run dev` with its folder, then run, restart and stop it from the notch. Read its output, answer its prompts, and hear about it when it fails.
+
+**Your dev commands**
+
+- **Quick commands:** save `npm run dev` with its folder, then run, restart and stop it from the dock at the bottom of the session manager. Read its output, answer its prompts, and hear about it when it fails. Turn it off if you only want the companion.
+
+**Where it lives**
+
+- **Notch or menu bar:** in the notch on a MacBook that has one, or in its own menu bar icon on other Macs or if you'd rather.
 - **Stays out of the way:** alerts fold into a pill, full screen shrinks Peeku to a glow, and it goes quiet while your screen is shared.
 - **Read-only and private:** Peeku never types into or approves anything in your agent sessions, and everything stays on your Mac.
 - **Native:** Swift and SwiftUI, light and dark mode, Reduce Motion, about 6 MB.
 
 ## A closer look
 
-### In the notch
+### Notch or menu bar
 
 Idle, the notch is just the notch. While agents work, two eyes glance around. When something needs you, Peeku drops out.
 
 <p align="center"><img src="docs/images/notch.png" width="760" alt="Three notch states: working with a spinner and a count of 5, Peeku dropping out of the notch with amber eyes, and a folded pill with a badge showing 3 waiting"></p>
 
-### On a Mac without a notch
+On an external display or older MacBook, there's no fake notch. Peeku lives in its menu bar icon instead, and you can choose that on a MacBook with a notch too (**Settings → Show Peeku in**). The icon's eyes show what it's doing: they glance around while agents work, and change color with a dot or a count when something needs you. When an agent needs you, Peeku climbs down from the icon, hangs from the menu bar and holds the alert. Click the icon (or press ⌥⌘.) for the session manager, right-click it for the menu.
 
-On an external display or older MacBook, Peeku hides while idle and slides down as a black pill when agents work. Open the manager from the menu bar icon or ⌥⌘.
+<p align="center"><img src="docs/images/menu-bar.png" width="760" alt="Four states of Peeku's menu bar icon on a display without a notch: idle with sleepy eyes, working with open eyes, Peeku climbing down from the icon with amber eyes while the icon shows an amber dot, and folded with a badge showing 3 waiting"></p>
 
-<p align="center"><img src="docs/images/menu-bar.png" width="760" alt="Four menu bar states on a display without a notch: idle with nothing showing, working as a black pill with a spinner and a count of 5, Peeku dropping out of the menu bar with amber eyes, and a folded pill with a badge showing 3 waiting"></p>
+<p align="center"><img src="docs/images/menu-bar-alert.png" width="760" alt="On a display without a notch, Peeku hangs from its menu bar icon above a frosted panel: Claude needs your permission to run npm install stripe@17.2.0 in payments-api, with Open Session and Later buttons"></p>
 
 ### When several agents need you
 
@@ -57,7 +69,7 @@ On an external display or older MacBook, Peeku hides while idle and slides down 
 ### Every session, and what happened today
 
 <p align="center">
-  <img src="docs/images/manager.png" width="49%" alt="The session manager: three sessions that need you with their commands and questions, two working, one finished; under each, its branch, model, cost so far and how full its context is, auth-service at 93% in red">
+  <img src="docs/images/manager.png" width="49%" alt="The session manager, with Now, History and Usage tabs, a settings gear and a footer dock with Agents and Commands: three sessions that need you with their commands and questions, two working, one finished; under each, its branch, model, cost so far and how full its context is, auth-service at 93% in red">
   <img src="docs/images/history.png" width="49%" alt="History: today's permission requests with how long they took to answer, a finished run, a cleared error and a new task">
 </p>
 
@@ -71,9 +83,9 @@ Peeku asks Claude Code and Codex for your limits every few minutes, with no setu
 
 ### Commands
 
-The Commands tab keeps the commands you run all day, like a dev server, a worker or a docs preview. Add one with **+ New Command**: pick its folder and type the command. It runs in your login shell, like a new terminal tab, so nvm, pyenv and your aliases work. Each row shows whether it's running and its latest line of output. Hover a row to edit or delete it.
+Commands keeps the commands you run all day, like a dev server, a worker or a docs preview. Add one with **+ New Command**: pick its folder and type the command. It runs in your login shell, like a new terminal tab, so nvm, pyenv and your aliases work. Each row shows whether it's running and its latest line of output. Hover a row to edit or delete it. Commands lives in the dock at the bottom of the session manager, not in the tabs at the top, and shows how many are running. Turn it off in Settings → Utilities if you don't need it.
 
-<p align="center"><img src="docs/images/commands.png" width="49%" alt="The Commands tab: Dashboard running npm run dev for 12 minutes with its latest Vite line, payments-api exited with code 1, and Docs waiting for input on a port question, each with output, restart and stop buttons"></p>
+<p align="center"><img src="docs/images/commands.png" width="49%" alt="Commands, opened from the footer dock, with a back arrow and a New button: Dashboard running npm run dev for 12 minutes with its latest Vite line, payments-api exited with code 1, and Docs waiting for input on a port question, each with output, restart and stop buttons"></p>
 
 When a command exits with an error, Peeku tells you with its last line of output. **Restart** runs it again, and **Show Output** opens everything it printed.
 
@@ -132,24 +144,25 @@ Everything runs on your Mac. The only network request Peeku makes itself is the 
 
 Your settings files are backed up before any change.
 
-## Using Peeku
+## Shortcuts and settings
 
 | Shortcut | Action |
 |---|---|
-| ⌥⌘. | Show or hide the session manager |
-| ⌥⌘. then 1–4 | Open the manager on Now, History, Usage or Commands (keep ⌥⌘ held) |
+| ⌥⌘. | Show or hide the session manager on your agents |
+| ⌥⌘. then 1–3 | Open the manager on Now, History or Usage (keep ⌥⌘ held) |
+| ⌥⌘, | Show or hide Commands |
 | ⌥⌘↓ | Next waiting agent |
 | ↵ | Open the highlighted session |
-| Esc | Fold the alert into the pill |
+| Esc | Fold the alert into the pill, or go back to Agents from Commands or Settings |
 | ⌘1–9 | Open a row by number |
 
-↵, Esc and ⌘1–9 work once the notch has focus. Peeku never takes the keyboard on its own.
+↵, Esc and ⌘1–9 work once Peeku has focus. Peeku never takes the keyboard on its own.
 
 **Goes quiet** (count only, no pop-up or sound) while your screen is shared or recorded, when **Quiet** is on, or for the session you're already looking at. In full screen it shrinks to a glow along the top edge.
 
-**Settings** covers appearance, login, updates, sounds per state, usage alerts, showing costs, which apps to watch, hooks and permissions.
+**Settings** opens from the gear at the top right of the session manager (or **Settings…** in the menu bar). It covers appearance, login, updates, sounds per state, usage alerts, showing costs, utilities, which apps to watch, hooks and permissions.
 
-<p align="center"><img src="docs/images/settings.png" width="360" alt="Peeku's settings: appearance, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, showing costs, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
+<p align="center"><img src="docs/images/settings.png" width="49%" alt="Peeku's settings inside the session manager, opened from the gear: appearance, notch or menu bar, open at login, update checks, notification options, staying quiet for the session in front, usage alerts, showing costs, a sound for each state, Quiet, which apps to watch, Claude Code hooks and permissions"></p>
 
 ## Updates and uninstall
 

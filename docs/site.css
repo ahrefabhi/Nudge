@@ -240,6 +240,11 @@ img { display: block; }
 .eq i:nth-child(5) { animation-duration: 1.22s; animation-delay: calc(var(--d) + .36s); }
 
 .tile-vis.away { flex-direction: column; gap: 22px; }
+.spend { width: min(100%,260px); display: flex; flex-direction: column; gap: 14px; }
+.spend-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: rgba(235,235,245,.5); }
+.spend-head b { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -.01em; }
+.spend-bars { height: 84px; display: flex; align-items: flex-end; gap: 8px; }
+.spend-bars i { flex: 1; height: var(--h); border-radius: 4px 4px 2px 2px; background: linear-gradient(to top, var(--amber) 0 var(--s), var(--blue) var(--s) 100%); opacity: .85; }
 .pill { position: relative; width: 200px; height: 28px; border-radius: 0 0 13px 13px; background: #000; box-shadow: 0 0 0 .5px rgba(255,255,255,.08); }
 .pill-pip { position: absolute; left: 11px; top: 4px; }
 .pill-count { position: absolute; right: 11px; top: 5px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--amber); color: #17120a; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
@@ -348,3 +353,4 @@ img { display: block; }
   .g-type { animation: none !important; }
   .reveal-on .reveal { opacity: 1; transform: none; filter: none; transition: none; }
 }
+.lede code { font: .92em ui-monospace, "SF Mono", Menlo, monospace; padding: 1px 5px; border-radius: 5px; background: rgba(255,255,255,.07); color: var(--text); }

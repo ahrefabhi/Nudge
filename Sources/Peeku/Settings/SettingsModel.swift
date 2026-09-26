@@ -3,6 +3,7 @@ import Observation
 import PeekuKit
 
 /// Settings state. Apps, hooks and permissions come from the same model onboarding uses.
+/// Settings show inside the manager; `start` and `stop` follow its Settings view.
 @MainActor
 @Observable
 final class SettingsModel {
@@ -14,6 +15,8 @@ final class SettingsModel {
     private(set) var popUpOnFinish = Preferences.popUpOnFinish
     private(set) var quietInView = Preferences.quietInView
     private(set) var usageAlertRules = Preferences.usageAlertRules
+    private(set) var commandsEnabled = Preferences.commandsEnabled
+    private(set) var prefersMenuBar = Preferences.prefersMenuBar
     private(set) var soundsEnabled = Preferences.soundsEnabled
     private(set) var sounds = Dictionary(uniqueKeysWithValues: Chime.allCases.map { ($0, Preferences.sound(for: $0)) })
     private(set) var quietUntil: Date?
@@ -23,8 +26,13 @@ final class SettingsModel {
     /// Called after a notification preference changes, so the app can apply it.
     @ObservationIgnored var onPreferencesChanged: (() -> Void)?
     @ObservationIgnored var onQuietChanged: (() -> Void)?
+    /// Called when Peeku moves between the notch and the menu bar.
+    @ObservationIgnored var onPlacementChanged: (() -> Void)?
     /// Usage alerts are edited in the manager's Usage tab.
     @ObservationIgnored var onEditUsageAlerts: (() -> Void)?
+    /// Runs an action that shows a dialog or a system prompt. The notch floats above ordinary
+    /// windows, so the app closes the manager first.
+    @ObservationIgnored var presentingDialog: (@escaping () -> Void) -> Void = { $0() }
     @ObservationIgnored private var poll: Timer?
 
     init(setup: OnboardingModel, updater: Updater? = nil) {
@@ -76,6 +84,18 @@ final class SettingsModel {
     func setQuietInView(_ on: Bool) {
         quietInView = on
         Preferences.quietInView = on
+    }
+
+    func setPrefersMenuBar(_ on: Bool) {
+        prefersMenuBar = on
+        Preferences.prefersMenuBar = on
+        onPlacementChanged?()
+    }
+
+    func setCommandsEnabled(_ on: Bool) {
+        commandsEnabled = on
+        Preferences.commandsEnabled = on
+        onPreferencesChanged?()
     }
 
     func setSoundsEnabled(_ on: Bool) {
