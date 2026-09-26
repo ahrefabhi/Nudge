@@ -49,11 +49,27 @@
            box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06); background: #000; }
   .panel img { position: absolute; left: -187.5px; top: 0; width: 950px; max-width: none; }
 
+  /* skills scene: the real Installed and Discover panels, then a close-up of an install */
+  #sWrap { position: absolute; left: 260px; top: 176px; width: 1400px; height: 884px; border-radius: 28px; overflow: hidden;
+           box-shadow: 0 40px 100px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06); }
+  #sWrap img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #sHot { position: absolute; left: 800px; top: 695px; width: 76px; height: 28px; }
+  #sTop { position: absolute; left: 0; right: 0; top: 0; height: 250px; background: linear-gradient(to bottom, rgba(13,14,18,.97) 45%, rgba(13,14,18,0)); }
+  #toast3 { position: absolute; left: 960px; top: 168px; transform: translateX(-50%); white-space: nowrap; font-size: 22px; padding: 12px 24px; animation: none; }
+
+  /* recap: four panels, each with its shortcut */
+  .kc { position: absolute; top: 860px; width: 437px; height: 56px; text-align: center; font: 500 26px var(--sans); color: rgba(235,235,245,.7);
+        display: flex; gap: 14px; align-items: center; justify-content: center; }
+  .kc kbd { font: 600 28px var(--mono); color: var(--text); padding: 8px 16px; border-radius: 12px; background: rgba(255,255,255,.08);
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.16); }
+
   /* outro */
   #outro { display: flex; flex-direction: column; align-items: center; justify-content: center; }
   #outro img { width: 200px; height: 200px; border-radius: 44px; filter: drop-shadow(0 30px 60px rgba(0,0,0,.55)); }
   #outro h1 { margin: 26px 0 0; font: 700 150px/1 var(--sans); letter-spacing: -.045em; }
   #outro .tag { margin-top: 22px; font: 500 46px var(--sans); letter-spacing: -.015em; color: rgba(235,235,245,.78); }
+  #outro .new { margin-top: 26px; font: 600 26px var(--sans); color: var(--green); padding: 8px 18px; border-radius: 999px;
+                background: color-mix(in oklch, var(--green) 14%, transparent); box-shadow: 0 0 0 1px color-mix(in oklch, var(--green) 35%, transparent); }
   #outro .meta { margin-top: 30px; font: 500 26px var(--mono); color: rgba(235,235,245,.45); display: flex; gap: 20px; }
   #outro .url { margin-top: 34px; font: 600 30px var(--sans); color: var(--amber); letter-spacing: .01em; }
 </style>
@@ -85,17 +101,32 @@
   <div class="cap" id="capC2" style="top:800px"><span class="dim">Answer their prompts</span> in one click.</div>
   <div class="cap" id="cap4" style="top:800px"><span id="c4a" style="color:var(--blue)">Questions.</span> <span id="c4b" style="color:var(--red)">Errors.</span> <span id="c4c" style="color:var(--green)">Finished runs.</span></div>
 
+  <div class="layer" id="skills">
+    <div id="sWrap"><img src="../../docs/images/skills-flow.png" alt=""><div id="sHot"></div></div>
+    <div id="sTop"></div>
+    <div class="cap" id="capS1" style="top:62px;font-size:56px"><span style="color:var(--blue)">New:</span> Skills. <span class="dim">Every plugin and skill, in one place.</span></div>
+    <div class="cap" id="capS2" style="top:62px;font-size:56px">Install for everything, <span class="dim">or just one project.</span></div>
+    <div class="toast" id="toast3">Installed playwright. New Claude Code sessions will load it.</div>
+  </div>
+
   <div class="layer" id="panels">
-    <div class="cap" id="cap5" style="top:70px;font-size:56px">Every session, <span class="dim">your limits and your commands.</span></div>
-    <div class="panel" id="pNow" style="left:115.5px;top:190px"><img src="../../docs/images/manager.png" alt=""></div>
-    <div class="panel" id="pUse" style="left:672.5px;top:190px"><img src="../../docs/images/usage.png" alt=""></div>
-    <div class="panel" id="pCmd" style="left:1229.5px;top:190px"><img src="../../docs/images/commands.png" alt=""></div>
+    <div class="cap" id="cap5" style="top:115px;font-size:56px">Your sessions, <span class="dim">limits, commands and skills.</span></div>
+    <div class="cap" id="cap6" style="top:115px;font-size:56px">One shortcut each. <span class="dim">Set your own in Settings.</span></div>
+    <div class="panel" id="pNow" style="left:44px;top:238px"><img src="../../docs/images/manager.png" alt=""></div>
+    <div class="panel" id="pUse" style="left:509px;top:238px"><img src="../../docs/images/usage.png" alt=""></div>
+    <div class="panel" id="pCmd" style="left:974px;top:238px"><img src="../../docs/images/commands.png" alt=""></div>
+    <div class="panel" id="pSkl" style="left:1439px;top:238px"><img src="../../docs/images/skills.png" alt=""></div>
+    <div class="kc" id="kNow" style="left:44px"><kbd>⌥⌘,</kbd>Agents</div>
+    <div class="kc" id="kUse" style="left:509px">Usage</div>
+    <div class="kc" id="kCmd" style="left:974px"><kbd>⌥⌘.</kbd>Commands</div>
+    <div class="kc" id="kSkl" style="left:1439px"><kbd>⌥⌘/</kbd>Skills</div>
   </div>
 
   <div class="layer" id="outro">
     <img src="../../docs/images/icon.png" alt="">
     <h1>Peeku</h1>
-    <div class="tag">A tiny companion in your notch.</div>
+    <div class="tag">A tiny companion for your coding agents.</div>
+    <div class="new">New: Skills</div>
     <div class="meta"><span>For Claude Code and Codex</span><span>·</span><span>macOS 14+</span><span>·</span><span>Open source</span></div>
     <div class="url">peeku.ahrefabhi.com</div>
   </div>
@@ -271,9 +302,10 @@ function capIn(node, t, a, b) {
 const T = {
   pushIn: 3.2, drop1: 4.5, alert1: 5.15,
   cursor: 7.3, click: 8.45, close1: 8.55, pullOut: 8.6, pushIn2: 10.35,
-  q: 10.75, qAlert: 11.35, err: 12.35, fin: 13.3,
-  cmdFail: 14.55, cmdInput: 16.25, cursor2: 16.5, click2: 17.45, close2: 17.55, dip1: 19.35,
-  panels: 19.65, dip2: 23.15, outro: 23.45, end: 26.7,
+  q: 10.75, qAlert: 11.35, err: 12.1, fin: 12.85,
+  cmdFail: 13.6, cmdInput: 15.2, cursor2: 15.45, click2: 16.35, close2: 16.45, dip1: 18.0,
+  skills: 18.3, zoom: 20.9, cursor3: 21.75, click3: 22.5, installed: 22.6, dipS: 23.3,
+  panels: 23.6, keys: 24.3, capSwap: 25.75, dip2: 27.8, outro: 28.1, end: 31.3,
 };
 // Island phases: [start, phase, event]
 const PHASES = [
@@ -418,8 +450,10 @@ function seek(t) {
     cursor.style.opacity = 1 - prog(t, closeT + .2, .5);
     cursor.style.transform = `translate(${lerp(sx, tx, cp) + arc * .3}px, ${lerp(sy, ty, cp) + arc}px) scale(${pressed ? .88 : 1})`;
   };
+  const press3 = t >= T.click3 - .02 && t < T.click3 + .14;
   if (t >= T.cursor - .01 && t < T.close1 + .7) glideTo(btn, T.cursor, 1.0, T.close1, press);
   else if (t >= T.cursor2 - .01 && t < T.close2 + .7) glideTo(yes, T.cursor2, .9, T.close2, press2);
+  else if (t >= T.cursor3 - .01 && t < T.dipS + .1) { glideTo($('sHot'), T.cursor3, .75, T.dipS - .5, press3); }
   else cursor.style.opacity = 0;
 
   // 7) Captions
@@ -436,24 +470,57 @@ function seek(t) {
   capIn($('capC2'), t, T.click2 + .1, T.dip1);
   $('scrim').style.opacity = clamp(prog(t, T.pushIn, .8) * (1 - prog(t, T.dip1, .3)));
 
-  // 8) Real app panels
-  const pv = window01(t, T.panels, T.dip2 + .3, .5, .3);
+  // 8) Skills: the Installed and Discover panels rise, the camera eases in on an install card,
+  //    the cursor clicks Install and the app's own notice appears
+  const skOn = t >= T.skills - .01 && t < T.dipS + .31;
+  $('skills').style.opacity = skOn ? 1 : 0;
+  if (skOn) {
+    const sp = prog(t, T.skills, .8, out) * (1 - prog(t, T.dipS, .3));
+    const zp = prog(t, T.zoom, 1.1, inOut);
+    const sw = $('sWrap');
+    sw.style.opacity = sp;
+    sw.style.transformOrigin = '1033px 663px';
+    // The close-up brings playwright's install card to the middle of the frame
+    sw.style.transform = `translate(${-330 * zp}px, ${(1 - sp) * 60 - (t - T.skills) * 4 - 170 * zp}px) scale(${lerp(.97, 1, sp) * lerp(1, 1.42, zp)})`;
+    sw.style.filter = sp >= 1 ? 'none' : `blur(${(1 - sp) * 6}px)`;
+    capIn($('capS1'), t, T.skills + .3, T.zoom + .2);
+    capIn($('capS2'), t, T.zoom + .35, T.dipS + .3);
+    const ip = window01(t, T.installed, T.dipS + .3, .35, .3);
+    const t3 = $('toast3');
+    t3.style.opacity = ip;
+    t3.style.transform = `translateX(-50%) translateY(${(1 - ip) * 10}px)`;
+  }
+
+  // 9) Recap: four panels in a row, each with its shortcut pressed in turn
   $('panels').style.opacity = t >= T.panels - .01 && t < T.dip2 + .31 ? 1 : 0;
-  capIn($('cap5'), t, T.panels + .25, T.dip2 + .3);
-  // Three panels at 90%, so they fit side by side
-  [['pNow', 0], ['pUse', .18], ['pCmd', .36]].forEach(([id, dl]) => {
+  capIn($('cap5'), t, T.panels + .25, T.capSwap);
+  capIn($('cap6'), t, T.capSwap + .15, T.dip2 + .3);
+  [['pNow', 'kNow', 0], ['pUse', 'kUse', .15], ['pCmd', 'kCmd', .3], ['pSkl', 'kSkl', .45]].forEach(([id, kid, dl], j) => {
     const p = prog(t, T.panels + dl, .8, out) * (1 - prog(t, T.dip2, .3));
-    const drift = (t - T.panels) * 6;
+    const drift = (t - T.panels) * 5;
     const n = $(id);
     n.style.opacity = p;
-    n.style.transformOrigin = '50% 0';
-    n.style.transform = `translateY(${(1 - p) * 70 - drift}px) scale(${lerp(.96, 1, p) * .9})`;
+    n.style.transformOrigin = '0 0';
+    n.style.transform = `translateY(${(1 - p) * 70 - drift}px) scale(${lerp(.96, 1, p) * .76})`;
+    const k = $(kid);
+    k.style.opacity = p;
+    k.style.transform = `translateY(${(1 - p) * 40 - drift}px)`;
+    const kbd = k.querySelector('kbd');
+    if (kbd) {
+      // Each key presses once, in order, and stays lit
+      const at = T.keys + j * .38;
+      const down = t >= at && t < at + .14;
+      const lit = prog(t, at, .25);
+      kbd.style.transform = down ? 'translateY(3px)' : 'none';
+      kbd.style.boxShadow = down ? 'inset 0 -1px 0 rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.3)'
+        : `inset 0 -3px 0 rgba(0,0,0,.45), 0 0 0 1px color-mix(in oklch, var(--blue) ${Math.round(lit * 70)}%, rgba(255,255,255,.16)), 0 0 ${lit * 28}px color-mix(in oklch, var(--blue) ${Math.round(lit * 45)}%, transparent)`;
+    }
   });
 
-  // 9) Outro
+  // 10) Outro
   const op = $('outro');
   op.style.opacity = t >= T.outro ? 1 : 0;
-  const kids = [op.querySelector('img'), op.querySelector('h1'), op.querySelector('.tag'), op.querySelector('.meta'), op.querySelector('.url')];
+  const kids = [op.querySelector('img'), op.querySelector('h1'), op.querySelector('.tag'), op.querySelector('.new'), op.querySelector('.meta'), op.querySelector('.url')];
   kids.forEach((k, j) => {
     const p = prog(t, T.outro + .1 + j * .2, .6, out);
     k.style.opacity = p;

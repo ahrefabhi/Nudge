@@ -8,7 +8,7 @@ import wave
 import numpy as np
 
 SR = 48000
-DUR = 26.7
+DUR = 31.3
 N = int(SR * DUR)
 BEAT = 0.6
 BAR = 4 * BEAT
@@ -16,8 +16,9 @@ rng = np.random.default_rng(7)
 
 # Timeline: keep in step with `const T` in comp/index.html
 T = dict(pushIn=3.2, drop1=4.5, alert1=5.15, click=8.45, close1=8.55, q=10.75, qAlert=11.35,
-         err=12.35, fin=13.3, cmdFail=14.55, cmdInput=16.25, click2=17.45, close2=17.55,
-         dip1=19.35, panels=19.65, dip2=23.15, outro=23.45, peekOutro=23.95)
+         err=12.1, fin=12.85, cmdFail=13.6, cmdInput=15.2, click2=16.35, close2=16.45,
+         dip1=18.0, skills=18.3, zoom=20.9, click3=22.5, installed=22.6, dipS=23.3,
+         panels=23.6, keys=24.3, dip2=27.8, outro=28.1, peekOutro=28.6)
 
 
 def hz(midi):
@@ -196,7 +197,7 @@ while tt < DUR:
 # Soft kick on the beat from the drop, a hat on the off-beats; both drop out on the dips
 tt = 0.0
 while tt < DUR:
-    near_dip = any(abs(tt - T[k]) < 0.35 for k in ('dip1', 'dip2'))
+    near_dip = any(abs(tt - T[k]) < 0.35 for k in ('dip1', 'dipS', 'dip2'))
     if T['drop1'] - 0.1 <= tt < T['outro'] - 0.1 and not near_dip:
         put(music, tt, kick(), 0.17)
         put(music, tt + BEAT / 2, hat(), 0.07)
@@ -260,14 +261,29 @@ put(sfx, T['close2'] + 0.37, bell(hz(89), 1.3, 0.5), 0.05)
 put(send, T['close2'] + 0.25, bell(hz(84), 1.3, 0.5), 0.05)
 
 # Dips: airy swells through the background
-for k in ('dip1', 'dip2'):
+for k in ('dip1', 'dipS', 'dip2'):
     w = whoosh(1.0, 0.35)
     put(sfx, T[k] - 0.3, w, 0.06)
     put(send, T[k] - 0.3, w, 0.05)
-# Panels rise: two soft plucks, one per panel
-put(sfx, T['panels'] + 0.05, pluck(hz(77), 0.7, 2600), 0.08)
-put(sfx, T['panels'] + 0.23, pluck(hz(81), 0.7, 2600), 0.08)
-put(sfx, T['panels'] + 0.41, pluck(hz(84), 0.7, 2600), 0.08)
+
+# Skills: the two panels rise on two plucks, the close-up on a soft swell,
+# then Install's click and a bright C6 + F6 when it's done (like the dev server coming up)
+put(sfx, T['skills'] + 0.05, pluck(hz(77), 0.7, 2600), 0.08)
+put(sfx, T['skills'] + 0.25, pluck(hz(84), 0.7, 2600), 0.08)
+put(send, T['skills'] + 0.05, pluck(hz(77), 0.7, 2600), 0.05)
+put(sfx, T['zoom'] - 0.1, whoosh(0.9, 0.45), 0.03)
+put(sfx, T['click3'], click, 0.26)
+put(sfx, T['installed'] + 0.05, bell(hz(84), 1.3, 0.5), 0.065)
+put(sfx, T['installed'] + 0.17, bell(hz(89), 1.3, 0.5), 0.05)
+put(send, T['installed'] + 0.05, bell(hz(84), 1.3, 0.5), 0.05)
+
+# Recap: a pluck per panel rising, then a soft key tick for each shortcut (Usage has none)
+for j, m in enumerate((77, 81, 84, 89)):
+    put(sfx, T['panels'] + 0.05 + j * 0.15, pluck(hz(m), 0.7, 2600), 0.075)
+for j in (0, 2, 3):
+    at = T['keys'] + j * 0.38
+    put(sfx, at, click, 0.16)
+    put(sfx, at + 0.02, bell(hz((77, 81, 84, 89)[j]), 0.8, 0.4), 0.035)
 
 # Outro: the logo lands on an F major bell chord; Peeku peeks out with a happy boop
 for j, m in enumerate((77, 81, 84, 89)):
@@ -283,7 +299,7 @@ put(music, T['outro'], v, 0.1)
 # ---------------------------------------------------------------------------
 # Mix: effects duck the music a touch, everything shares one room
 duck = np.ones(N)
-for k in ('drop1', 'alert1', 'click', 'q', 'qAlert', 'err', 'fin', 'cmdFail', 'cmdInput', 'click2'):
+for k in ('drop1', 'alert1', 'click', 'q', 'qAlert', 'err', 'fin', 'cmdFail', 'cmdInput', 'click2', 'click3', 'installed'):
     i = int(T[k] * SR)
     m = int(0.5 * SR)
     j = min(N, i + m)

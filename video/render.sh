@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Renders the Peeku launch video into video/out/: peeku.mp4 (with audio), poster.jpg (also frame 0).
-# Usage: video/render.sh [poster-time]   e.g. video/render.sh 21.6
+# Usage: video/render.sh [poster-time]   e.g. video/render.sh 20.6
 # Needs node, python3 and ffmpeg. The first run installs Playwright and numpy locally.
 set -euo pipefail
 cd "$(dirname "$0")"
-poster="${1:-21.6}"
+poster="${1:-20.6}"
 
 [[ -d node_modules/playwright ]] || npm install --silent
 npx --no-install playwright install chromium >/dev/null
